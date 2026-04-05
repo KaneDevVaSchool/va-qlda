@@ -12,6 +12,7 @@ class Project extends Model
     protected $fillable = [
         'name', 'type', 'phase', 'status', 'owner_id', 'deadline',
         'description', 'progress', 'archived_at',
+        'customer_name', 'customer_email', 'suppliers', 'process_timeline',
         'stakeholder_emails', 'csat_invites_sent', 'csat_survey_sent_at',
     ];
 
@@ -20,6 +21,8 @@ class Project extends Model
         'archived_at' => 'datetime',
         'progress' => 'decimal:4',
         'stakeholder_emails' => 'array',
+        'suppliers' => 'array',
+        'process_timeline' => 'array',
         'csat_survey_sent_at' => 'datetime',
     ];
 

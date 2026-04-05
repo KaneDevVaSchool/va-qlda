@@ -1,42 +1,106 @@
 <template>
     <div class="ppms-page">
-        <p v-if="loading" class="ppms-loading-line" role="status">Đang tải…</p>
+        <p v-if="loading" class="ppms-loading-line" role="status">{{ t('common.loading') }}</p>
         <template v-else-if="project">
             <header class="ppms-page-head ppms-row">
                 <div>
-                    <router-link to="/projects" class="ppms-back">Danh sách</router-link>
+                    <router-link to="/projects" class="ppms-back">{{ t('projects.listBack') }}</router-link>
                     <h1>{{ project.name }}</h1>
                     <p>{{ project.description }}</p>
                     <div class="ppms-tags">
-                        <span>{{ project.type }}</span>
-                        <span>{{ project.phase }}</span>
-                        <span>{{ project.status }}</span>
-                        <span>Tiến độ: {{ Number(project.progress).toFixed(2) }}%</span>
+                        <span>{{ t(`projects.type.${project.type}`) }}</span>
+                        <span>{{ t(`projects.phase.${project.phase}`) }}</span>
+                        <span>{{ t(`projects.status.${project.status}`) }}</span>
+                        <span>{{ t('projects.progressLabel') }}: {{ Number(project.progress).toFixed(2) }}%</span>
                     </div>
                 </div>
                 <div class="ppms-actions">
-                    <button type="button" class="ppms-btn-ghost" @click="duplicateProject">Nhân bản dự án</button>
+                    <button type="button" class="ppms-btn-ghost" @click="duplicateProject">
+                        {{ t('projects.duplicate') }}
+                    </button>
                 </div>
             </header>
 
             <section class="ppms-card ppms-mt">
-                <h2>Gantt (API — lọc assignee / status / root)</h2>
+                <div class="ppms-row ppms-row--spread">
+                    <h2>{{ t('projects.stakeholdersTitle') }}</h2>
+                    <button type="button" class="ppms-btn-ghost" @click="openMetaEdit">
+                        {{ t('projects.editStakeholders') }}
+                    </button>
+                </div>
+                <div class="ppms-split ppms-mt">
+                    <div>
+                        <h3 class="ppms-muted" style="font-size: 0.75rem; margin: 0 0 0.35rem">
+                            {{ t('projects.customer') }}
+                        </h3>
+                        <p v-if="project.customer_name" style="margin: 0">{{ project.customer_name }}</p>
+                        <p v-else class="ppms-muted" style="margin: 0">{{ t('projects.customerUnset') }}</p>
+                        <p v-if="project.customer_email" class="ppms-muted ppms-mt-sm" style="margin: 0; font-size: 0.9rem">
+                            {{ t('projects.customerEmail') }}: {{ project.customer_email }}
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="ppms-muted" style="font-size: 0.75rem; margin: 0 0 0.35rem">
+                            {{ t('projects.suppliersTitle') }}
+                        </h3>
+                        <ul v-if="(project.suppliers || []).length" class="ppms-supplier-list">
+                            <li v-for="(s, i) in project.suppliers" :key="i">{{ s.name }}</li>
+                        </ul>
+                        <p v-else class="ppms-muted" style="margin: 0">{{ t('projects.suppliersEmpty') }}</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="ppms-card ppms-mt">
+                <h2>{{ t('projects.timelineTitle') }}</h2>
+                <p class="ppms-muted ppms-mt-sm">{{ t('projects.timelineHint') }}</p>
+                <div class="ppms-process-timeline" role="list">
+                    <div
+                        v-for="step in timelineDisplay"
+                        :key="step.phase"
+                        class="ppms-process-step"
+                        :class="{ 'is-current': step.isCurrent, 'is-done': !!step.completed_at }"
+                        role="listitem"
+                    >
+                        <span class="ppms-process-dot" aria-hidden="true" />
+                        <div class="ppms-process-body">
+                            <span class="ppms-process-label">{{ t(`projects.phase.${step.phase}`) }}</span>
+                            <span v-if="step.isCurrent" class="ppms-process-badge">{{
+                                t('projects.timelineCurrent')
+                            }}</span>
+                            <time v-if="step.completed_at" :datetime="step.completed_at">{{ step.completed_at }}</time>
+                            <span v-else class="ppms-muted">{{ t('projects.timelinePlanned') }}</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="ppms-card ppms-mt">
+                <h2>{{ t('projects.ganttTitle') }}</h2>
                 <div class="ppms-gantt-filters ppms-task-form">
                     <select v-model="ganttFilters.assignee_id">
-                        <option value="">— Assignee —</option>
+                        <option value="">— {{ t('projects.ganttAssignee') }} —</option>
                         <option v-for="o in assigneeOptions" :key="o.id" :value="String(o.id)">{{ o.name }}</option>
                     </select>
-                    <input v-model="ganttFilters.status" type="text" placeholder="status: todo,in_progress,done" />
+                    <input v-model="ganttFilters.status" type="text" :placeholder="t('projects.ganttStatusPh')" />
                     <label class="ppms-inline-check">
                         <input v-model="ganttFilters.root_only" type="checkbox" />
-                        Chỉ task gốc
+                        {{ t('projects.ganttRootOnly') }}
                     </label>
-                    <button type="button" class="ppms-btn-ghost" @click="loadGantt">Làm mới</button>
+                    <button type="button" class="ppms-btn-ghost" @click="loadGantt">
+                        {{ t('projects.ganttRefresh') }}
+                    </button>
                 </div>
                 <p v-if="gantt.window?.start" class="ppms-muted ppms-mt-sm">
-                    Cửa sổ: {{ gantt.window.start }} → {{ gantt.window.end }} ({{ gantt.window.days }} ngày)
+                    {{
+                        t('projects.ganttWindow', {
+                            start: gantt.window.start,
+                            end: gantt.window.end,
+                            days: gantt.window.days,
+                        })
+                    }}
                 </p>
-                <p v-if="!gantt.bars?.length" class="ppms-muted ppms-mt-sm">Không có task khớp bộ lọc.</p>
+                <p v-if="!gantt.bars?.length" class="ppms-muted ppms-mt-sm">{{ t('projects.ganttEmpty') }}</p>
                 <div class="ppms-gantt">
                     <div v-for="b in gantt.bars" :key="b.task_id" class="ppms-gantt-row">
                         <span class="ppms-gantt-name">{{ b.name }} · {{ b.status }}</span>
@@ -54,10 +118,15 @@
             </section>
 
             <section v-if="project.type === 'delivery'" class="ppms-card ppms-mt">
-                <h2>CSAT (Type 2) — đánh giá 1–5</h2>
+                <h2>{{ t('projects.csatTitle') }}</h2>
                 <p v-if="project.csat_metrics" class="ppms-muted ppms-mt-sm">
-                    Phản hồi: {{ project.csat_metrics.response_count }} / mời
-                    {{ project.csat_metrics.invites_sent }} ({{ project.csat_metrics.response_rate_pct }}%)
+                    {{
+                        t('projects.csatMetrics', {
+                            count: project.csat_metrics.response_count,
+                            invites: project.csat_metrics.invites_sent,
+                            rate: project.csat_metrics.response_rate_pct,
+                        })
+                    }}
                 </p>
                 <form class="ppms-task-form" @submit.prevent="submitCsat">
                     <input v-model.number="csat.rating" type="number" min="1" max="5" required />
@@ -68,7 +137,7 @@
             </section>
 
             <section class="ppms-card ppms-mt">
-                <h2>Task — weight = complexity×0.4 + impact×0.6</h2>
+                <h2>{{ t('projects.tasksTitle') }}</h2>
                 <form class="ppms-stack" @submit.prevent="addTask">
                     <div class="ppms-task-form">
                         <input v-model="taskForm.name" placeholder="Tên task" required />
@@ -153,7 +222,7 @@
             </section>
 
             <section v-if="focusTask" class="ppms-card ppms-mt">
-                <h2>Chi tiết task #{{ focusTask.id }}</h2>
+                <h2>{{ t('projects.taskDetailTitle', { id: focusTask.id }) }}</h2>
                 <div class="ppms-split">
                     <div>
                         <h3>Comments</h3>
@@ -192,6 +261,56 @@
                     </div>
                 </div>
             </section>
+            <div v-if="showMetaEdit" class="ppms-modal-backdrop" @click.self="showMetaEdit = false">
+                <div class="ppms-modal">
+                    <h2>{{ t('projects.editStakeholders') }}</h2>
+                    <form class="ppms-stack" @submit.prevent="saveMeta">
+                        <label class="ppms-field">
+                            <span>{{ t('projects.fieldCustomerName') }}</span>
+                            <input v-model="metaForm.customer_name" />
+                        </label>
+                        <label class="ppms-field">
+                            <span>{{ t('projects.fieldCustomerEmail') }}</span>
+                            <input v-model="metaForm.customer_email" type="email" />
+                        </label>
+                        <div>
+                            <span class="ppms-field" style="display: block; margin-bottom: 0.5rem">{{
+                                t('projects.suppliersTitle')
+                            }}</span>
+                            <div v-for="(s, i) in metaForm.suppliers" :key="i" class="ppms-task-form ppms-mt-sm">
+                                <input v-model="s.name" :placeholder="t('projects.fieldSupplierName')" />
+                                <button
+                                    v-if="metaForm.suppliers.length > 1"
+                                    type="button"
+                                    class="ppms-btn-ghost ppms-btn-sm"
+                                    @click.prevent="removeMetaSupplier(i)"
+                                >
+                                    {{ t('projects.removeSupplier') }}
+                                </button>
+                            </div>
+                            <button type="button" class="ppms-btn-ghost ppms-mt-sm" @click="addMetaSupplier">
+                                {{ t('projects.addSupplier') }}
+                            </button>
+                        </div>
+                        <div class="ppms-mt">
+                            <span class="ppms-muted" style="font-size: 0.85rem">{{ t('projects.timelineTitle') }}</span>
+                            <div class="ppms-stack ppms-mt-sm">
+                                <label v-for="ph in TIMELINE_PHASES" :key="ph" class="ppms-field">
+                                    <span>{{ t(`projects.phase.${ph}`) }}</span>
+                                    <input v-model="metaForm.timelineDates[ph]" type="date" />
+                                </label>
+                            </div>
+                        </div>
+                        <p v-if="metaErr" class="ppms-error">{{ metaErr }}</p>
+                        <div class="ppms-modal-actions">
+                            <button type="button" class="ppms-btn-ghost" @click="showMetaEdit = false">
+                                {{ t('common.cancel') }}
+                            </button>
+                            <button type="submit" class="ppms-btn-primary">{{ t('common.save') }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </template>
     </div>
 </template>
@@ -200,8 +319,13 @@
 import { computed, reactive, ref, watch } from 'vue';
 import axios from 'axios';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { formatApiUserMessage } from '@/bootstrap';
 import { ppmsConfirm, ppmsToastError, ppmsToastSuccess, ppmsToastWarning } from '@/ppmsUi';
+
+const { t } = useI18n();
+
+const TIMELINE_PHASES = ['planning', 'development', 'uat', 'done', 'maintenance'];
 
 const props = defineProps({
     id: { type: [String, Number], required: true },
@@ -242,6 +366,99 @@ const bulk = reactive({
     assignee_id: null,
     status: '',
 });
+
+const showMetaEdit = ref(false);
+const metaErr = ref('');
+const metaForm = reactive({
+    customer_name: '',
+    customer_email: '',
+    suppliers: [{ name: '' }],
+    timelineDates: {
+        planning: '',
+        development: '',
+        uat: '',
+        done: '',
+        maintenance: '',
+    },
+});
+
+const timelineDisplay = computed(() => {
+    const p = project.value;
+    if (!p) {
+        return [];
+    }
+    const byPhase = {};
+    for (const row of p.process_timeline || []) {
+        if (row.phase) {
+            byPhase[row.phase] = row.completed_at || null;
+        }
+    }
+    return TIMELINE_PHASES.map((phase) => ({
+        phase,
+        completed_at: byPhase[phase] || null,
+        isCurrent: p.phase === phase,
+    }));
+});
+
+function openMetaEdit() {
+    const p = project.value;
+    if (!p) {
+        return;
+    }
+    metaErr.value = '';
+    metaForm.customer_name = p.customer_name || '';
+    metaForm.customer_email = p.customer_email || '';
+    const sup = p.suppliers || [];
+    metaForm.suppliers = sup.length ? sup.map((s) => ({ name: s.name || '' })) : [{ name: '' }];
+    const byPhase = {};
+    for (const row of p.process_timeline || []) {
+        if (row.phase) {
+            byPhase[row.phase] = row.completed_at ? String(row.completed_at).slice(0, 10) : '';
+        }
+    }
+    for (const ph of TIMELINE_PHASES) {
+        metaForm.timelineDates[ph] = byPhase[ph] || '';
+    }
+    showMetaEdit.value = true;
+}
+
+function addMetaSupplier() {
+    metaForm.suppliers.push({ name: '' });
+}
+
+function removeMetaSupplier(i) {
+    if (metaForm.suppliers.length > 1) {
+        metaForm.suppliers.splice(i, 1);
+    }
+}
+
+async function saveMeta() {
+    if (!(await ppmsConfirm(t('projects.confirmSaveMeta')))) {
+        return;
+    }
+    metaErr.value = '';
+    const suppliers = metaForm.suppliers
+        .map((s) => s.name.trim())
+        .filter(Boolean)
+        .map((name) => ({ name }));
+    const process_timeline = TIMELINE_PHASES.filter((ph) => metaForm.timelineDates[ph]).map((phase) => ({
+        phase,
+        completed_at: metaForm.timelineDates[phase],
+    }));
+    try {
+        await axios.patch(`/api/projects/${props.id}`, {
+            customer_name: metaForm.customer_name.trim() || null,
+            customer_email: metaForm.customer_email.trim() || null,
+            suppliers: suppliers.length ? suppliers : null,
+            process_timeline: process_timeline.length ? process_timeline : null,
+        });
+        showMetaEdit.value = false;
+        ppmsToastSuccess(t('projects.saveMetaOk'));
+        await load();
+    } catch (e) {
+        metaErr.value = formatApiUserMessage(e, t('projects.saveMetaErr'));
+    }
+}
 
 const assigneeOptions = computed(() => {
     const m = new Map();
@@ -487,11 +704,11 @@ async function downloadFile(a) {
 }
 
 async function duplicateProject() {
-    if (!(await ppmsConfirm('Nhân bản dự án này? Một dự án mới sẽ được tạo.'))) {
+    if (!(await ppmsConfirm(t('projects.confirmDuplicate')))) {
         return;
     }
     const { data } = await axios.post(`/api/projects/${props.id}/duplicate`, { reset_dates: true });
-    ppmsToastSuccess('Đã nhân bản dự án.');
+    ppmsToastSuccess(t('projects.duplicateOk'));
     router.push({ name: 'project-detail', params: { id: String(data.id) } });
 }
 </script>

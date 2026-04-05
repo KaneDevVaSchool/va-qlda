@@ -50,10 +50,11 @@ class ReportController extends Controller
 
         return response()->streamDownload(function () {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['project_id', 'name', 'type', 'phase', 'status', 'progress', 'owner_id']);
+            fputcsv($out, ['project_id', 'name', 'customer_name', 'type', 'phase', 'status', 'progress', 'owner_id', 'suppliers_count']);
             Project::query()->whereNull('archived_at')->orderBy('id')->chunk(100, function ($rows) use ($out) {
                 foreach ($rows as $p) {
-                    fputcsv($out, [$p->id, $p->name, $p->type, $p->phase, $p->status, $p->progress, $p->owner_id]);
+                    $supCount = is_array($p->suppliers) ? count($p->suppliers) : 0;
+                    fputcsv($out, [$p->id, $p->name, $p->customer_name, $p->type, $p->phase, $p->status, $p->progress, $p->owner_id, $supCount]);
                 }
             });
             fclose($out);

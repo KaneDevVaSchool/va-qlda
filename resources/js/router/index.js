@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { getStoredToken } from '../bootstrap';
+import { i18n } from '../i18n';
 
 const bc = (items) => items;
 
@@ -20,10 +21,10 @@ const routes = [
                 name: 'dashboard',
                 component: () => import('../pages/Dashboard.vue'),
                 meta: {
-                    title: 'Dashboard',
-                    pageTitle: 'Dashboard',
-                    pageDescription: 'Tổng quan dự án, KPI, Innovation funnel và dự án cần chú ý.',
-                    breadcrumb: bc([{ label: 'Trang chủ' }]),
+                    titleKey: 'dashboard.pageTitle',
+                    pageTitleKey: 'dashboard.pageTitle',
+                    pageDescriptionKey: 'dashboard.pageDescription',
+                    breadcrumb: bc([{ labelKey: 'common.home' }]),
                 },
             },
             {
@@ -31,10 +32,13 @@ const routes = [
                 name: 'projects',
                 component: () => import('../pages/projects/ProjectList.vue'),
                 meta: {
-                    title: 'Dự án',
-                    pageTitle: 'Dự án',
-                    pageDescription: 'Danh sách theo loại, phase, owner và tiến độ (BR-PM).',
-                    breadcrumb: bc([{ label: 'Trang chủ', to: '/' }, { label: 'Dự án' }]),
+                    titleKey: 'projects.pageTitle',
+                    pageTitleKey: 'projects.pageTitle',
+                    pageDescriptionKey: 'projects.pageDescription',
+                    breadcrumb: bc([
+                        { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'projects.breadcrumb' },
+                    ]),
                 },
             },
             {
@@ -43,12 +47,12 @@ const routes = [
                 component: () => import('../pages/projects/ProjectDetail.vue'),
                 props: true,
                 meta: {
-                    title: 'Chi tiết dự án',
+                    titleKey: 'projects.detailTitle',
                     hideLayoutTitle: true,
                     breadcrumb: bc([
-                        { label: 'Trang chủ', to: '/' },
-                        { label: 'Dự án', to: '/projects' },
-                        { label: 'Chi tiết' },
+                        { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'projects.breadcrumb', to: '/projects' },
+                        { labelKey: 'projects.breadcrumbDetail' },
                     ]),
                 },
             },
@@ -147,7 +151,8 @@ router.beforeEach((to, from, next) => {
 
 router.afterEach((to) => {
     const base = 'PPMS — VA Schools';
-    document.title = to.meta.title ? `${to.meta.title} | ${base}` : base;
+    const title = to.meta.titleKey ? i18n.global.t(to.meta.titleKey) : to.meta.title;
+    document.title = title ? `${title} | ${base}` : base;
 });
 
 export default router;

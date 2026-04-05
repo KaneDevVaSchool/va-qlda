@@ -107,6 +107,17 @@ class PpmsSeeder extends Seeder
             'deadline' => now()->addDays(40),
             'description' => 'Hệ quản lý dự án & hiệu suất nội bộ: Laravel API, Vue SPA, KPI, Kaizen, 3P. Đội: Kiều/Hoa BA·PM, Khoa TL, Tài/Long fullstack, Thịnh kiến trúc & tự động hoá.',
             'progress' => 0,
+            'customer_name' => 'VA Schools — Ban Giám hiệu',
+            'customer_email' => 'ban.giamhieu@va-schools.vn',
+            'suppliers' => [
+                ['name' => 'Cloud VA (IaaS)'],
+                ['name' => 'Đối tác tích hợp SSO'],
+            ],
+            'process_timeline' => [
+                ['phase' => 'planning', 'completed_at' => now()->subMonths(4)->toDateString()],
+                ['phase' => 'development', 'completed_at' => now()->subMonths(2)->toDateString()],
+                ['phase' => 'uat', 'completed_at' => null],
+            ],
             'stakeholder_emails' => ['ban.giamhieu@va-schools.vn', 'cto@va-schools.vn'],
             'csat_invites_sent' => 0,
         ]);
@@ -263,6 +274,18 @@ class PpmsSeeder extends Seeder
             'deadline' => now()->addMonth(),
             'description' => 'Theo dõi incident, patch bảo mật, SLA phản hồi ticket. Phối hợp Thịnh (automation) và Tài (hotfix API).',
             'progress' => 0,
+            'customer_name' => 'Khối vận hành & giáo vụ',
+            'customer_email' => 'hotro.giaovu@va-schools.vn',
+            'suppliers' => [
+                ['name' => 'NCC SSO (hợp đồng bảo trì)'],
+            ],
+            'process_timeline' => [
+                ['phase' => 'planning', 'completed_at' => now()->subYear()->toDateString()],
+                ['phase' => 'development', 'completed_at' => now()->subMonths(10)->toDateString()],
+                ['phase' => 'uat', 'completed_at' => now()->subMonths(9)->toDateString()],
+                ['phase' => 'done', 'completed_at' => now()->subMonths(8)->toDateString()],
+                ['phase' => 'maintenance', 'completed_at' => now()->subMonths(7)->toDateString()],
+            ],
         ]);
 
         Task::query()->create([
@@ -321,6 +344,13 @@ class PpmsSeeder extends Seeder
             'deadline' => now()->addMonths(4),
             'description' => 'Thử nghiệm pipeline RAG nội bộ, không production. Báo cáo funnel Innovation trong PPMS.',
             'progress' => 0,
+            'customer_name' => 'Khối học thuật (POC nội bộ)',
+            'customer_email' => null,
+            'suppliers' => [],
+            'process_timeline' => [
+                ['phase' => 'planning', 'completed_at' => now()->subMonths(2)->toDateString()],
+                ['phase' => 'development', 'completed_at' => null],
+            ],
         ]);
 
         Task::query()->create([

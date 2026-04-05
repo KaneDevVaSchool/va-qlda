@@ -1333,3 +1333,120 @@ body.ppms-modal-open {
 .pbi-mt {
     margin-top: 0.75rem;
 }
+
+/* —— Project process timeline (phase) —— */
+.ppms-process-timeline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    margin-top: 1rem;
+    padding: 0.5rem 0;
+}
+
+.ppms-process-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    flex: 1 1 8.5rem;
+    min-width: 7rem;
+    position: relative;
+    padding-bottom: 0.35rem;
+}
+
+.ppms-process-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 0.55rem;
+    left: calc(0.55rem + 0.35rem);
+    width: calc(100% - 0.55rem);
+    height: 2px;
+    background: var(--ppms-border);
+    z-index: 0;
+}
+
+.ppms-process-dot {
+    flex-shrink: 0;
+    width: 0.65rem;
+    height: 0.65rem;
+    margin-top: 0.25rem;
+    border-radius: 50%;
+    background: var(--ppms-border);
+    border: 2px solid var(--ppms-surface);
+    box-shadow: 0 0 0 2px var(--ppms-border);
+    position: relative;
+    z-index: 1;
+}
+
+.ppms-process-step.is-done .ppms-process-dot {
+    background: var(--ppms-success);
+    box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.35);
+}
+
+.ppms-process-step.is-current .ppms-process-dot {
+    background: var(--ppms-primary);
+    box-shadow: 0 0 0 2px var(--ppms-primary-muted);
+}
+
+.ppms-process-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+    font-size: 0.85rem;
+}
+
+.ppms-process-label {
+    font-weight: 600;
+    color: var(--ppms-text);
+}
+
+.ppms-process-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    background: var(--ppms-primary-soft);
+    color: var(--ppms-primary);
+    width: fit-content;
+}
+
+.ppms-process-body time {
+    font-variant-numeric: tabular-nums;
+    color: var(--ppms-muted);
+    font-size: 0.8rem;
+}
+
+.ppms-row--spread {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.ppms-row--spread h2 {
+    margin: 0;
+}
+
+.ppms-supplier-list {
+    margin: 0.5rem 0 0;
+    padding-left: 1.15rem;
+    color: var(--ppms-text);
+    font-size: 0.9rem;
+}
+
+.ppms-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.ppms-pagination-actions {
+    display: flex;
+    gap: 0.5rem;
+}

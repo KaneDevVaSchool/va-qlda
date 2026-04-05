@@ -184,8 +184,8 @@
                     <nav class="ppms-breadcrumb" :aria-label="t('common.breadcrumb')">
                         <template v-for="(c, i) in crumbs" :key="i">
                             <span v-if="i > 0" class="ppms-bc-sep" aria-hidden="true">/</span>
-                            <router-link v-if="c.to" :to="c.to">{{ c.label }}</router-link>
-                            <span v-else class="ppms-bc-current">{{ c.label }}</span>
+                            <router-link v-if="c.to" :to="c.to">{{ c.labelKey ? t(c.labelKey) : c.label }}</router-link>
+                            <span v-else class="ppms-bc-current">{{ c.labelKey ? t(c.labelKey) : c.label }}</span>
                         </template>
                     </nav>
                     <template v-if="!route.meta.hideLayoutTitle">
@@ -224,9 +224,13 @@ const unread = ref(0);
 const PPMS_SIDEBAR_COLLAPSED = 'ppms-sidebar-collapsed';
 const sidebarCollapsed = ref(false);
 
-const crumbs = computed(() => route.meta.breadcrumb ?? [{ label: 'Trang chủ' }]);
-const pageTitle = computed(() => route.meta.pageTitle ?? '');
-const pageDescription = computed(() => route.meta.pageDescription ?? '');
+const crumbs = computed(() => route.meta.breadcrumb ?? [{ labelKey: 'common.home' }]);
+const pageTitle = computed(() =>
+    route.meta.pageTitleKey ? t(route.meta.pageTitleKey) : (route.meta.pageTitle ?? ''),
+);
+const pageDescription = computed(() =>
+    route.meta.pageDescriptionKey ? t(route.meta.pageDescriptionKey) : (route.meta.pageDescription ?? ''),
+);
 
 const userInitial = computed(() => {
     const n = user.value?.name?.trim();
