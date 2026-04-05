@@ -732,7 +732,8 @@
         border-right: none;
         border-bottom: 1px solid var(--ppms-border);
         box-shadow: 0 1px 0 rgba(26, 29, 38, 0.04);
-        max-height: min(42vh, 20rem);
+        /* Cố định theo rem — không scale theo chiều cao viewport (tránh 42vh đổi khi xoay máy / resize). */
+        max-height: 20rem;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
     }
@@ -752,11 +753,13 @@
 
 @media (min-width: 1024px) {
     .ppms-app-middle .ppms-sidebar {
-        position: relative;
-        align-self: stretch;
+        /* Không stretch theo chiều cao viewport; dính cạnh trên vùng middle khi trang cuộn; cuộn nội bộ khi dài. */
+        position: sticky;
+        top: 0;
+        align-self: flex-start;
+        max-height: 100%;
         overflow-x: hidden;
         overflow-y: auto;
-        max-height: none;
     }
 }
 
