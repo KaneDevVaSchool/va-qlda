@@ -1,0 +1,110 @@
+{
+    "common": {
+        "language": "Ngôn ngữ",
+        "localeVi": "Tiếng Việt",
+        "localeEn": "English",
+        "skipToContent": "Bỏ qua menu, tới nội dung",
+        "notifications": "Thông báo",
+        "breadcrumb": "Breadcrumb",
+        "mainNav": "Menu chính"
+    },
+    "layout": {
+        "navOverview": "Tổng quan",
+        "navOps": "Vận hành",
+        "navPeople": "Con người và báo cáo",
+        "navDashboard": "Dashboard",
+        "navProjects": "Dự án",
+        "navKpi": "KPI",
+        "navKaizen": "Kaizen",
+        "navInnovation": "Innovation",
+        "navEvaluations": "Đánh giá 3P",
+        "navReports": "Báo cáo",
+        "navNotifications": "Thông báo",
+        "logout": "Đăng xuất",
+        "logoutConfirm": "Đăng xuất khỏi hệ thống?",
+        "logoutTitle": "Đăng xuất",
+        "collapseSidebar": "Thu gọn menu",
+        "expandSidebar": "Mở rộng menu",
+        "role": {
+            "admin": "Quản trị",
+            "pm": "PM",
+            "tl": "Team Lead",
+            "hr": "HR",
+            "developer": "Developer"
+        }
+    },
+    "dashboard": {
+        "reportTitle": "Báo cáo điều hành",
+        "reportSubtitle": "PPMS VA Schools - tổng quan dự án, KPI và đổi mới",
+        "lastRefreshed": "Dữ liệu cập nhật lúc",
+        "loading": "Đang tải dữ liệu…",
+        "loadError": "Không tải được dashboard.",
+        "empty": {
+            "projectTypes": "Chưa có dự án để hiển thị phân bổ loại."
+        },
+        "kpi": {
+            "totalProjects": "Tổng dự án",
+            "attentionProjects": "Cần chú ý",
+            "openTasks": "Task đang mở",
+            "innovationPipeline": "Ống Innovation"
+        },
+        "kpiHint": {
+            "totalProjects": "Tất cả dự án chưa lưu trữ",
+            "attentionProjects": "At risk, delayed, blocked",
+            "openTasks": "Tổng task chưa done theo người",
+            "innovationPipeline": "Submitted + POC + Applied"
+        },
+        "visual": {
+            "projectTypes": "Phân bổ theo loại dự án",
+            "projectTypesSub": "Donut - đếm theo type",
+            "kpiTrend": "Xu hướng KPI (snapshot)",
+            "kpiTrendSub": "Performance % - theo tuần",
+            "kpiTrendEmpty": "Chạy snapshot KPI để có điểm theo tuần.",
+            "performancePct": "Hiệu suất %"
+        },
+        "funnel": {
+            "title": "Innovation funnel (Type 3 / R&D)",
+            "submitted": "Submitted",
+            "poc": "POC",
+            "applied": "Applied"
+        },
+        "matrix": {
+            "byType": "Chi tiết theo loại",
+            "byStatus": "Chi tiết theo trạng thái",
+            "kaizenByStatus": "Kaizen theo trạng thái"
+        },
+        "table": {
+            "attentionTitle": "Dự án cần chú ý",
+            "attentionEmpty": "Không có dự án at risk / delayed / blocked.",
+            "workloadTitle": "Workload (task chưa done)",
+            "workloadEmpty": "Chưa có dữ liệu.",
+            "name": "Tên",
+            "type": "Loại",
+            "status": "Trạng thái",
+            "progress": "Tiến độ %",
+            "pm": "PM",
+            "member": "Thành viên",
+            "openTasks": "Số task mở"
+        },
+        "projectType": {
+            "maintenance": "Vận hành (Type 1)",
+            "delivery": "Delivery (Type 2)",
+            "rnd": "R&D (Type 3)"
+        },
+        "projectStatus": {
+            "on_track": "On track",
+            "at_risk": "At risk",
+            "delayed": "Delayed",
+            "blocked": "Blocked"
+        },
+        "kaizenStatus": {
+            "draft": "Nháp",
+            "submitted": "Đã gửi",
+            "approved": "Đã duyệt",
+            "poc": "POC",
+            "applied": "Áp dụng",
+            "verified": "Đã xác minh",
+            "implemented": "Đã triển khai"
+        }
+    }
+}

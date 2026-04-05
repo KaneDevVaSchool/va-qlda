@@ -1,0 +1,128 @@
+<?php
+
+namespace App\Models;
+
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+
+class User extends Authenticatable
+{
+    use HasApiTokens, HasFactory, Notifiable;
+
+    /**
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'role',
+    ];
+
+    /**
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+        'password_history',
+    ];
+
+    /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'password_changed_at' => 'datetime',
+        'locked_until' => 'datetime',
+        'last_login_at' => 'datetime',
+        'terms_accepted_at' => 'datetime',
+        'must_change_password' => 'boolean',
+        'security_banner_acknowledged' => 'boolean',
+        'password_history' => 'array',
+        'password_expiry_days' => 'integer',
+        'lockout_threshold' => 'integer',
+        'failed_login_count' => 'integer',
+        'session_timeout_minutes' => 'integer',
+    ];
+
+    public function ownedProjects(): HasMany
+    {
+        return $this->hasMany(Project::class, 'owner_id');
+    }
+
+    public function assignedTasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'assignee_id');
+    }
+
+    public function kaizens(): HasMany
+    {
+        return $this->hasMany(Kaizen::class, 'submitter_id');
+    }
+
+    public function evaluations(): HasMany
+    {
+        return $this->hasMany(Evaluation::class, 'person_id');
+    }
+
+    public function kpiSnapshots(): MorphMany
+    {
+        return $this->morphMany(KpiSnapshot::class, 'entity');
+    }
+
+    public function loginHistories(): HasMany
+    {
+        return $this->hasMany(LoginHistory::class);
+    }
+
+    public function activeSessions(): HasMany
+    {
+        return $this->hasMany(ActiveSession::class);
+    }
+
+    public function otpCodes(): HasMany
+    {
+        return $this->hasMany(OtpCode::class);
+    }
+
+    public function isLocked(): bool
+    {
+        if ($this->locked_until === null) {
+            return false;
+        }
+
+        return $this->locked_until->isFuture();
+    }
+
+    public function isPasswordExpired(): bool
+    {
+        $days = (int) ($this->password_expiry_days ?? 90);
+        if ($days <= 0) {
+            return false;
+        }
+
+        $anchor = $this->password_changed_at ?? $this->created_at ?? now();
+
+        return $anchor->copy()->addDays($days)->isPast();
+    }
+
+    /**
+     * MFA intentionally not implemented (product scope).
+     */
+    public function requiresMfa(): bool
+    {
+        return false;
+    }
+
+    public function hasAcknowledgedBanner(): bool
+    {
+        return (bool) $this->security_banner_acknowledged;
+    }
+}

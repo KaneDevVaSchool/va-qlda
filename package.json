@@ -1,0 +1,31 @@
+{
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "lint": "eslint resources/js",
+        "lint:fix": "eslint resources/js --fix",
+        "format": "prettier --write \"resources/js/**/*.{js,vue}\""
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "@vitejs/plugin-vue": "^6.0.5",
+        "axios": "^1.6.4",
+        "chart.js": "^4.5.1",
+        "eslint": "^10.2.0",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-vue": "^10.8.0",
+        "globals": "^17.4.0",
+        "laravel-vite-plugin": "^1.0.0",
+        "prettier": "^3.8.1",
+        "vite": "^5.0.0",
+        "vue": "^3.5.32",
+        "vue-eslint-parser": "^10.4.0",
+        "vue-router": "^4.6.4"
+    },
+    "dependencies": {
+        "vue-i18n": "^11.3.0"
+    }
+}
