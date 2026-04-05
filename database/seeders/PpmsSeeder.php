@@ -561,7 +561,7 @@ class PpmsSeeder extends Seeder
         }
 
         // —— Thông báo in-app ——
-        $mk = fn (string $title, string $body) => ['title' => $title, 'body' => $body];
+        $mk = fn(string $title, string $body) => ['title' => $title, 'body' => $body];
 
         PpmsNotification::query()->create([
             'type' => 'project_at_risk',

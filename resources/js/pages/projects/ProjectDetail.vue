@@ -72,7 +72,11 @@
                 <form class="ppms-stack" @submit.prevent="addTask">
                     <div class="ppms-task-form">
                         <input v-model="taskForm.name" placeholder="Tên task" required />
-                        <input v-model.number="taskForm.parent_id" type="number" placeholder="Parent task id (tối đa 1 cấp)" />
+                        <input
+                            v-model.number="taskForm.parent_id"
+                            type="number"
+                            placeholder="Parent task id (tối đa 1 cấp)"
+                        />
                         <input v-model.number="taskForm.estimate_hours" type="number" min="0" step="0.5" required />
                         <input v-model.number="taskForm.complexity" type="number" min="1" max="5" required />
                         <input v-model.number="taskForm.impact" type="number" min="1" max="5" required />
@@ -93,7 +97,9 @@
                         <option value="done">done</option>
                         <option value="blocked">blocked</option>
                     </select>
-                    <button type="button" class="ppms-btn-primary" :disabled="!selectedIds.length" @click="runBulk">Áp dụng</button>
+                    <button type="button" class="ppms-btn-primary" :disabled="!selectedIds.length" @click="runBulk">
+                        Áp dụng
+                    </button>
                 </div>
 
                 <div class="ppms-table-scroll ppms-mt">
@@ -114,10 +120,14 @@
                             <tr v-for="t in project.tasks" :key="t.id">
                                 <td><input v-model="selectedIds" type="checkbox" :value="t.id" /></td>
                                 <td>
-                                    <button type="button" class="ppms-linklike" @click="toggleFocus(t)">{{ t.name }}</button>
+                                    <button type="button" class="ppms-linklike" @click="toggleFocus(t)">
+                                        {{ t.name }}
+                                    </button>
                                 </td>
                                 <td class="ppms-muted">
-                                    <span v-if="t.predecessors?.length">{{ t.predecessors.map((p) => p.id).join(',') }}</span>
+                                    <span v-if="t.predecessors?.length">{{
+                                        t.predecessors.map((p) => p.id).join(',')
+                                    }}</span>
                                     <span v-else>—</span>
                                 </td>
                                 <td>{{ t.weight }}</td>
@@ -132,7 +142,9 @@
                                 </td>
                                 <td>{{ t.assignee?.name || '—' }}</td>
                                 <td>
-                                    <button type="button" class="ppms-btn-ghost ppms-btn-sm" @click="removeTask(t)">Xóa</button>
+                                    <button type="button" class="ppms-btn-ghost ppms-btn-sm" @click="removeTask(t)">
+                                        Xóa
+                                    </button>
                                 </td>
                             </tr>
                         </tbody>
@@ -147,7 +159,8 @@
                         <h3>Comments</h3>
                         <ul class="ppms-comments">
                             <li v-for="c in comments" :key="c.id">
-                                <strong>{{ c.user?.name }}</strong>: {{ c.body }}
+                                <strong>{{ c.user?.name }}</strong
+                                >: {{ c.body }}
                             </li>
                         </ul>
                         <form @submit.prevent="addComment">
@@ -158,7 +171,12 @@
                     <div>
                         <h3>Dependency (Finish-to-Start)</h3>
                         <form class="ppms-task-form" @submit.prevent="addDep">
-                            <input v-model.number="depPredId" type="number" placeholder="Predecessor task id" required />
+                            <input
+                                v-model.number="depPredId"
+                                type="number"
+                                placeholder="Predecessor task id"
+                                required
+                            />
                             <button type="submit" class="ppms-btn-primary">Thêm</button>
                         </form>
                         <p v-if="depErr" class="ppms-error">{{ depErr }}</p>
@@ -166,7 +184,9 @@
                         <input type="file" @change="onFile" />
                         <ul class="ppms-filelist">
                             <li v-for="a in attachments" :key="a.id">
-                                <button type="button" class="ppms-linklike" @click="downloadFile(a)">{{ a.original_name }}</button>
+                                <button type="button" class="ppms-linklike" @click="downloadFile(a)">
+                                    {{ a.original_name }}
+                                </button>
                             </li>
                         </ul>
                     </div>

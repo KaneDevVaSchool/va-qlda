@@ -18,12 +18,7 @@
             </header>
 
             <section class="pbi-kpi-row" :aria-label="t('dashboard.reportTitle')">
-                <article
-                    v-for="card in kpiCards"
-                    :key="card.id"
-                    class="pbi-kpi-card"
-                    :title="card.hint"
-                >
+                <article v-for="card in kpiCards" :key="card.id" class="pbi-kpi-card" :title="card.hint">
                     <span class="pbi-kpi-label">{{ card.label }}</span>
                     <span class="pbi-kpi-value">{{ formatInt(card.value) }}</span>
                     <span class="pbi-kpi-hint">{{ card.hint }}</span>
@@ -74,15 +69,21 @@
                 <div class="pbi-funnel-metrics">
                     <div class="pbi-funnel-metric">
                         <span class="pbi-funnel-metric-label">{{ t('dashboard.funnel.submitted') }}</span>
-                        <span class="pbi-funnel-metric-value">{{ formatInt(summary.innovation_funnel?.submitted ?? 0) }}</span>
+                        <span class="pbi-funnel-metric-value">{{
+                            formatInt(summary.innovation_funnel?.submitted ?? 0)
+                        }}</span>
                     </div>
                     <div class="pbi-funnel-metric">
                         <span class="pbi-funnel-metric-label">{{ t('dashboard.funnel.poc') }}</span>
-                        <span class="pbi-funnel-metric-value">{{ formatInt(summary.innovation_funnel?.poc ?? 0) }}</span>
+                        <span class="pbi-funnel-metric-value">{{
+                            formatInt(summary.innovation_funnel?.poc ?? 0)
+                        }}</span>
                     </div>
                     <div class="pbi-funnel-metric">
                         <span class="pbi-funnel-metric-label">{{ t('dashboard.funnel.applied') }}</span>
-                        <span class="pbi-funnel-metric-value">{{ formatInt(summary.innovation_funnel?.applied ?? 0) }}</span>
+                        <span class="pbi-funnel-metric-value">{{
+                            formatInt(summary.innovation_funnel?.applied ?? 0)
+                        }}</span>
                     </div>
                 </div>
             </article>
@@ -133,7 +134,9 @@
                             </tbody>
                         </table>
                     </div>
-                    <p v-else class="pbi-visual-empty pbi-visual-empty--pad">{{ t('dashboard.table.attentionEmpty') }}</p>
+                    <p v-else class="pbi-visual-empty pbi-visual-empty--pad">
+                        {{ t('dashboard.table.attentionEmpty') }}
+                    </p>
                 </div>
             </article>
 
@@ -161,7 +164,9 @@
                             </tbody>
                         </table>
                     </div>
-                    <p v-else class="pbi-visual-empty pbi-visual-empty--pad">{{ t('dashboard.table.workloadEmpty') }}</p>
+                    <p v-else class="pbi-visual-empty pbi-visual-empty--pad">
+                        {{ t('dashboard.table.workloadEmpty') }}
+                    </p>
                 </div>
             </article>
         </div>

@@ -34,10 +34,7 @@ const routes = [
                     title: 'Dự án',
                     pageTitle: 'Dự án',
                     pageDescription: 'Danh sách theo loại, phase, owner và tiến độ (BR-PM).',
-                    breadcrumb: bc([
-                        { label: 'Trang chủ', to: '/' },
-                        { label: 'Dự án' },
-                    ]),
+                    breadcrumb: bc([{ label: 'Trang chủ', to: '/' }, { label: 'Dự án' }]),
                 },
             },
             {
@@ -63,10 +60,7 @@ const routes = [
                     title: 'KPI',
                     pageTitle: 'KPI Engine',
                     pageDescription: 'Performance, efficiency, SLA, benchmark và snapshot tuần.',
-                    breadcrumb: bc([
-                        { label: 'Trang chủ', to: '/' },
-                        { label: 'KPI' },
-                    ]),
+                    breadcrumb: bc([{ label: 'Trang chủ', to: '/' }, { label: 'KPI' }]),
                 },
             },
             {
@@ -77,10 +71,7 @@ const routes = [
                     title: 'Kaizen',
                     pageTitle: 'Kaizen',
                     pageDescription: 'Cải tiến liên tục, leaderboard và nhắc tuần.',
-                    breadcrumb: bc([
-                        { label: 'Trang chủ', to: '/' },
-                        { label: 'Kaizen' },
-                    ]),
+                    breadcrumb: bc([{ label: 'Trang chủ', to: '/' }, { label: 'Kaizen' }]),
                 },
             },
             {
@@ -91,10 +82,7 @@ const routes = [
                     title: 'Innovation',
                     pageTitle: 'Innovation (R&D)',
                     pageDescription: 'Ý tưởng Type 3 — funnel Submitted → POC → Applied.',
-                    breadcrumb: bc([
-                        { label: 'Trang chủ', to: '/' },
-                        { label: 'Innovation' },
-                    ]),
+                    breadcrumb: bc([{ label: 'Trang chủ', to: '/' }, { label: 'Innovation' }]),
                 },
             },
             {
@@ -105,10 +93,7 @@ const routes = [
                     title: 'Đánh giá 3P',
                     pageTitle: 'Đánh giá 3P',
                     pageDescription: 'P1 / P2 / P3, peer review và xuất PDF.',
-                    breadcrumb: bc([
-                        { label: 'Trang chủ', to: '/' },
-                        { label: 'Đánh giá 3P' },
-                    ]),
+                    breadcrumb: bc([{ label: 'Trang chủ', to: '/' }, { label: 'Đánh giá 3P' }]),
                 },
             },
             {
@@ -119,10 +104,7 @@ const routes = [
                     title: 'Báo cáo',
                     pageTitle: 'Báo cáo & export',
                     pageDescription: 'Weekly PDF, CSV dự án và tổng hợp Kaizen impact.',
-                    breadcrumb: bc([
-                        { label: 'Trang chủ', to: '/' },
-                        { label: 'Báo cáo' },
-                    ]),
+                    breadcrumb: bc([{ label: 'Trang chủ', to: '/' }, { label: 'Báo cáo' }]),
                 },
             },
             {
@@ -133,10 +115,7 @@ const routes = [
                     title: 'Thông báo',
                     pageTitle: 'Thông báo',
                     pageDescription: 'Thông báo trong ứng dụng theo BR-NT.',
-                    breadcrumb: bc([
-                        { label: 'Trang chủ', to: '/' },
-                        { label: 'Thông báo' },
-                    ]),
+                    breadcrumb: bc([{ label: 'Trang chủ', to: '/' }, { label: 'Thông báo' }]),
                 },
             },
         ],

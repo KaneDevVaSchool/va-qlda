@@ -15,39 +15,25 @@
                         <span class="ppms-site-footer-tagline">Quản lý dự án &amp; hiệu suất</span>
                     </div>
                 </div>
-                <nav
-                    v-if="showNav"
-                    class="ppms-site-footer-nav"
-                    aria-label="Liên kết nhanh"
-                >
+                <nav v-if="showNav" class="ppms-site-footer-nav" aria-label="Liên kết nhanh">
                     <router-link to="/">Dashboard</router-link>
                     <router-link to="/projects">Dự án</router-link>
                     <router-link to="/kpi">KPI</router-link>
                     <router-link to="/reports">Báo cáo</router-link>
                     <router-link to="/notifications">Thông báo</router-link>
-                    <a
-                        href="https://www.w3.org/WAI/WCAG21/quickref/"
-                        rel="noopener noreferrer"
-                        target="_blank"
-                    >WCAG 2.1</a>
+                    <a href="https://www.w3.org/WAI/WCAG21/quickref/" rel="noopener noreferrer" target="_blank"
+                        >WCAG 2.1</a
+                    >
                 </nav>
-                <nav
-                    v-else
-                    class="ppms-site-footer-nav ppms-site-footer-nav--compact"
-                    aria-label="Tài nguyên"
-                >
-                    <a
-                        href="https://www.w3.org/WAI/WCAG21/quickref/"
-                        rel="noopener noreferrer"
-                        target="_blank"
-                    >Hướng tới WCAG 2.1</a>
+                <nav v-else class="ppms-site-footer-nav ppms-site-footer-nav--compact" aria-label="Tài nguyên">
+                    <a href="https://www.w3.org/WAI/WCAG21/quickref/" rel="noopener noreferrer" target="_blank"
+                        >Hướng tới WCAG 2.1</a
+                    >
                 </nav>
             </div>
             <div class="ppms-site-footer-rule" aria-hidden="true" />
             <div class="ppms-site-footer-bottom">
-                <p class="ppms-site-footer-copy">
-                    © {{ year }} Vietnam America Schools. Bảo lưu mọi quyền.
-                </p>
+                <p class="ppms-site-footer-copy">© {{ year }} Vietnam America Schools. Bảo lưu mọi quyền.</p>
                 <p class="ppms-site-footer-note">Phiên bản vận hành &amp; kiểm thử nội bộ.</p>
             </div>
         </div>

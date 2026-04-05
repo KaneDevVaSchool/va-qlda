@@ -1,11 +1,6 @@
 <template>
     <Teleport to="body">
-        <div
-            v-if="confirmDialog.open"
-            class="ppms-modal-backdrop"
-            role="presentation"
-            @click.self="onCancel"
-        >
+        <div v-if="confirmDialog.open" class="ppms-modal-backdrop" role="presentation" @click.self="onCancel">
             <div
                 role="dialog"
                 aria-modal="true"

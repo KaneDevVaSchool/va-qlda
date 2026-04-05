@@ -22,7 +22,14 @@
 
                         <div v-if="error" class="login-alert" role="alert">
                             <span class="login-alert-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="20"
+                                    height="20"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
                                     <circle cx="12" cy="12" r="10" />
                                     <path d="M12 8v4M12 16h.01" stroke-linecap="round" />
                                 </svg>
@@ -94,7 +101,12 @@
                                         :disabled="loading"
                                         @click="passwordVisible = !passwordVisible"
                                     >
-                                        <svg v-if="!passwordVisible" class="login-eye-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                        <svg
+                                            v-if="!passwordVisible"
+                                            class="login-eye-svg"
+                                            viewBox="0 0 24 24"
+                                            aria-hidden="true"
+                                        >
                                             <path
                                                 fill="currentColor"
                                                 d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0-7C7 9 2.73 12.11 1 16.5 2.73 20.89 7 24 12 24s9.27-3.11 11-7.5C21.27 12.11 17 9 12 9zm0 13a9.77 9.77 0 0 1-8.82-5.5C4.15 10.36 7.92 7 12 7s7.85 3.36 8.82 7.5A9.77 9.77 0 0 1 12 22z"
