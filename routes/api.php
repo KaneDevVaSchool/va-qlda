@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\KaizenController;
 use App\Http\Controllers\Api\KpiController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\ProjectDocumentController;
+use App\Http\Controllers\Api\ProjectImportController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\TaskAttachmentController;
 use App\Http\Controllers\Api\TaskBulkController;
@@ -17,11 +19,17 @@ use App\Http\Controllers\Api\TaskCommentController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TaskDependencyController;
 use App\Http\Controllers\Api\UserLookupController;
+use App\Http\Controllers\Auth\GoogleOAuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
+Route::post('/login/mfa', [AuthController::class, 'loginMfa'])->middleware('throttle:login');
+
+Route::get('/auth/google/config', [GoogleOAuthController::class, 'config']);
+Route::get('/auth/google/redirect', [GoogleOAuthController::class, 'redirectUrl'])->middleware('throttle:google_oauth');
+Route::post('/auth/google/exchange', [GoogleOAuthController::class, 'exchange'])->middleware('throttle:google_oauth');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
@@ -43,10 +51,28 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/reports/weekly-status.pdf', [ReportController::class, 'weeklyStatusPdf']);
     Route::get('/reports/export/projects.csv', [ReportController::class, 'exportCsv']);
+    Route::get('/reports/export/projects-filtered.csv', [ReportController::class, 'exportProjectsFilteredCsv']);
+    Route::get('/reports/export/projects-filtered.json', [ReportController::class, 'exportProjectsFilteredJson']);
+    Route::get('/reports/export/projects-filtered.pdf', [ReportController::class, 'exportProjectsFilteredPdf']);
+    Route::get('/reports/import/projects-template.csv', [ProjectImportController::class, 'templateCsv']);
+    Route::get('/reports/import/projects-template.json', [ProjectImportController::class, 'templateJson']);
     Route::get('/reports/kaizen-impact', [ReportController::class, 'kaizenImpactSummary']);
 
+    Route::post('projects/import/preview', [ProjectImportController::class, 'preview'])->middleware('throttle:30,1');
+    Route::post('projects/import/commit', [ProjectImportController::class, 'commit'])->middleware('throttle:20,1');
+    Route::post('projects/bulk', [ProjectController::class, 'bulk']);
+    Route::post('projects/bulk-destroy', [ProjectController::class, 'bulkDestroy']);
+    Route::get('projects/tab-counts', [ProjectController::class, 'tabCounts']);
+    Route::get('projects/label-suggestions', [ProjectController::class, 'labelSuggestions']);
     Route::apiResource('projects', ProjectController::class);
     Route::get('projects/{project}/gantt', [ProjectController::class, 'gantt']);
+    Route::get('projects/{project}/attachments', [ProjectController::class, 'attachments']);
+    Route::get('projects/{project}/documents', [ProjectDocumentController::class, 'index']);
+    Route::post('projects/{project}/documents', [ProjectDocumentController::class, 'store']);
+    Route::post('projects/{project}/documents/upload', [ProjectDocumentController::class, 'upload']);
+    Route::get('project-documents/{document}/download', [ProjectDocumentController::class, 'download'])->whereNumber('document');
+    Route::patch('project-documents/{document}', [ProjectDocumentController::class, 'update'])->whereNumber('document');
+    Route::delete('project-documents/{document}', [ProjectDocumentController::class, 'destroy'])->whereNumber('document');
     Route::patch('projects/{project}/archive', [ProjectController::class, 'archive']);
     Route::post('projects/{project}/duplicate', [ProjectController::class, 'duplicate']);
 

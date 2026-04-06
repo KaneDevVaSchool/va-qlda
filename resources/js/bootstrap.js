@@ -15,16 +15,42 @@ window.axios.defaults.timeout = 60000;
 const TOKEN_KEY = 'ppms_token';
 
 export function getStoredToken() {
-    return localStorage.getItem(TOKEN_KEY);
+    try {
+        return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
+    } catch {
+        return localStorage.getItem(TOKEN_KEY);
+    }
 }
 
-export function setAuthToken(token) {
-    if (token) {
-        localStorage.setItem(TOKEN_KEY, token);
-        window.axios.defaults.headers.common.Authorization = `Bearer ${token}`;
-    } else {
-        localStorage.removeItem(TOKEN_KEY);
-        delete window.axios.defaults.headers.common.Authorization;
+/**
+ * @param {string|null} token
+ * @param {{ remember?: boolean }} [options] remember=false → chỉ sessionStorage (đóng tab coi như hết phiên).
+ */
+export function setAuthToken(token, options = {}) {
+    const remember = options.remember !== false;
+    try {
+        if (token) {
+            if (remember) {
+                localStorage.setItem(TOKEN_KEY, token);
+                sessionStorage.removeItem(TOKEN_KEY);
+            } else {
+                sessionStorage.setItem(TOKEN_KEY, token);
+                localStorage.removeItem(TOKEN_KEY);
+            }
+            window.axios.defaults.headers.common.Authorization = `Bearer ${token}`;
+        } else {
+            localStorage.removeItem(TOKEN_KEY);
+            sessionStorage.removeItem(TOKEN_KEY);
+            delete window.axios.defaults.headers.common.Authorization;
+        }
+    } catch {
+        if (token) {
+            localStorage.setItem(TOKEN_KEY, token);
+            window.axios.defaults.headers.common.Authorization = `Bearer ${token}`;
+        } else {
+            localStorage.removeItem(TOKEN_KEY);
+            delete window.axios.defaults.headers.common.Authorization;
+        }
     }
 }
 

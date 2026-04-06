@@ -1,5 +1,37 @@
 @import './ppms-va-theme.css';
 
+/*
+ * Tỷ lệ giao diện ~80% (tương đương zoom trình duyệt): chữ, rem, ảnh/icon, sidebar.
+ * - Trình hỗ trợ `zoom`: dùng zoom (co cả đơn vị px).
+ * - Không hỗ trợ: giảm cỡ gốc + sidebar / vùng chạm theo rem để khớp mật độ.
+ *
+ * Lưu ý: `zoom` trên root không làm `vh`/`dvh` co theo — 100vh vẫn = viewport thật nên
+ * nội dung nhìn chỉ ~80% chiều cao, footer “cách đáy” một dải trống. Biến
+ * `--ppms-layout-zoom` + min-height calc(100dvh / zoom) bù lại.
+ */
+html {
+    font-size: 80%;
+    --ppms-layout-zoom: 1;
+    min-height: calc(100vh / var(--ppms-layout-zoom));
+    min-height: calc(100dvh / var(--ppms-layout-zoom));
+}
+
+@supports (zoom: 0.8) {
+    html {
+        font-size: 100%;
+        zoom: 0.8;
+        --ppms-layout-zoom: 0.8;
+    }
+}
+
+@media print {
+    html {
+        zoom: 1 !important;
+        font-size: 100% !important;
+        --ppms-layout-zoom: 1 !important;
+    }
+}
+
 * {
     box-sizing: border-box;
 }
@@ -9,10 +41,43 @@ body {
     font-family: var(--ppms-font);
     background: var(--ppms-bg-subtle);
     color: var(--ppms-text);
-    min-height: 100vh;
-    min-height: 100dvh;
+    min-height: calc(100vh / var(--ppms-layout-zoom));
+    min-height: calc(100dvh / var(--ppms-layout-zoom));
+    display: flex;
+    flex-direction: column;
     -webkit-font-smoothing: antialiased;
     line-height: 1.5;
+}
+
+/* Vue mount: luôn kéo cao tới đáy viewport để footer (.va-site-footer) nằm sát đáy, không hở nền */
+#app {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh / var(--ppms-layout-zoom));
+    min-height: calc(100dvh / var(--ppms-layout-zoom));
+    width: 100%;
+}
+
+/* Con trực tiếp của #app: kéo cao viewport. Auth: header + nội dung + footer. */
+#app > .ppms-app,
+#app > .ppms-auth-page {
+    flex: 1 1 auto;
+    min-height: calc(100vh / var(--ppms-layout-zoom));
+    min-height: calc(100dvh / var(--ppms-layout-zoom));
+    width: 100%;
+}
+
+#app > .ppms-app {
+    display: flex;
+    flex-direction: column;
+}
+
+#app > .ppms-auth-page {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: stretch;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -164,21 +229,20 @@ a:hover {
 
 .ppms-page {
     width: 100%;
-    max-width: min(100%, 1320px);
     margin: 0 auto;
 }
 
 .ppms-card {
     background: var(--ppms-surface-elevated);
     border: 1px solid var(--ppms-border);
-    border-radius: var(--ppms-radius);
+    border-radius: var(--ppms-radius-sm);
     padding: 1.25rem 1.5rem;
     box-shadow: var(--ppms-shadow);
 }
 
 @media (hover: hover) and (pointer: fine) {
     .ppms-card:hover {
-        border-color: #354560;
+        border-color: rgba(17, 141, 255, 0.35);
     }
 }
 
@@ -240,7 +304,8 @@ a:hover {
 }
 
 .ppms-btn-primary,
-.ppms-btn-ghost {
+.ppms-btn-ghost,
+.ppms-btn-danger-outline {
     font: inherit;
     cursor: pointer;
     border-radius: var(--ppms-radius-sm);
@@ -270,6 +335,22 @@ a:hover {
     color: var(--ppms-text);
 }
 
+.ppms-btn-danger-outline {
+    background: var(--ppms-surface);
+    border-color: var(--ppms-danger);
+    color: var(--ppms-danger);
+    font-weight: 600;
+}
+
+.ppms-btn-danger-outline:hover:not(:disabled) {
+    background: rgba(220, 38, 38, 0.08);
+}
+
+.ppms-btn-danger-outline:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
 .ppms-btn-sm {
     padding: 0.35rem 0.65rem;
     font-size: 0.8rem;
@@ -277,13 +358,26 @@ a:hover {
 }
 
 .ppms-auth-page {
-    min-height: 100vh;
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    background:
-        linear-gradient(165deg, rgba(154, 0, 54, 0.07) 0%, transparent 42%),
-        var(--ppms-bg-subtle);
+    position: relative;
+    isolation: isolate;
+    min-height: calc(100vh / var(--ppms-layout-zoom));
+    min-height: calc(100dvh / var(--ppms-layout-zoom));
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: stretch;
+    background-color: #a50021;
+    background-image: linear-gradient(180deg, #b80028 0%, #a50021 38%, #8f001c 100%);
+}
+
+.ppms-auth-page > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* .ppms-auth nằm trong .login-content, không phải con trực tiếp — cần descendant để bỏ nền xám */
+.ppms-auth-page .ppms-auth {
+    background: transparent !important;
 }
 
 .ppms-auth {
@@ -473,6 +567,72 @@ a:hover {
     justify-content: flex-end;
     gap: 0.5rem;
     margin-top: 1rem;
+}
+
+.ppms-modal--import {
+    max-width: min(100%, 42rem);
+}
+
+.ppms-import-hint {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.ppms-import-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ppms-import-file-label {
+    cursor: pointer;
+    margin: 0;
+}
+
+.ppms-import-summary {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.ppms-import-preview-wrap {
+    max-height: min(50vh, 22rem);
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.ppms-table--compact th,
+.ppms-table--compact td {
+    padding: 0.35rem 0.45rem;
+    font-size: 0.78rem;
+}
+
+.ppms-import-badge {
+    display: inline-block;
+    padding: 0.12rem 0.4rem;
+    border-radius: 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ppms-import-badge--ok {
+    background: rgba(13, 148, 136, 0.12);
+    color: #0f766e;
+}
+
+.ppms-import-badge--err {
+    background: rgba(220, 38, 38, 0.1);
+    color: var(--ppms-danger);
+}
+
+.ppms-import-err-cell {
+    color: var(--ppms-danger);
+    max-width: 14rem;
+    word-break: break-word;
 }
 
 .ppms-stack {

@@ -11,6 +11,8 @@ class OtpCode extends Model
 
     public const PURPOSE_EMAIL_VERIFICATION = 'email_verification';
 
+    public const PURPOSE_LOGIN_MFA = 'login_mfa';
+
     protected $fillable = [
         'user_id',
         'email',

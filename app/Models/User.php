@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'google_id',
     ];
 
     /**
@@ -114,11 +115,17 @@ class User extends Authenticatable
     }
 
     /**
-     * MFA intentionally not implemented (product scope).
+     * Second step (email OTP) after password when PPMS_LOGIN_MFA=true and role is listed.
      */
     public function requiresMfa(): bool
     {
-        return false;
+        if (! config('ppms.login_mfa_enabled', false)) {
+            return false;
+        }
+
+        $roles = config('ppms.login_mfa_roles', []);
+
+        return in_array($this->role, $roles, true);
     }
 
     public function hasAcknowledgedBanner(): bool

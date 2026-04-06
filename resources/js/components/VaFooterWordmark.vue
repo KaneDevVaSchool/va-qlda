@@ -1,5 +1,5 @@
 <template>
-    <span class="ppms-brand-mark ppms-brand-mark--footer">
+    <span class="ppms-brand-mark" :class="markClass">
         <img
             :src="src"
             :alt="alt"
@@ -14,17 +14,27 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const PRIMARY_SRC = '/images/logo/logo-footer.png';
 const FALLBACK_SRC = '/images/default/logo-default.png';
 
-defineProps({
+const props = defineProps({
     alt: {
         type: String,
         default: 'Vietnam America Schools',
     },
+    /** header: nhỏ gọn cho thanh đỉnh; footer: chip chuẩn */
+    variant: {
+        type: String,
+        default: 'footer',
+        validator: (v) => ['footer', 'header'].includes(v),
+    },
 });
+
+const markClass = computed(() =>
+    props.variant === 'header' ? 'ppms-brand-mark--header' : 'ppms-brand-mark--footer',
+);
 
 const src = ref(PRIMARY_SRC);
 

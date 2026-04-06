@@ -12,10 +12,11 @@ class UserLookupController extends Controller
     {
         $q = User::query()->select('id', 'name', 'email', 'role')->orderBy('name');
 
-        if ($search = $request->query('q')) {
-            $q->where(function ($qq) use ($search) {
-                $qq->where('name', 'like', '%'.$search.'%')
-                    ->orWhere('email', 'like', '%'.$search.'%');
+        if ($search = trim((string) $request->query('q', ''))) {
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
+            $like = '%'.$escaped.'%';
+            $q->where(function ($qq) use ($like) {
+                $qq->where('name', 'like', $like)->orWhere('email', 'like', $like);
             });
         }
 

@@ -34,7 +34,10 @@ class RouteServiceProvider extends ServiceProvider
             }
             $email = strtolower((string) $request->input('email', ''));
 
-            return Limit::perMinute(10)->by(sha1($email.'|'.$request->ip()));
+            return [
+                Limit::perMinute(10)->by(sha1($email.'|'.$request->ip())),
+                Limit::perMinute(60)->by('ip:'.$request->ip()),
+            ];
         });
 
         RateLimiter::for('register', function (Request $request) {
@@ -43,6 +46,15 @@ class RouteServiceProvider extends ServiceProvider
             }
 
             return Limit::perMinute(5)->by($request->ip());
+        });
+
+        /** OAuth Google: tách khỏi throttle:login (login dùng email+IP; request redirect/exchange không có email → dễ chạm giới hạn 10/phút). */
+        RateLimiter::for('google_oauth', function (Request $request) {
+            if (app()->environment('testing')) {
+                return Limit::perMinute(1000)->by('test');
+            }
+
+            return Limit::perMinute(40)->by('google_oauth:'.$request->ip());
         });
 
         $this->routes(function () {

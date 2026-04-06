@@ -57,6 +57,11 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    /*
+    | SPA base URL (defaults to APP_URL). Set when the API is on a different host than the Vue app.
+    */
+    'frontend_url' => rtrim((string) env('FRONTEND_URL', env('APP_URL', 'http://localhost')), '/'),
+
     'asset_url' => env('ASSET_URL'),
 
     /*

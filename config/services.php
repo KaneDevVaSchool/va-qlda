@@ -31,4 +31,15 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        // Phải trùng ký tự với "Authorized redirect URIs" trong Google Cloud Console (thường: https://your-domain/auth/google/callback).
+        'redirect' => rtrim(
+            (string) (env('GOOGLE_REDIRECT_URI') ?: rtrim((string) env('APP_URL', 'http://localhost'), '/').'/auth/google/callback'),
+            '/'
+        ),
+        'allow_register' => (bool) env('GOOGLE_LOGIN_ALLOW_REGISTER', false),
+    ],
+
 ];

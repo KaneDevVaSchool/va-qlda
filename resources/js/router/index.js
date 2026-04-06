@@ -34,7 +34,6 @@ const routes = [
                 meta: {
                     titleKey: 'projects.pageTitle',
                     pageTitleKey: 'projects.pageTitle',
-                    pageDescriptionKey: 'projects.pageDescription',
                     breadcrumb: bc([
                         { labelKey: 'common.home', to: '/' },
                         { labelKey: 'projects.breadcrumb' },

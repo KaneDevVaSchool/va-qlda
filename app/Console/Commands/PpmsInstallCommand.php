@@ -5,11 +5,11 @@ namespace App\Console\Commands;
 use Database\Seeders\PpmsSeeder;
 use Illuminate\Console\Command;
 
-class PpmsRefreshDemoCommand extends Command
+class PpmsInstallCommand extends Command
 {
-    protected $signature = 'ppms:refresh-demo {--force : Bỏ qua xác nhận (CI / script)}';
+    protected $signature = 'ppms:install {--force : Bỏ qua xác nhận (CI / script)}';
 
-    protected $description = 'migrate:fresh + seed PPMS (dữ liệu demo VA Schools, mật khẩu: password)';
+    protected $description = 'migrate:fresh + seed tài khoản quản trị (ADMIN_EMAIL / ADMIN_INITIAL_PASSWORD trong .env)';
 
     public function handle(): int
     {
@@ -19,7 +19,7 @@ class PpmsRefreshDemoCommand extends Command
             return self::FAILURE;
         }
 
-        if (! $this->option('force') && ! $this->confirm('Xóa toàn bộ bảng và nạp lại dữ liệu demo?', true)) {
+        if (! $this->option('force') && ! $this->confirm('Xóa toàn bộ bảng và chạy migration + seed lại?', true)) {
             return self::SUCCESS;
         }
 
@@ -27,8 +27,7 @@ class PpmsRefreshDemoCommand extends Command
         $this->call('db:seed', ['--class' => PpmsSeeder::class, '--force' => true]);
 
         $this->newLine();
-        $this->info('Hoàn tất. Mật khẩu mọi user: password');
-        $this->line('Ví dụ: kieu.nguyen@va-schools.vn / password (PM), tai.nguyen@va-schools.vn (Dev)');
+        $this->info('Hoàn tất. Đăng nhập bằng ADMIN_EMAIL và ADMIN_INITIAL_PASSWORD trong .env.');
 
         return self::SUCCESS;
     }

@@ -13,7 +13,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(\App\Services\ProjectListQueryService::class, function () {
+            return new \App\Services\ProjectListQueryService;
+        });
     }
 
     /**
