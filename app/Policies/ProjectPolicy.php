@@ -29,9 +29,10 @@ class ProjectPolicy
         return $this->canBrowse($user);
     }
 
+    /** Any role that may browse projects may create them (not restricted to PM/TL/Admin). */
     public function create(User $user): bool
     {
-        return $this->canManage($user);
+        return $this->canBrowse($user);
     }
 
     public function update(User $user, Project $project): bool
