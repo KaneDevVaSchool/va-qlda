@@ -44,4 +44,13 @@ return [
     */
     'upload_max_file_kb' => max(1, (int) env('PPMS_UPLOAD_MAX_FILE_KB', 51200)),
 
+    /*
+    | Google OAuth: nếu danh sách không rỗng, chỉ email có phần sau @ trùng một phần tử
+    | (ví dụ hcm.vaschools.edu.vn) mới được hoàn tất đăng nhập Google.
+    */
+    'google_allowed_email_domains' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('ACCEPT_DOMAIN_MAIL', ''))
+    ))),
+
 ];

@@ -72,6 +72,10 @@ class GoogleOAuthController extends Controller
         $googleId = (string) $googleUser->getId();
         $name = $googleUser->getName() ?: (strstr($email, '@', true) ?: $email);
 
+        if (! $this->googleEmailDomainAllowed($email)) {
+            return redirect()->to($this->loginUrl(['google_error' => 'domain_not_allowed']));
+        }
+
         $user = User::query()->where('google_id', $googleId)->first();
 
         if (! $user) {
@@ -152,6 +156,34 @@ class GoogleOAuthController extends Controller
         if (! is_string($id) || $id === '' || ! is_string($secret) || $secret === '') {
             abort(503, 'Google OAuth is not configured.');
         }
+    }
+
+    /**
+     * When ACCEPT_DOMAIN_MAIL / config ppms.google_allowed_email_domains is non-empty,
+     * the email's domain (after @) must match one entry exactly (case-insensitive).
+     */
+    private function googleEmailDomainAllowed(string $email): bool
+    {
+        $allowed = config('ppms.google_allowed_email_domains', []);
+        if (! is_array($allowed) || $allowed === []) {
+            return true;
+        }
+
+        $domain = strtolower(substr(strrchr($email, '@') ?: '', 1));
+        if ($domain === '') {
+            return false;
+        }
+
+        foreach ($allowed as $entry) {
+            if (! is_string($entry) || $entry === '') {
+                continue;
+            }
+            if (strtolower($entry) === $domain) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function cacheKey(string $exchange): string

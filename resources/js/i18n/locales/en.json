@@ -786,6 +786,7 @@
         "googleNoAccount": "This Google email is not on the system. Contact your administrator or use email and password.",
         "googleLocked": "This account is locked.",
         "googleAccountMismatch": "This email is linked to a different Google account.",
+        "googleDomainNotAllowed": "This Google email’s domain is not allowed for sign-in. Contact IT if needed.",
         "googleStartErr": "Could not start Google sign-in (check server configuration).",
         "googleExchangeErr": "Google sign-in link is invalid or has expired."
     }

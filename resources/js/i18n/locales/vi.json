@@ -787,6 +787,7 @@
         "googleNoAccount": "Email Google chưa có trên hệ thống. Liên hệ quản trị để được cấp tài khoản, hoặc đăng nhập bằng email và mật khẩu.",
         "googleLocked": "Tài khoản đang bị khóa.",
         "googleAccountMismatch": "Email này đã được liên kết với tài khoản Google khác.",
+        "googleDomainNotAllowed": "Email Google không thuộc miền được phép đăng nhập (liên hệ IT nếu cần).",
         "googleStartErr": "Không bắt đầu được đăng nhập Google (kiểm tra cấu hình máy chủ).",
         "googleExchangeErr": "Liên kết đăng nhập Google không hợp lệ hoặc đã hết hạn."
     }

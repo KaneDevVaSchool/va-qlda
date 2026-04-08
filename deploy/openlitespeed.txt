@@ -46,6 +46,15 @@ PPMS / Laravel — triển khai trên OpenLiteSpeed (OLS)
    - Repo đã chuẩn hóa trong index.php (gốc project) + public/.htaccess (Handle Authorization).
    - Nếu vẫn 401: kiểm tra Virtual Host / proxy có strip Authorization; bật forward header tương đương Apache RewriteRule Authorization.
 
+6c) Google OAuth — lỗi "redirect_uri_mismatch" / 400
+   - Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client ID →
+     Authorized redirect URIs: thêm đúng một URI, ví dụ:
+     https://projects.vaschools.edu.vn/auth/google/callback
+   - .env: APP_URL và GOOGLE_REDIRECT_URI cùng host (vd APP_URL=https://projects.vaschools.edu.vn,
+     GOOGLE_REDIRECT_URI=https://projects.vaschools.edu.vn/auth/google/callback).
+   - OAuth consent screen: nếu app ở chế độ Testing, chỉ user trong danh sách test mới đăng nhập được.
+   - php artisan config:clear sau khi deploy .env.
+
 7) Cron (scheduler)
    - Thêm cron * * * * * cd /đường-dẫn-dự-án && php artisan schedule:run >> /dev/null 2>&1
 

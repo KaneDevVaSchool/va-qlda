@@ -390,6 +390,7 @@ const GOOGLE_ERROR_I18N = {
     no_account: 'googleNoAccount',
     locked: 'googleLocked',
     account_mismatch: 'googleAccountMismatch',
+    domain_not_allowed: 'googleDomainNotAllowed',
 };
 
 function googleErrorMessage(code) {
