@@ -37,22 +37,23 @@
                             </select>
                         </div>
                     </div>
-                    <div class="ppms-pd-filter-field ppms-pd-filter-field--switch">
-                        <span class="ppms-pd-filter-label ppms-pd-filter-label--spacer" aria-hidden="true">&nbsp;</span>
-                        <label class="ppms-pd-filter-switch">
-                            <input
-                                id="ppms-pd-filter-root"
-                                v-model="ganttFilters.root_only"
-                                type="checkbox"
-                                class="ppms-pd-filter-switch-input"
-                            />
-                            <span class="ppms-pd-filter-switch-ui" aria-hidden="true" />
-                            <span class="ppms-pd-filter-switch-text">{{ t('projects.ganttRootOnly') }}</span>
-                        </label>
+                    <div class="ppms-pd-filter-field">
+                        <span :id="rootFilterLabelId" class="ppms-pd-filter-label">{{ t('projects.ganttRootOnlyFilter') }}</span>
+                        <div class="ppms-pd-filter-control">
+                            <label class="ppms-pd-filter-switch-box" :aria-labelledby="rootFilterLabelId">
+                                <span class="ppms-pd-filter-switch-box-text">{{ t('projects.ganttRootOnly') }}</span>
+                                <span class="ppms-pd-filter-switch-track">
+                                    <input
+                                        id="ppms-pd-filter-root-input"
+                                        v-model="ganttFilters.root_only"
+                                        type="checkbox"
+                                        class="ppms-pd-filter-switch-input"
+                                    />
+                                    <span class="ppms-pd-filter-switch-ui" aria-hidden="true" />
+                                </span>
+                            </label>
+                        </div>
                     </div>
-                    <button type="button" class="ppms-pd-tasks-refresh" @click="$emit('refresh-gantt')">
-                        {{ t('projects.ganttRefresh') }}
-                    </button>
                 </div>
             </div>
 
@@ -249,7 +250,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, useId } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { barsWithTasks, buildBoardRows } from '../../utils/projectTasksBoard';
 import { ganttTaskStatusLabel, initials } from '../../utils/projectDetailFormatters';
@@ -272,13 +273,15 @@ const props = defineProps({
 
 defineEmits([
     'submit-csat',
-    'refresh-gantt',
     'toggle-focus',
     'remove-task',
     'add-dep',
     'task-file',
     'download-attachment',
 ]);
+
+const uid = useId();
+const rootFilterLabelId = `ppms-pd-root-fl-${uid}`;
 
 const tasksBoardRef = ref(null);
 const leftScrollRef = ref(null);
@@ -597,10 +600,6 @@ defineExpose({ tasksBoardRef, scrollBoardIntoView });
     gap: 0.75rem 1rem;
 }
 
-.ppms-pd-filter-field--switch {
-    padding-top: 0.1rem;
-}
-
 .ppms-pd-filter-field {
     display: flex;
     flex-direction: column;
@@ -615,10 +614,6 @@ defineExpose({ tasksBoardRef, scrollBoardIntoView });
     letter-spacing: 0.02em;
     line-height: 1.2;
     min-height: 0.9rem;
-}
-
-.ppms-pd-filter-label--spacer {
-    user-select: none;
 }
 
 .ppms-pd-filter-control {
@@ -660,44 +655,85 @@ defineExpose({ tasksBoardRef, scrollBoardIntoView });
         0 0 0 2px rgba(0, 120, 212, 0.22);
 }
 
-.ppms-pd-filter-switch {
-    display: inline-flex;
+.ppms-pd-filter-switch-box {
+    display: flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    min-height: 2.5rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid #d2d0ce;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
     cursor: pointer;
     user-select: none;
-    padding: 0.35rem 0;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.ppms-pd-filter-switch-box:hover {
+    border-color: #b3b0ad;
+}
+
+.ppms-pd-filter-switch-box:focus-within {
+    border-color: #0078d4;
+    box-shadow:
+        inset 0 1px 2px rgba(0, 0, 0, 0.04),
+        0 0 0 2px rgba(0, 120, 212, 0.22);
+}
+
+.ppms-pd-filter-switch-box-text {
     font-size: 0.875rem;
     color: #323130;
+    line-height: 1.35;
+    flex: 1;
+    min-width: 0;
+}
+
+.ppms-pd-filter-switch-track {
+    position: relative;
+    flex-shrink: 0;
+    width: 3.25rem;
+    height: 1.875rem;
 }
 
 .ppms-pd-filter-switch-input {
     position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    margin: 0;
     opacity: 0;
-    width: 0;
-    height: 0;
+    cursor: pointer;
 }
 
 .ppms-pd-filter-switch-ui {
-    position: relative;
-    width: 2.25rem;
-    height: 1.25rem;
-    flex-shrink: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3.25rem;
+    height: 1.875rem;
     border-radius: 999px;
     background: #c8c6c4;
     transition: background 0.2s ease;
+    pointer-events: none;
 }
 
 .ppms-pd-filter-switch-ui::after {
     content: '';
     position: absolute;
-    top: 2px;
-    left: 2px;
-    width: calc(1.25rem - 4px);
-    height: calc(1.25rem - 4px);
+    top: 3px;
+    left: 3px;
+    width: 1.35rem;
+    height: 1.35rem;
     border-radius: 50%;
     background: #fff;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
     transition: transform 0.2s ease;
 }
 
@@ -706,39 +742,11 @@ defineExpose({ tasksBoardRef, scrollBoardIntoView });
 }
 
 .ppms-pd-filter-switch-input:checked + .ppms-pd-filter-switch-ui::after {
-    transform: translateX(1rem);
+    transform: translateX(1.45rem);
 }
 
 .ppms-pd-filter-switch-input:focus-visible + .ppms-pd-filter-switch-ui {
-    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.35);
-}
-
-.ppms-pd-filter-switch-text {
-    line-height: 1.3;
-}
-
-.ppms-pd-tasks-refresh {
-    min-height: 2.5rem;
-    padding: 0 1rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    border-radius: 8px;
-    border: 1px solid #0078d4;
-    background: #fff;
-    color: #0078d4;
-    cursor: pointer;
-    transition:
-        background 0.15s ease,
-        color 0.15s ease;
-}
-
-.ppms-pd-tasks-refresh:hover {
-    background: #f3f9fd;
-}
-
-.ppms-pd-tasks-refresh:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.35);
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.45);
 }
 
 .ppms-pd-tasks-window {

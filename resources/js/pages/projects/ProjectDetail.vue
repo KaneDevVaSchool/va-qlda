@@ -55,7 +55,6 @@
                         :dep-err="depErr"
                         :attachments="attachments"
                         @submit-csat="submitCsat"
-                        @refresh-gantt="loadGantt"
                         @toggle-focus="toggleFocus"
                         @remove-task="removeTask"
                         @add-dep="addDep"

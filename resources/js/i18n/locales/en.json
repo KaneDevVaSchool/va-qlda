@@ -342,6 +342,7 @@
         "ganttAssignee": "Assignee",
         "ganttStatusPh": "status: todo,in_progress,done",
         "ganttRootOnly": "Root tasks only",
+        "ganttRootOnlyFilter": "Tree scope",
         "ganttFilterAssigneeAll": "All assignees",
         "ganttFilterStatusAll": "All statuses",
         "ganttRefresh": "Refresh",

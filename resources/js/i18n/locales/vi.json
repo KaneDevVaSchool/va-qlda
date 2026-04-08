@@ -342,6 +342,7 @@
         "ganttAssignee": "Assignee",
         "ganttStatusPh": "status: todo,in_progress,done",
         "ganttRootOnly": "Chỉ task gốc",
+        "ganttRootOnlyFilter": "Phạm vi cây",
         "ganttFilterAssigneeAll": "Tất cả người thực hiện",
         "ganttFilterStatusAll": "Tất cả trạng thái",
         "ganttRefresh": "Làm mới",
