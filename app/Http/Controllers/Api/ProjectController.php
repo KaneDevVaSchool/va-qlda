@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskAttachment;
+use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\ProjectListQueryService;
 use App\Services\ProjectMediaService;
@@ -15,6 +16,7 @@ use App\Services\TaskProgressDisplayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class ProjectController extends Controller
@@ -95,7 +97,7 @@ class ProjectController extends Controller
         $data = $request->validate([
             'project_ids' => 'required|array|min:1|max:50',
             'project_ids.*' => 'integer|exists:projects,id',
-            'owner_id' => 'nullable|exists:users,id',
+            'owner_id' => ['nullable', Rule::exists(User::class, 'id')],
             'phase' => 'nullable|in:planning,development,uat,done,maintenance,rnd',
             'archived' => 'nullable|boolean',
             'add_labels' => 'nullable|array|max:20',
@@ -192,7 +194,7 @@ class ProjectController extends Controller
             'type' => 'required|in:maintenance,delivery,rnd',
             'phase' => 'sometimes|in:planning,development,uat,done,maintenance',
             'status' => 'sometimes|in:on_track,at_risk,delayed,blocked',
-            'owner_id' => 'required|exists:users,id',
+            'owner_id' => ['required', Rule::exists(User::class, 'id')],
             'deadline' => 'nullable|date',
             'start_date' => 'nullable|date',
             'actual_start_date' => 'nullable|date',
@@ -211,9 +213,9 @@ class ProjectController extends Controller
             'labels' => 'nullable|array',
             'labels.*' => 'string|max:64',
             'executor_user_ids' => 'nullable|array|max:40',
-            'executor_user_ids.*' => 'integer|exists:users,id',
+            'executor_user_ids.*' => ['integer', Rule::exists(User::class, 'id')],
             'follower_user_ids' => 'nullable|array|max:40',
-            'follower_user_ids.*' => 'integer|exists:users,id',
+            'follower_user_ids.*' => ['integer', Rule::exists(User::class, 'id')],
             'permission_preset' => 'nullable|in:org_default,members_only,owner_only',
         ]);
 
@@ -436,7 +438,7 @@ class ProjectController extends Controller
             'type' => 'sometimes|in:maintenance,delivery,rnd',
             'phase' => 'sometimes|in:planning,development,uat,done,maintenance,rnd',
             'status' => 'sometimes|in:on_track,at_risk,delayed,blocked',
-            'owner_id' => 'sometimes|exists:users,id',
+            'owner_id' => ['sometimes', Rule::exists(User::class, 'id')],
             'deadline' => 'nullable|date',
             'start_date' => 'nullable|date',
             'actual_start_date' => 'nullable|date',
@@ -456,9 +458,9 @@ class ProjectController extends Controller
             'labels' => 'nullable|array',
             'labels.*' => 'string|max:64',
             'executor_user_ids' => 'nullable|array|max:40',
-            'executor_user_ids.*' => 'integer|exists:users,id',
+            'executor_user_ids.*' => ['integer', Rule::exists(User::class, 'id')],
             'follower_user_ids' => 'nullable|array|max:40',
-            'follower_user_ids.*' => 'integer|exists:users,id',
+            'follower_user_ids.*' => ['integer', Rule::exists(User::class, 'id')],
             'permission_preset' => 'nullable|in:org_default,members_only,owner_only',
         ]);
 
