@@ -5,6 +5,10 @@
 
     RewriteEngine On
 
+    # OpenLiteSpeed: bật "Auto Load from .htaccess" (hoặc inherit rewrite) ở Virtual Host.
+    # Nếu app chạy trong thư mục con (vd: /ppms), đặt đúng đường dẫn:
+    # RewriteBase /ppms/
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

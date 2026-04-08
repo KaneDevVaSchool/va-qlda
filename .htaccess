@@ -1,0 +1,40 @@
+# Document Root = thư mục gốc project: chặn truy cập trực tiếp vào mã nguồn (bổ sung cho index.php ở gốc).
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Chặn thư mục / file nhạy cảm ở gốc project
+    RewriteRule ^(vendor|bootstrap|config|database|resources|routes|tests|node_modules)(/|$) - [F,L]
+    RewriteRule ^(\.env|\.git|\.gitignore|\.env\..*|composer\.(json|lock)|package(-lock)?\.json|phpunit\.xml.*|artisan)$ - [F,L]
+
+    # /storage/... chỉ cho phép nếu có trong public/storage (symlink storage:link)
+    RewriteCond %{REQUEST_URI} ^/storage/
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} !-f
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} !-d
+    RewriteRule ^ - [F,L]
+
+    # OpenLiteSpeed / Apache: bật load .htaccess ở Virtual Host.
+    # Nếu app trong thư mục con: RewriteBase /ten-thu-muc/
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # File/thư mục trong public/ (build, favicon, storage symlink, ...)
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -d
+    RewriteRule ^(.*)$ public/$1 [L]
+
+    # Còn lại → Laravel (index.php ở thư mục gốc)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>

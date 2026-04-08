@@ -1,0 +1,71 @@
+================================================================================
+Lỗi: http://domain/cgi-sys/defaultwebpage.cgi (trang "Default Web Site Page" cPanel)
+================================================================================
+
+Trang này KHÔNG phải lỗi Laravel. cPanel trả về khi:
+  - Tên miền/subdomain chưa gắn đúng thư mục trên hosting, HOẶC
+  - DNS chưa trỏ đúng IP máy chủ, HOẶC
+  - Thư mục document root trống / không có site.
+
+Laravel chỉ chạy SAU KHI request đã vào đúng thư mục chứa index.php (thư mục public).
+
+--------------------------------------------------------------------------------
+A) Kiểm tra DNS (máy hoặc dùng https://dnschecker.org )
+--------------------------------------------------------------------------------
+1. Bản ghi A của projects.vaschools.edu.vn phải trỏ tới IP hosting (trùng IP khi ping
+   hoặc IP trong cPanel → "Shared IP Address" / "Server Information").
+2. Nếu vừa đổi DNS: chờ propagate (vài phút đến 48h).
+3. Tránh trỏ nhầm sang IP parking/CDN chưa cấu hình.
+
+--------------------------------------------------------------------------------
+B) cPanel — Subdomain / Document Root (thường gặp nhất)
+--------------------------------------------------------------------------------
+1. Đăng nhập cPanel → Domains → Subdomains (hoặc "Domains" tùy giao diện).
+2. Tìm subdomain: projects.vaschools.edu.vn (hoặc prefix "projects").
+3. Cột "Document Root" — một trong hai cách:
+
+   A) Trỏ vào .../public (khuyến nghị, an toàn nhất):
+     /home/USER/public_html/ppms/public
+
+   B) Trỏ vào thư mục gốc project (repo có index.php + .htaccess ở gốc):
+     /home/USER/public_html/ppms
+     → Phải có file index.php và .htaccess ở đúng thư mục đó (đã có trong repo).
+
+   SAI (hay gặp):
+     /home/USER/public_html  (trống hoặc không phải project)
+     Thiếu file index.php / .htaccess đúng chỗ
+
+4. Nếu chưa có subdomain: tạo mới, Document Root = đường dẫn tới .../public.
+
+5. Sau khi sửa: chờ vài phút, xóa cache DNS trình duyệt / thử trình duyệt ẩn danh.
+
+--------------------------------------------------------------------------------
+C) Đặt file đúng chỗ trên server
+--------------------------------------------------------------------------------
+1. Toàn bộ mã Laravel nằm NGOÀI web root được khuyến nghị; chỉ thư mục "public"
+   (chứa index.php, .htaccess) là document root. Nhiều host cho phép:
+     /home/USER/ppms/              ← app, vendor, .env
+     /home/USER/public_html/.../public  ← chỉ symlink hoặc copy public
+
+2. Trong document root BẮT CÓ:
+     index.php
+     .htaccess
+     (và thư mục build, assets nếu dùng Vite)
+
+3. Quyền: storage, bootstrap/cache ghi được (xem deploy/openlitespeed.txt).
+
+--------------------------------------------------------------------------------
+D) OpenLiteSpeed / LiteSpeed sau cPanel
+--------------------------------------------------------------------------------
+- Virtual host của subdomain phải có Document Root = .../public
+- Rewrite + load .htaccess bật (giống hướng dẫn deploy/openlitespeed.txt).
+
+--------------------------------------------------------------------------------
+E) Sau khi đã vào được site (không còn default page)
+--------------------------------------------------------------------------------
+- .env: APP_URL=https://projects.vaschools.edu.vn (đúng scheme + domain)
+- php artisan config:clear && php artisan config:cache
+
+================================================================================
+Tóm tắt: Sửa DNS (A record) + Document Root subdomain = thư mục "public" Laravel.
+================================================================================

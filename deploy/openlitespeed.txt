@@ -1,0 +1,63 @@
+================================================================================
+PPMS / Laravel — triển khai trên OpenLiteSpeed (OLS)
+================================================================================
+
+1) Cấu trúc thư mục trên server
+   - Upload toàn bộ mã nguồn (không cần .git nếu deploy bằng artifact).
+   - Document root (chọn một):
+     a) Khuyến nghị: .../va-qlda/public (chỉ thư mục public).
+     b) Repo này hỗ trợ: .../va-qlda (thư mục gốc project) — dùng index.php + .htaccess ở gốc,
+        rewrite sang public/ và chặn vendor/.env/... (xem .htaccess ở root).
+
+2) WebAdmin OpenLiteSpeed (giao diện quản trị)
+   - Virtual Hosts → Add / chọn site → tab General:
+     - Document Root: đường dẫn tuyệt đối tới .../public
+   - Virtual Hosts → chọn site → tab Script Handler:
+     - Gán PHP (thường là lsphp81 / lsphp82 / lsphp83 tùy phiên bản cài đặt).
+   - Virtual Hosts → Rewrite:
+     - Enable Rewrite: Yes
+     - Auto Load from .htaccess: Yes (khuyến nghị — dùng public/.htaccess của Laravel)
+   - Nếu không dùng .htaccess: trong Context "/" bật rewrite inherit tương đương Apache.
+
+3) PHP (qua CyberPanel / WebAdmin hoặc php.ini của lsphp)
+   - extension: bcmath, ctype, fileinfo, json, mbstring, openssl, pdo, tokenizer, xml, curl
+   - memory_limit >= 256M (tùy tải)
+   - upload_max_filesize / post_max_size phù hợp (upload tài liệu)
+   - Kiểm tra: php -v (CLI) và phiên bản LSAPI trong WebAdmin khớp ^8.1 theo composer.json.
+
+4) Quyền thư mục (trên Linux, user chạy web thường là nobody hoặc www-data)
+   - storage và bootstrap/cache: ghi được (775 hoặc 755 + owner đúng)
+   - Ví dụ (điều chỉnh user/group theo server):
+     chown -R deploy:www-data storage bootstrap/cache
+     chmod -R ug+rwx storage bootstrap/cache
+
+5) Môi trường Laravel (sau khi có .env)
+   php artisan config:cache
+   php artisan route:cache
+   php artisan view:cache
+   (Khi dev / cần debug: php artisan config:clear && php artisan route:clear)
+
+6) APP_URL và HTTPS
+   - Trong .env: APP_URL=https://ten-mien-cua-ban
+   - Bật SSL trong OLS/CyberPanel; Laravel TrustProxies nếu đứng sau CDN/proxy.
+
+7) Cron (scheduler)
+   - Thêm cron * * * * * cd /đường-dẫn-dự-án && php artisan schedule:run >> /dev/null 2>&1
+
+8) Queue (nếu dùng queue database/redis)
+   - Chạy worker: php artisan queue:work (supervisor hoặc systemd).
+
+9) Ứng dụng trong thư mục con (vd: https://domain.com/va-qlda/)
+   - APP_URL phải khớp đường dẫn đầy đủ.
+   - Trong public/.htaccess có thể cần RewriteBase (xem ghi chú trong file đó).
+
+10) Kiểm tra nhanh
+   - Mở trang chủ → không 404.
+   - /api/... hoặc route SPA: không bị chặn rewrite (rule Laravel đã xử lý index.php).
+
+================================================================================
+Tham khảo: https://docs.litespeedtech.com/lsws/cp/cpanel/laravel/
+
+Nếu chỉ thấy trang cPanel "Default Web Site Page" (/cgi-sys/defaultwebpage.cgi):
+xem deploy/cpanel-default-page.txt (DNS + Document Root subdomain).
+================================================================================
