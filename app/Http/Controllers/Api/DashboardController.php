@@ -8,6 +8,7 @@ use App\Models\KpiSnapshot;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\KpiEngine;
+use App\Support\MigrationCms;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -39,7 +40,7 @@ class DashboardController extends Controller
             ->pluck('count', 'status');
 
         $workload = DB::table('tasks')
-            ->join('users', 'users.id', '=', 'tasks.assignee_id')
+            ->join(MigrationCms::usersJoinTarget(), 'users.id', '=', 'tasks.assignee_id')
             ->whereNotNull('tasks.assignee_id')
             ->where('tasks.status', '!=', 'done')
             ->groupBy('tasks.assignee_id', 'users.name')
