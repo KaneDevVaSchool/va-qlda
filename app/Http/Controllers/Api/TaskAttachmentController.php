@@ -18,8 +18,9 @@ class TaskAttachmentController extends Controller
 
     public function store(Request $request, Task $task)
     {
+        $maxKb = (int) config('ppms.upload_max_file_kb', 51200);
         $request->validate([
-            'file' => 'required|file|max:10240',
+            'file' => 'required|file|max:'.$maxKb,
         ]);
 
         $file = $request->file('file');

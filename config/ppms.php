@@ -32,4 +32,16 @@ return [
 
     'login_mfa_ttl_minutes' => (int) env('PPMS_LOGIN_MFA_TTL', 10),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Upload max file size (API validation)
+    |--------------------------------------------------------------------------
+    |
+    | Laravel file rule "max" is in kilobytes. Applies to project document
+    | uploads and task attachments. Ensure PHP upload_max_filesize / post_max_size
+    | are not lower than this value in production.
+    |
+    */
+    'upload_max_file_kb' => max(1, (int) env('PPMS_UPLOAD_MAX_FILE_KB', 51200)),
+
 ];

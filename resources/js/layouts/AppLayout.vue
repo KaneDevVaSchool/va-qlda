@@ -1,9 +1,20 @@
 <template>
-    <div class="ppms-app">
+    <div class="ppms-app" :class="{ 'ppms-app--nav-open': mobileNavOpen }">
         <a href="#ppms-main" class="ppms-skip-link">{{ t('common.skipToContent') }}</a>
 
         <header class="ppms-app-header">
             <div class="ppms-app-header-inner">
+                <button
+                    type="button"
+                    class="ppms-icon-btn-header ppms-app-nav-toggle"
+                    :aria-expanded="mobileNavOpen"
+                    aria-controls="ppms-sidebar-nav"
+                    :aria-label="mobileNavOpen ? t('layout.closeMenu') : t('layout.toggleMenu')"
+                    @click="toggleMobileNav"
+                >
+                    <span v-if="!mobileNavOpen" class="ppms-icon-menu" aria-hidden="true" />
+                    <span v-else class="ppms-icon-close" aria-hidden="true" />
+                </button>
                 <router-link to="/" class="ppms-app-brand-link">
                     <span class="ppms-app-header-mascot-wrap" aria-hidden="true">
                         <VaMascotImg img-class="ppms-app-header-mascot" alt="" />
@@ -44,10 +55,16 @@
         </header>
 
         <div class="ppms-app-middle ppms-shell">
+            <div
+                class="ppms-sidebar-backdrop"
+                aria-hidden="true"
+                @click="closeMobileNav"
+            />
             <aside
                 id="ppms-sidebar-nav"
                 class="ppms-sidebar"
                 :class="{ 'ppms-sidebar--collapsed': sidebarCollapsed }"
+                :aria-hidden="sidebarAriaHidden"
             >
                 <nav class="ppms-nav ppms-nav--sidebar" :aria-label="t('common.mainNav')">
                     <div class="ppms-nav-group">
@@ -205,7 +222,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { useRoute, useRouter } from 'vue-router';
 import VaMascotImg from '../components/VaMascotImg.vue';
@@ -223,6 +240,14 @@ const user = ref(null);
 const unread = ref(0);
 const PPMS_SIDEBAR_COLLAPSED = 'ppms-sidebar-collapsed';
 const sidebarCollapsed = ref(false);
+const mobileNavOpen = ref(false);
+const isMobileLayout = ref(
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches,
+);
+
+const sidebarAriaHidden = computed(() =>
+    isMobileLayout.value && !mobileNavOpen.value ? true : undefined,
+);
 
 const crumbs = computed(() => route.meta.breadcrumb ?? [{ labelKey: 'common.home' }]);
 const pageTitle = computed(() =>
@@ -261,6 +286,48 @@ function toggleSidebarCollapsed() {
     }
 }
 
+function updateMobileLayoutFlag() {
+    if (typeof window === 'undefined') {
+        return;
+    }
+    isMobileLayout.value = window.matchMedia('(max-width: 1023px)').matches;
+}
+
+function toggleMobileNav() {
+    mobileNavOpen.value = !mobileNavOpen.value;
+}
+
+function closeMobileNav() {
+    mobileNavOpen.value = false;
+}
+
+function onEscapeKey(e) {
+    if (e.key === 'Escape' && mobileNavOpen.value) {
+        e.preventDefault();
+        closeMobileNav();
+    }
+}
+
+function onDesktopBreakpoint(e) {
+    if (e.matches) {
+        closeMobileNav();
+    }
+}
+
+watch(mobileNavOpen, (open) => {
+    if (typeof document === 'undefined') {
+        return;
+    }
+    document.body.classList.toggle('ppms-drawer-open', open);
+});
+
+watch(
+    () => route.fullPath,
+    () => {
+        closeMobileNav();
+    },
+);
+
 async function refreshUnread() {
     try {
         const { data } = await axios.get('/api/notifications');
@@ -272,8 +339,15 @@ async function refreshUnread() {
 }
 
 let pollId;
+let mqlDesktop;
 
 onMounted(async () => {
+    updateMobileLayoutFlag();
+    window.addEventListener('resize', updateMobileLayoutFlag);
+    window.addEventListener('keydown', onEscapeKey);
+    mqlDesktop = window.matchMedia('(min-width: 1024px)');
+    mqlDesktop.addEventListener('change', onDesktopBreakpoint);
+
     if (typeof localStorage !== 'undefined' && localStorage.getItem(PPMS_SIDEBAR_COLLAPSED) === '1') {
         sidebarCollapsed.value = true;
     }
@@ -291,6 +365,14 @@ onMounted(async () => {
 onUnmounted(() => {
     if (pollId) {
         clearInterval(pollId);
+    }
+    window.removeEventListener('resize', updateMobileLayoutFlag);
+    window.removeEventListener('keydown', onEscapeKey);
+    if (mqlDesktop) {
+        mqlDesktop.removeEventListener('change', onDesktopBreakpoint);
+    }
+    if (typeof document !== 'undefined') {
+        document.body.classList.remove('ppms-drawer-open');
     }
 });
 

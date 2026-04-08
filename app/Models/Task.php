@@ -10,9 +10,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Task extends Model
 {
     protected $fillable = [
-        'project_id', 'parent_id', 'name', 'description', 'assignee_id',
+        'project_id', 'project_phase_id', 'parent_id', 'name', 'description', 'assignee_id',
         'estimate_hours', 'actual_hours', 'complexity', 'impact', 'weight',
-        'due_date', 'status', 'blocked_reason', 'blocked_at', 'sort_order',
+        'due_date', 'status', 'progress_mode', 'manual_progress_pct',
+        'volume_total', 'volume_done', 'checklist_total', 'checklist_done', 'category',
+        'blocked_reason', 'blocked_at', 'sort_order',
     ];
 
     protected $casts = [
@@ -21,11 +23,17 @@ class Task extends Model
         'estimate_hours' => 'decimal:2',
         'actual_hours' => 'decimal:2',
         'weight' => 'decimal:6',
+        'manual_progress_pct' => 'decimal:2',
     ];
 
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function projectPhase(): BelongsTo
+    {
+        return $this->belongsTo(ProjectPhase::class, 'project_phase_id');
     }
 
     public function parent(): BelongsTo

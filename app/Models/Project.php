@@ -10,11 +10,12 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class Project extends Model
 {
     protected $fillable = [
-        'name', 'type', 'phase', 'status', 'owner_id', 'deadline', 'start_date', 'actual_start_date',
-        'description', 'progress', 'archived_at',
+        'name', 'code', 'type', 'phase', 'status', 'owner_id', 'deadline', 'start_date', 'actual_start_date',
+        'description', 'estimated_value', 'progress', 'progress_calc', 'archived_at',
         'customer_name', 'customer_email', 'suppliers', 'process_timeline',
         'stakeholder_emails', 'csat_invites_sent', 'csat_survey_sent_at',
         'labels',
+        'executor_user_ids', 'follower_user_ids', 'permission_preset',
     ];
 
     protected $casts = [
@@ -23,11 +24,14 @@ class Project extends Model
         'actual_start_date' => 'date',
         'archived_at' => 'datetime',
         'progress' => 'decimal:4',
+        'estimated_value' => 'decimal:2',
         'stakeholder_emails' => 'array',
         'suppliers' => 'array',
         'process_timeline' => 'array',
         'csat_survey_sent_at' => 'datetime',
         'labels' => 'array',
+        'executor_user_ids' => 'array',
+        'follower_user_ids' => 'array',
     ];
 
     /**
@@ -88,5 +92,15 @@ class Project extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(ProjectDocument::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function phases(): HasMany
+    {
+        return $this->hasMany(ProjectPhase::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function supplies(): HasMany
+    {
+        return $this->hasMany(ProjectSupply::class)->orderBy('sort_order')->orderBy('id');
     }
 }

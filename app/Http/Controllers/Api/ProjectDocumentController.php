@@ -26,17 +26,15 @@ class ProjectDocumentController extends Controller
         $this->authorize('update', $project);
 
         $data = $request->validate([
-            'doc_type' => 'required|in:folder,google_doc,google_sheet,link',
+            'doc_type' => 'required|in:folder,link',
             'name' => 'required|string|max:255',
             'url' => 'nullable|string|max:2048',
             'parent_id' => 'nullable|integer|exists:project_documents,id',
             'sort_order' => 'nullable|integer|min:0|max:999999',
         ]);
 
-        if (in_array($data['doc_type'], ['google_doc', 'google_sheet', 'link'], true)) {
-            if (empty($request->input('url'))) {
-                throw ValidationException::withMessages(['url' => ['URL is required for this type.']]);
-            }
+        if ($data['doc_type'] === 'link' && empty($request->input('url'))) {
+            throw ValidationException::withMessages(['url' => ['URL is required for this type.']]);
         }
 
         if (! empty($data['parent_id'])) {
@@ -61,8 +59,9 @@ class ProjectDocumentController extends Controller
     {
         $this->authorize('update', $project);
 
+        $maxKb = (int) config('ppms.upload_max_file_kb', 51200);
         $request->validate([
-            'file' => 'required|file|max:10240',
+            'file' => 'required|file|max:'.$maxKb,
             'parent_id' => 'nullable|integer|exists:project_documents,id',
             'sort_order' => 'nullable|integer|min:0|max:999999',
         ]);

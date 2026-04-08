@@ -12,10 +12,6 @@ class ProjectDocument extends Model
 
     public const TYPE_UPLOAD = 'upload';
 
-    public const TYPE_GOOGLE_DOC = 'google_doc';
-
-    public const TYPE_GOOGLE_SHEET = 'google_sheet';
-
     public const TYPE_LINK = 'link';
 
     protected $fillable = [
@@ -54,8 +50,6 @@ class ProjectDocument extends Model
         return [
             self::TYPE_FOLDER,
             self::TYPE_UPLOAD,
-            self::TYPE_GOOGLE_DOC,
-            self::TYPE_GOOGLE_SHEET,
             self::TYPE_LINK,
         ];
     }

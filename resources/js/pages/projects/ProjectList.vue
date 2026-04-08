@@ -5,316 +5,48 @@
             <option v-for="s in labelsSuggestions" :key="'gdl-' + s" :value="s" />
         </datalist>
 
-        <section v-if="savedViews.length" class="ppms-card ppms-mt ppms-saved-views ppms-saved-views--compact">
-            <h3 class="ppms-saved-views-title">{{ t('projects.savedViewsTitle') }}</h3>
-            <div class="ppms-saved-views-scroll">
-                <ul class="ppms-saved-views-list">
-                    <li v-for="v in savedViews" :key="v.id">
-                        <button type="button" class="ppms-linklike" @click="applySavedView(v)">{{ v.name }}</button>
-                        <button type="button" class="ppms-btn-ghost ppms-btn-sm" @click="removeSavedView(v.id)">
-                            {{ t('projects.removeView') }}
-                        </button>
-                    </li>
-                </ul>
-            </div>
-        </section>
+        <ProjectListSavedViews :saved-views="savedViews" @apply="applySavedView($event)" @remove="removeSavedView" />
 
-        <div class="ppms-pl-subtoolbar ppms-pl-subtoolbar--unified ppms-mt">
-            <div class="ppms-pl-subtoolbar-left">
-                <div class="ppms-pl-leading-cluster">
-                    <div class="ppms-pl-view-toggle" role="group" :aria-label="t('projects.viewModeToggleAria')">
-                        <button
-                            type="button"
-                            class="ppms-pl-view-btn"
-                            :class="{ 'ppms-pl-view-btn--active': viewMode === 'list' }"
-                            :title="t('projects.viewModeList')"
-                            :aria-pressed="viewMode === 'list'"
-                            :aria-label="t('projects.viewModeList')"
-                            @click="setViewMode('list')"
-                        >
-                            <svg class="ppms-pl-ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <line x1="8" y1="6" x2="21" y2="6" />
-                                <line x1="8" y1="12" x2="21" y2="12" />
-                                <line x1="8" y1="18" x2="21" y2="18" />
-                                <line x1="3" y1="6" x2="3.01" y2="6" />
-                                <line x1="3" y1="12" x2="3.01" y2="12" />
-                                <line x1="3" y1="18" x2="3.01" y2="18" />
-                            </svg>
-                        </button>
-                        <button
-                            type="button"
-                            class="ppms-pl-view-btn"
-                            :class="{ 'ppms-pl-view-btn--active': viewMode === 'kanban' }"
-                            :title="t('projects.viewModeKanbanTitle')"
-                            :aria-pressed="viewMode === 'kanban'"
-                            :aria-label="t('projects.viewModeKanban')"
-                            @click="setViewMode('kanban')"
-                        >
-                            <svg class="ppms-pl-ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <rect x="4" y="3" width="4.5" height="18" rx="1" />
-                                <rect x="10.5" y="3" width="4.5" height="18" rx="1" />
-                                <rect x="17" y="3" width="4.5" height="18" rx="1" />
-                                <line x1="5.25" y1="7" x2="7.25" y2="7" stroke-linecap="round" />
-                                <line x1="5.25" y1="10" x2="7.25" y2="10" stroke-linecap="round" />
-                                <line x1="11.75" y1="7" x2="13.75" y2="7" stroke-linecap="round" />
-                                <line x1="11.75" y1="10" x2="13.75" y2="10" stroke-linecap="round" />
-                            </svg>
-                        </button>
-                    </div>
-                    <button type="button" class="ppms-btn-primary ppms-pl-new-project-btn" @click="showForm = true">
-                        <svg
-                            class="ppms-pl-ico-svg ppms-pl-ico-svg--on-primary"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2.25"
-                            stroke-linecap="round"
-                            aria-hidden="true"
-                        >
-                            <line x1="12" y1="5" x2="12" y2="19" />
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
-                        <span>{{ t('projects.newProject') }}</span>
-                    </button>
-                </div>
-            </div>
-            <div v-if="!loading" class="ppms-pl-subtoolbar-right ppms-pl-subtoolbar-right--fill">
-                <div v-if="lastPage > 1" class="ppms-pl-page-arrows">
-                    <button
-                        type="button"
-                        class="ppms-btn-ghost ppms-pl-page-btn"
-                        :disabled="page <= 1"
-                        :aria-label="t('projects.prevPage')"
-                        @click="goPage(page - 1)"
-                    >
-                        <svg class="ppms-pl-ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <polyline points="15 18 9 12 15 6" />
-                        </svg>
-                    </button>
-                    <button
-                        type="button"
-                        class="ppms-btn-ghost ppms-pl-page-btn"
-                        :disabled="page >= lastPage"
-                        :aria-label="t('projects.nextPage')"
-                        @click="goPage(page + 1)"
-                    >
-                        <svg class="ppms-pl-ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <polyline points="9 18 15 12 9 6" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="ppms-pl-tbar-actions">
-                    <button type="button" class="ppms-btn-ghost ppms-pl-tbar-btn" @click="onToolbarLabels">
-                        <svg class="ppms-pl-ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <path
-                                d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82zM7 7h.01"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            />
-                        </svg>
-                        <span>{{ t('projects.toolbarLabels') }}</span>
-                    </button>
-                    <button
-                        v-if="canImport"
-                        type="button"
-                        class="ppms-btn-ghost ppms-pl-tbar-btn"
-                        @click="openImportModal"
-                    >
-                        <svg class="ppms-pl-ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <span>{{ t('projects.toolbarImport') }}</span>
-                    </button>
-                    <button
-                        v-if="canExport"
-                        type="button"
-                        class="ppms-btn-ghost ppms-pl-tbar-btn"
-                        @click="exportFiltered('csv')"
-                    >
-                        <svg class="ppms-pl-ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <span>{{ t('projects.toolbarExport') }}</span>
-                    </button>
-                    <div ref="toolbarMenuEl" class="ppms-toolbar-dropdown ppms-toolbar-dropdown--pl">
-                        <button
-                            type="button"
-                            class="ppms-btn-ghost ppms-pl-tbar-btn ppms-pl-tbar-btn--menu ppms-toolbar-dropdown-trigger"
-                            :aria-expanded="toolbarMenuOpen"
-                            aria-haspopup="true"
-                            :aria-controls="toolbarMenuOpen ? 'ppms-project-toolbar-menu' : undefined"
-                            @click.stop="toolbarMenuOpen = !toolbarMenuOpen"
-                        >
-                            <svg class="ppms-pl-ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <line x1="4" y1="21" x2="4" y2="14" />
-                                <line x1="4" y1="10" x2="4" y2="3" />
-                                <line x1="12" y1="21" x2="12" y2="12" />
-                                <line x1="12" y1="8" x2="12" y2="3" />
-                                <line x1="20" y1="21" x2="20" y2="16" />
-                                <line x1="20" y1="12" x2="20" y2="3" />
-                                <circle cx="4" cy="12" r="2" />
-                                <circle cx="12" cy="14" r="2" />
-                                <circle cx="20" cy="8" r="2" />
-                            </svg>
-                            <span>{{ t('projects.toolbarSettings') }}</span>
-                            <svg
-                                class="ppms-pl-ico-svg ppms-pl-ico-svg--caret"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                aria-hidden="true"
-                            >
-                                <polyline points="6 9 12 15 18 9" />
-                            </svg>
-                        </button>
-                        <ul
-                            v-show="toolbarMenuOpen"
-                            id="ppms-project-toolbar-menu"
-                            class="ppms-toolbar-dropdown-panel"
-                            role="menu"
-                        >
-                            <li role="none">
-                                <button type="button" class="ppms-dropdown-menuitem" role="menuitem" @click="onToolbarCopyLink">
-                                    {{ t('projects.copyShareLink') }}
-                                </button>
-                            </li>
-                            <li role="none">
-                                <button type="button" class="ppms-dropdown-menuitem" role="menuitem" @click="onToolbarSaveView">
-                                    {{ t('projects.saveViewBtn') }}
-                                </button>
-                            </li>
-                            <li role="none">
-                                <div class="ppms-dropdown-menuitem ppms-dropdown-menuitem--static" role="presentation">
-                                    <label class="ppms-field ppms-field--compact ppms-pl-sort-inline">
-                                        <span>{{ t('projects.filterSort') }}</span>
-                                        <select v-model="filters.sort" class="ppms-project-list-sort-select" @change="onFilterChange">
-                                            <option value="type_asc">{{ t('projects.sortTypeAsc') }}</option>
-                                            <option value="updated_desc">{{ t('projects.sortUpdatedDesc') }}</option>
-                                            <option value="progress_desc">{{ t('projects.sortProgressDesc') }}</option>
-                                            <option value="progress_asc">{{ t('projects.sortProgressAsc') }}</option>
-                                            <option value="name_asc">{{ t('projects.sortNameAsc') }}</option>
-                                            <option value="deadline_asc">{{ t('projects.sortDeadlineAsc') }}</option>
-                                        </select>
-                                    </label>
-                                </div>
-                            </li>
-                            <li role="none">
-                                <div
-                                    class="ppms-dropdown-menuitem ppms-dropdown-menuitem--static ppms-pl-column-picker-wrap"
-                                    role="group"
-                                    :aria-label="t('projects.columnPickerTitle')"
-                                >
-                                    <div class="ppms-pl-column-picker-title">{{ t('projects.columnPickerTitle') }}</div>
-                                    <p class="ppms-pl-column-picker-hint ppms-muted">{{ t('projects.columnPickerHint') }}</p>
-                                    <ul class="ppms-pl-column-picker-list">
-                                        <li v-for="opt in columnPickerOptions" :key="'col-' + opt.key">
-                                            <label class="ppms-pl-column-picker-row">
-                                                <input
-                                                    type="checkbox"
-                                                    :checked="columnVisibility[opt.key]"
-                                                    :disabled="opt.locked"
-                                                    @change="onColumnToggle(opt.key, $event)"
-                                                />
-                                                <span>{{ t('projects.' + opt.labelKey) }}</span>
-                                            </label>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
-                            <template v-if="canExport">
-                                <li role="none">
-                                    <button type="button" class="ppms-dropdown-menuitem" role="menuitem" @click="onToolbarExportCsv">
-                                        {{ t('projects.exportCsvFiltered') }}
-                                    </button>
-                                </li>
-                                <li role="none">
-                                    <button type="button" class="ppms-dropdown-menuitem" role="menuitem" @click="onToolbarExportJson">
-                                        {{ t('projects.exportJsonFiltered') }}
-                                    </button>
-                                </li>
-                                <li role="none">
-                                    <button type="button" class="ppms-dropdown-menuitem" role="menuitem" @click="onToolbarExportPdf">
-                                        {{ t('projects.exportPdfFiltered') }}
-                                    </button>
-                                </li>
-                                <li v-if="selectedProjectIds.length" role="none">
-                                    <button type="button" class="ppms-dropdown-menuitem" role="menuitem" @click="onToolbarExportCsvSelected">
-                                        {{ t('projects.exportCsvSelection') }}
-                                    </button>
-                                </li>
-                                <li v-if="selectedProjectIds.length" role="none">
-                                    <button type="button" class="ppms-dropdown-menuitem" role="menuitem" @click="onToolbarExportJsonSelected">
-                                        {{ t('projects.exportJsonSelection') }}
-                                    </button>
-                                </li>
-                                <li v-if="selectedProjectIds.length" role="none">
-                                    <button type="button" class="ppms-dropdown-menuitem" role="menuitem" @click="onToolbarExportPdfSelected">
-                                        {{ t('projects.exportPdfSelection') }}
-                                    </button>
-                                </li>
-                            </template>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <ProjectListToolbar
+            ref="toolbarRef"
+            v-model:menu-open="toolbarMenuOpen"
+            :view-mode="viewMode"
+            :loading="loading"
+            :page="page"
+            :last-page="lastPage"
+            :can-import="canImport"
+            :can-export="canExport"
+            :filters="filters"
+            :column-picker-options="columnPickerOptions"
+            :column-visibility="columnVisibility"
+            :selected-count="selectedProjectIds.length"
+            @set-view-mode="setViewMode"
+            @open-create="openCreateModal"
+            @go-page="goPage"
+            @toolbar-labels="onToolbarLabels"
+            @open-import="openImportModal"
+            @export-csv-filtered="onToolbarExportCsv"
+            @export-json-filtered="onToolbarExportJson"
+            @export-pdf-filtered="onToolbarExportPdf"
+            @export-csv-selected="onToolbarExportCsvSelected"
+            @export-json-selected="onToolbarExportJsonSelected"
+            @export-pdf-selected="onToolbarExportPdfSelected"
+            @copy-link="onToolbarCopyLink"
+            @save-view="onToolbarSaveView"
+            @filter-change="onFilterChange"
+            @column-toggle="onColumnToggle"
+        />
 
-        <aside
-            v-if="canBulkDelete && selectedProjectIds.length && !loading"
-            class="ppms-card ppms-bulk-dock ppms-bulk-dock--full ppms-mt ppms-bulk-dock-panel ppms-bulk-dock-panel--danger"
-            role="region"
-            :aria-label="t('projects.bulkBarTitle', { n: selectedProjectIds.length })"
-        >
-            <div class="ppms-bulk-dock-head ppms-bulk-dock-head--danger">
-                <h3 class="ppms-bulk-dock-title">{{ t('projects.bulkBarTitle', { n: selectedProjectIds.length }) }}</h3>
-                <button type="button" class="ppms-linklike ppms-bulk-dock-clear" @click="clearBulkSelection">
-                    {{ t('projects.bulkClearSelection') }}
-                </button>
-            </div>
-            <div class="ppms-bulk-danger-row">
-                <div class="ppms-bulk-danger-icon" aria-hidden="true">
-                    <svg class="ppms-bulk-danger-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                        <line x1="10" y1="11" x2="10" y2="17" />
-                        <line x1="14" y1="11" x2="14" y2="17" />
-                    </svg>
-                </div>
-                <div class="ppms-bulk-danger-copy">
-                    <h4 class="ppms-bulk-danger-title">{{ t('projects.bulkDeleteTitle') }}</h4>
-                    <p class="ppms-bulk-danger-text">{{ t('projects.bulkDeleteHint', { n: selectedProjectIds.length }) }}</p>
-                </div>
-                <div class="ppms-bulk-danger-actions">
-                    <button type="button" class="ppms-btn-danger-outline ppms-bulk-danger-btn" @click="runBulkDelete">
-                        {{ t('projects.bulkDeleteBtn') }}
-                    </button>
-                </div>
-            </div>
-        </aside>
+        <ProjectListBulkDeleteDock
+            :can-bulk-delete="canBulkDelete"
+            :selected-count="selectedProjectIds.length"
+            :loading="loading"
+            @clear="clearBulkSelection"
+            @bulk-delete="runBulkDelete"
+        />
 
-        <div
-            v-if="loading"
-            class="ppms-project-list-loading ppms-mt"
-            role="status"
-            aria-live="polite"
-            aria-busy="true"
-        >
-            <span class="ppms-sr-only">{{ t('common.loading') }}</span>
-            <div v-if="viewMode === 'list'" class="ppms-skeleton-table" aria-hidden="true">
-                <div v-for="n in 6" :key="'sk-' + n" class="ppms-skeleton-row">
-                    <div class="ppms-skeleton-cell ppms-skeleton-cell--lg" />
-                    <div class="ppms-skeleton-cell ppms-skeleton-cell--sm" />
-                    <div class="ppms-skeleton-cell ppms-skeleton-cell--md" />
-                    <div class="ppms-skeleton-cell ppms-skeleton-cell--sm" />
-                    <div class="ppms-skeleton-cell ppms-skeleton-cell--xs" />
-                </div>
-            </div>
-            <div v-else class="ppms-pl-kanban-skeleton" aria-hidden="true">
-                <div v-for="n in 6" :key="'ksk-' + n" class="ppms-pl-kanban-skeleton-col" />
-            </div>
-        </div>
-        <section v-else class="ppms-project-list-table-section" :aria-label="t('projects.listSectionTitle')">
+        <ProjectListLoadingState :loading="loading" :view-mode="viewMode" />
+        <section v-if="!loading" class="ppms-project-list-table-section" :aria-label="t('projects.listSectionTitle')">
             <div v-if="!projects.length" class="ppms-empty-hint ppms-mt">
                 <p class="ppms-empty-hint-text">{{ t('projects.tableEmpty') }}</p>
             </div>
@@ -663,391 +395,101 @@
             </div>
         </section>
 
-        <div
-            v-if="showImportModal"
-            class="ppms-modal-backdrop"
-            role="presentation"
-            @click.self="closeImportModal"
-        >
-            <div
-                class="ppms-modal ppms-modal--import"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="ppms-modal-import-title"
-            >
-                <h2 id="ppms-modal-import-title">{{ t('projects.importModalTitle') }}</h2>
-                <p class="ppms-muted ppms-import-hint">{{ t('projects.importPreviewHint') }}</p>
-                <div class="ppms-import-actions ppms-mt-sm">
-                    <button type="button" class="ppms-btn-ghost ppms-btn-sm" @click="downloadImportTemplateCsv">
-                        {{ t('projects.importDownloadTemplateCsv') }}
-                    </button>
-                    <button type="button" class="ppms-btn-ghost ppms-btn-sm" @click="downloadImportTemplateJson">
-                        {{ t('projects.importDownloadTemplateJson') }}
-                    </button>
-                    <label class="ppms-btn-ghost ppms-btn-sm ppms-import-file-label">
-                        <input
-                            ref="importFileInput"
-                            type="file"
-                            accept=".csv,.txt,.json,text/csv,text/plain,application/json"
-                            class="ppms-sr-only"
-                            @change="onImportFileChange"
-                        />
-                        <span>{{ t('projects.importPickFile') }}</span>
-                    </label>
-                    <button
-                        type="button"
-                        class="ppms-btn-primary ppms-btn-sm"
-                        :disabled="importPreviewLoading || !importFileChosen"
-                        @click="runImportPreview"
-                    >
-                        {{ t('projects.importPreview') }}
-                    </button>
-                </div>
-                <p v-if="importSummary.total > 0" class="ppms-import-summary ppms-mt-sm">
-                    {{
-                        t('projects.importSummary', {
-                            valid: importSummary.valid,
-                            invalid: importSummary.invalid,
-                            total: importSummary.total,
-                        })
-                    }}
-                </p>
-                <div v-if="importPreviewRows.length" class="ppms-table-scroll ppms-import-preview-wrap ppms-mt-sm">
-                    <table class="ppms-table ppms-table--compact">
-                        <thead>
-                            <tr>
-                                <th>{{ t('projects.importLine') }}</th>
-                                <th>{{ t('projects.importStatus') }}</th>
-                                <th>{{ t('projects.importAction') }}</th>
-                                <th>{{ t('projects.colName') }}</th>
-                                <th>{{ t('projects.importErrors') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(r, i) in importPreviewRows" :key="'ir-' + i">
-                                <td>{{ r.line }}</td>
-                                <td>
-                                    <span :class="r.status === 'valid' ? 'ppms-import-badge ppms-import-badge--ok' : 'ppms-import-badge ppms-import-badge--err'">
-                                        {{ r.status === 'valid' ? t('projects.importValid') : t('projects.importInvalid') }}
-                                    </span>
-                                </td>
-                                <td>{{ r.action || '—' }}</td>
-                                <td>{{ r.name || '—' }}</td>
-                                <td class="ppms-import-err-cell">{{ (r.errors || []).join('; ') }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="ppms-modal-actions">
-                    <button type="button" class="ppms-btn-ghost" @click="closeImportModal">{{ t('common.cancel') }}</button>
-                    <button
-                        type="button"
-                        class="ppms-btn-primary"
-                        :disabled="importCommitLoading || !importPreviewId || importSummary.valid < 1"
-                        @click="runImportCommit"
-                    >
-                        {{ t('projects.importCommit') }}
-                    </button>
-                </div>
-            </div>
-        </div>
+        <ProjectListModalImport
+            ref="importModalRef"
+            v-model="showImportModal"
+            :file-chosen="importFileChosen"
+            :preview-loading="importPreviewLoading"
+            :commit-loading="importCommitLoading"
+            :preview-id="importPreviewId"
+            :summary="importSummary"
+            :preview-rows="importPreviewRows"
+            @close="closeImportModal"
+            @download-template="onImportDownloadTemplate"
+            @file-change="onImportFileChange"
+            @preview="runImportPreview"
+            @commit="runImportCommit"
+        />
 
-        <div
-            v-if="showSaveViewModal"
-            class="ppms-modal-backdrop"
-            role="presentation"
-            @click.self="showSaveViewModal = false"
-        >
-            <div
-                class="ppms-modal"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="ppms-modal-save-view-title"
-            >
-                <h2 id="ppms-modal-save-view-title">{{ t('projects.saveViewBtn') }}</h2>
-                <label class="ppms-field">
-                    <span>{{ t('projects.saveViewPrompt') }}</span>
-                    <input v-model="saveViewNameInput" type="text" maxlength="80" @keyup.enter="confirmSaveView" />
-                </label>
-                <div class="ppms-modal-actions">
-                    <button type="button" class="ppms-btn-ghost" @click="showSaveViewModal = false">
-                        {{ t('common.cancel') }}
-                    </button>
-                    <button type="button" class="ppms-btn-primary" @click="confirmSaveView">{{ t('common.save') }}</button>
-                </div>
-            </div>
-        </div>
+        <ProjectListModalSaveView
+            v-model:open="showSaveViewModal"
+            v-model:name="saveViewNameInput"
+            @confirm="confirmSaveView"
+        />
 
-        <div
-            v-if="showLabelsModal"
-            class="ppms-modal-backdrop"
-            role="presentation"
-            @click.self="closeLabelsModal"
-        >
-            <div
-                class="ppms-modal ppms-modal--labels"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="ppms-modal-labels-title"
-                @click.stop
-            >
-                <h2 id="ppms-modal-labels-title">{{ t('projects.labelsModalTitle') }}</h2>
-                <section class="ppms-labels-modal-section">
-                    <h3 class="ppms-labels-modal-sub">{{ t('projects.labelsFilterSection') }}</h3>
-                    <p class="ppms-muted ppms-labels-modal-hint">{{ t('projects.labelsFilterHint') }}</p>
-                    <label class="ppms-field">
-                        <span>{{ t('projects.colLabels') }}</span>
-                        <input v-model="labelsModal.filterInput" type="text" list="ppms-pl-label-datalist" autocomplete="off" />
-                    </label>
-                    <div class="ppms-labels-modal-actions-row ppms-mt-sm">
-                        <button type="button" class="ppms-btn-primary ppms-btn-sm" @click="applyLabelFilterFromModal">
-                            {{ t('projects.labelsFilterApply') }}
-                        </button>
-                        <button type="button" class="ppms-btn-ghost ppms-btn-sm" @click="clearLabelFilterFromModal">
-                            {{ t('projects.labelsFilterClear') }}
-                        </button>
-                    </div>
-                </section>
-                <section v-if="canBulk" class="ppms-labels-modal-section ppms-mt">
-                    <h3 class="ppms-labels-modal-sub">{{ t('projects.labelsBulkSection') }}</h3>
-                    <label class="ppms-field">
-                        <span>{{ t('projects.labelsBulkAddHint') }}</span>
-                        <input v-model="labelsBulkAddText" type="text" autocomplete="off" />
-                    </label>
-                    <button type="button" class="ppms-btn-primary ppms-btn-sm ppms-mt-sm" @click="runBulkLabelsAdd">
-                        {{ t('projects.labelsBulkApplyAdd') }}
-                    </button>
-                    <label class="ppms-field ppms-mt">
-                        <span>{{ t('projects.labelsBulkRemoveHint') }}</span>
-                        <input v-model="labelsBulkRemoveText" type="text" autocomplete="off" />
-                    </label>
-                    <button type="button" class="ppms-btn-ghost ppms-btn-sm ppms-mt-sm" @click="runBulkLabelsRemove">
-                        {{ t('projects.labelsBulkApplyRemove') }}
-                    </button>
-                </section>
-                <div class="ppms-modal-actions">
-                    <button type="button" class="ppms-btn-ghost" @click="closeLabelsModal">{{ t('common.close') }}</button>
-                </div>
-            </div>
-        </div>
+        <ProjectListModalLabels
+            v-model="showLabelsModal"
+            :labels-modal="labelsModal"
+            :labels-bulk-add-text="labelsBulkAddText"
+            :labels-bulk-remove-text="labelsBulkRemoveText"
+            :can-bulk="canBulk"
+            @close="closeLabelsModal"
+            @apply-filter="applyLabelFilterFromModal"
+            @clear-filter="clearLabelFilterFromModal"
+            @bulk-add="runBulkLabelsAdd"
+            @bulk-remove="runBulkLabelsRemove"
+            @update:labels-bulk-add-text="labelsBulkAddText = $event"
+            @update:labels-bulk-remove-text="labelsBulkRemoveText = $event"
+        />
 
-        <div v-if="showForm" class="ppms-modal-backdrop" role="presentation" @click.self="showForm = false">
-            <div
-                class="ppms-modal"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="ppms-modal-create-project-title"
-            >
-                <h2 id="ppms-modal-create-project-title">{{ t('projects.createModalTitle') }}</h2>
-                <form @submit.prevent="createProject">
-                    <label class="ppms-field">
-                        <span>{{ t('projects.fieldName') }} *</span>
-                        <input v-model="form.name" required />
-                    </label>
-                    <label class="ppms-field">
-                        <span>{{ t('projects.fieldType') }} *</span>
-                        <select v-model="form.type" required>
-                            <option value="maintenance">{{ t('projects.type.maintenance') }}</option>
-                            <option value="delivery">{{ t('projects.type.delivery') }}</option>
-                            <option value="rnd">{{ t('projects.type.rnd') }}</option>
-                        </select>
-                    </label>
-                    <label class="ppms-field">
-                        <span>{{ t('projects.fieldOwner') }} *</span>
-                        <select v-model="form.owner_id" required>
-                            <option value="" disabled>{{ t('projects.filterAll') }}</option>
-                            <option v-for="u in userOptions" :key="'f-' + u.id" :value="String(u.id)">{{ u.name }} ({{ u.email }})</option>
-                        </select>
-                    </label>
-                    <label class="ppms-field">
-                        <span>{{ t('projects.fieldDeadline') }}</span>
-                        <input v-model="form.deadline" type="date" />
-                    </label>
-                    <label class="ppms-field">
-                        <span>{{ t('projects.colStart') }}</span>
-                        <input v-model="form.start_date" type="date" />
-                    </label>
-                    <label class="ppms-field">
-                        <span>{{ t('projects.fieldCustomerName') }}</span>
-                        <input v-model="form.customer_name" />
-                    </label>
-                    <label class="ppms-field">
-                        <span>{{ t('projects.fieldCustomerEmail') }}</span>
-                        <input v-model="form.customer_email" type="email" />
-                    </label>
-                    <label class="ppms-field">
-                        <span>{{ t('projects.fieldSuppliersHint') }}</span>
-                        <textarea v-model="form.suppliers_text" rows="3" />
-                    </label>
-                    <label class="ppms-field">
-                        <span>{{ t('projects.fieldDescription') }}</span>
-                        <textarea v-model="form.description" rows="3" />
-                    </label>
-                    <label class="ppms-field">
-                        <span>{{ t('projects.fieldLabelsHint') }}</span>
-                        <input v-model="form.labels_text" type="text" autocomplete="off" />
-                    </label>
-                    <p v-if="formError" class="ppms-error">{{ formError }}</p>
-                    <div class="ppms-modal-actions">
-                        <button type="button" class="ppms-btn-ghost" @click="showForm = false">
-                            {{ t('common.cancel') }}
-                        </button>
-                        <button type="submit" class="ppms-btn-primary">{{ t('common.save') }}</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+        <ProjectListModalCreate
+            ref="createModalRef"
+            v-model:open="showForm"
+            :form="form"
+            :form-error="formError"
+            :user-options="userOptions"
+            @submit="createProject"
+        />
 
-        <Teleport to="body">
-            <div
-                v-if="userPopover.open"
-                ref="userPopoverEl"
-                class="ppms-pl-user-popover"
-                role="dialog"
-                :aria-label="
-                    userPopover.mode === 'admin'
-                        ? t('projects.avatarInfoAdmin')
-                        : userPopover.menuSlots.length && !userPopover.user
-                          ? t('projects.userPopoverPickParticipant')
-                          : t('projects.avatarInfoParticipants')
-                "
-                :style="{ top: userPopover.top + 'px', left: userPopover.left + 'px' }"
-                @click.stop
-            >
-                <template v-if="userPopover.menuSlots.length && !userPopover.user">
-                    <p class="ppms-pl-user-popover-extra-title">{{ t('projects.userPopoverPickParticipant') }}</p>
-                    <ul class="ppms-pl-user-popover-list ppms-pl-user-popover-pick-list">
-                        <li v-for="(slot, pi) in userPopover.menuSlots" :key="'ms-' + pi">
-                            <button type="button" class="ppms-pl-user-popover-pick" @click="onPickMenuParticipant(slot)">
-                                {{ participantSlotLabel(slot) }}
-                            </button>
-                        </li>
-                    </ul>
-                </template>
-                <template v-else>
-                    <div v-if="userPopover.user" class="ppms-pl-user-popover-head">
-                        <span
-                            class="ppms-pl-avatar ppms-pl-avatar--sm"
-                            :style="{ background: avatarColor(userPopover.user?.name || userPopover.user?.email || '?') }"
-                            aria-hidden="true"
-                        >
-                            {{ userInitials(userPopover.user?.name) }}
-                        </span>
-                        <div class="ppms-pl-user-popover-text">
-                            <strong class="ppms-pl-user-popover-name">{{ userPopover.user?.name || '—' }}</strong>
-                            <p v-if="userPopover.user?.email" class="ppms-pl-user-popover-email">{{ userPopover.user.email }}</p>
-                        </div>
-                    </div>
-                    <div v-if="userPopover.stakeholders.length" class="ppms-pl-user-popover-extra">
-                        <p class="ppms-pl-user-popover-extra-title">{{ t('projects.userPopoverOtherParticipants') }}</p>
-                        <ul class="ppms-pl-user-popover-list">
-                            <li v-for="(line, pi) in userPopover.stakeholders" :key="'st-' + pi">{{ line }}</li>
-                        </ul>
-                    </div>
-                </template>
-            </div>
-        </Teleport>
+        <ProjectListUserPopover
+            ref="userPopoverRef"
+            :open="userPopover.open"
+            :top="userPopover.top"
+            :left="userPopover.left"
+            :mode="userPopover.mode"
+            :user="userPopover.user"
+            :menu-slots="userPopover.menuSlots"
+            :stakeholders="userPopover.stakeholders"
+            :participant-slot-label="participantSlotLabel"
+            :avatar-color="avatarColor"
+            :user-initials="userInitials"
+            @pick="onPickMenuParticipant"
+        />
     </main>
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, unref, watch } from 'vue';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { formatApiUserMessage } from '@/bootstrap';
 import { ppmsConfirm, ppmsToastError, ppmsToastSuccess } from '@/ppmsUi';
+import { useProjectListColumns } from './composables/useProjectListColumns';
+import { clampProgress, deadlineTone, formatDeadline, formatProgress, progressToneClass } from './utils/projectListDisplay';
+import { parseCommaLabelTokens, projectLabelList, projectLabelsPreview } from './utils/projectLabels';
+import { buildParticipantSlots as participantAllSlots, displayNameFromEmail } from './utils/projectParticipants';
+import {
+    KANBAN_FETCH_PER_PAGE,
+    KANBAN_PHASE_ORDER,
+    PPMS_PROJECT_LIST_VIEW_MODE_KEY,
+    PPMS_PROJECT_VIEWS_KEY,
+} from './constants/projectList';
+import ProjectListBulkDeleteDock from './components/list/ProjectListBulkDeleteDock.vue';
+import ProjectListLoadingState from './components/list/ProjectListLoadingState.vue';
+import ProjectListModalCreate from './components/list/ProjectListModalCreate.vue';
+import ProjectListModalImport from './components/list/ProjectListModalImport.vue';
+import ProjectListModalLabels from './components/list/ProjectListModalLabels.vue';
+import ProjectListModalSaveView from './components/list/ProjectListModalSaveView.vue';
+import ProjectListSavedViews from './components/list/ProjectListSavedViews.vue';
+import ProjectListToolbar from './components/list/ProjectListToolbar.vue';
+import ProjectListUserPopover from './components/list/ProjectListUserPopover.vue';
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 
-const PPMS_PROJECT_VIEWS_KEY = 'ppms-project-saved-views';
-const PPMS_PROJECT_LIST_VIEW_MODE_KEY = 'ppms-project-list-view-mode';
-const PPMS_PROJECT_LIST_COLUMNS_KEY = 'ppms-project-list-columns';
-
-const PL_COL_ORDER = ['admin', 'code', 'name', 'participants', 'progress', 'tasks', 'start', 'actualStart', 'end', 'status', 'actions'];
-
-const COLUMN_LABEL_KEYS = {
-    admin: 'colAdmin',
-    code: 'colCode',
-    name: 'colName',
-    participants: 'colParticipants',
-    progress: 'colProgress',
-    tasks: 'colTasks',
-    start: 'colStart',
-    actualStart: 'colActualStart',
-    end: 'colEnd',
-    status: 'colStatus',
-    actions: 'colActions',
-};
-
-function defaultColumnVisibility() {
-    return PL_COL_ORDER.reduce((acc, k) => {
-        acc[k] = true;
-
-        return acc;
-    }, {});
-}
-
-function loadProjectListColumns() {
-    const d = defaultColumnVisibility();
-    try {
-        const raw = localStorage.getItem(PPMS_PROJECT_LIST_COLUMNS_KEY);
-        if (raw) {
-            const o = JSON.parse(raw);
-            if (o && typeof o === 'object') {
-                for (const k of PL_COL_ORDER) {
-                    if (typeof o[k] === 'boolean') {
-                        d[k] = o[k];
-                    }
-                }
-            }
-        }
-    } catch {
-        /* ignore */
-    }
-    d.name = true;
-    d.actions = true;
-
-    return d;
-}
-
-const columnVisibility = reactive(loadProjectListColumns());
-
-function persistProjectListColumns() {
-    columnVisibility.name = true;
-    columnVisibility.actions = true;
-    try {
-        localStorage.setItem(PPMS_PROJECT_LIST_COLUMNS_KEY, JSON.stringify({ ...columnVisibility }));
-    } catch {
-        /* ignore */
-    }
-}
-
-function colVis(key) {
-    return columnVisibility[key] !== false;
-}
-
-function columnLocked(key) {
-    return key === 'name' || key === 'actions';
-}
-
-function onColumnToggle(key, ev) {
-    if (columnLocked(key)) {
-        return;
-    }
-    columnVisibility[key] = Boolean(ev?.target?.checked);
-    persistProjectListColumns();
-}
-
-const columnPickerOptions = computed(() =>
-    PL_COL_ORDER.map((key) => ({
-        key,
-        labelKey: COLUMN_LABEL_KEYS[key],
-        locked: columnLocked(key),
-    })),
-);
+const { columnVisibility, colVis, onColumnToggle, columnPickerOptions, PL_COL_ORDER } = useProjectListColumns();
 
 const projects = ref([]);
 const viewMode = ref('list');
@@ -1087,6 +529,10 @@ const form = reactive({
     owner_id: '',
     deadline: '',
     start_date: '',
+    progress_calc: 'weighted_tasks',
+    executor_user_ids: [],
+    follower_user_ids: [],
+    permission_preset: 'org_default',
     description: '',
     customer_name: '',
     customer_email: '',
@@ -1094,10 +540,34 @@ const form = reactive({
     labels_text: '',
 });
 
+function resetCreateForm() {
+    form.name = '';
+    form.type = 'delivery';
+    form.owner_id = '';
+    form.deadline = '';
+    form.start_date = '';
+    form.progress_calc = 'weighted_tasks';
+    form.executor_user_ids = [];
+    form.follower_user_ids = [];
+    form.permission_preset = 'org_default';
+    form.description = '';
+    form.customer_name = '';
+    form.customer_email = '';
+    form.suppliers_text = '';
+    form.labels_text = '';
+}
+
+function openCreateModal() {
+    resetCreateForm();
+    showForm.value = true;
+}
+
+const createModalRef = ref(null);
+
 const savedViews = ref([]);
 
 const toolbarMenuOpen = ref(false);
-const toolbarMenuEl = ref(null);
+const toolbarRef = ref(null);
 
 const showLabelsModal = ref(false);
 const labelsSuggestions = ref([]);
@@ -1117,7 +587,11 @@ watch(quickLabelProjectId, async (id) => {
 });
 
 const showImportModal = ref(false);
-const importFileInput = ref(null);
+const importModalRef = ref(null);
+
+function importFileInputEl() {
+    return unref(importModalRef.value?.fileInputRef);
+}
 const importFileChosen = ref(false);
 const importPreviewId = ref(null);
 const importPreviewRows = ref([]);
@@ -1231,11 +705,6 @@ const displayTableRows = computed(() => {
     return out;
 });
 
-/** Kanban requests more rows per API page so the board is usable; list view keeps user per_page. */
-const KANBAN_FETCH_PER_PAGE = 100;
-
-const KANBAN_PHASE_ORDER = ['planning', 'development', 'uat', 'done', 'maintenance', 'rnd'];
-
 function kanbanPhaseOf(p) {
     const ph = p?.phase;
     if (KANBAN_PHASE_ORDER.includes(ph)) {
@@ -1327,7 +796,7 @@ const userPopover = reactive({
     left: 0,
 });
 
-const userPopoverEl = ref(null);
+const userPopoverRef = ref(null);
 
 function closeUserPopover() {
     userPopover.open = false;
@@ -1358,7 +827,7 @@ function positionPopoverFromAnchor(anchorEl) {
 }
 
 function adjustPopoverVertical(anchorEl) {
-    const el = userPopoverEl.value;
+    const el = unref(userPopoverRef.value?.rootEl);
     if (!el || !anchorEl || !(anchorEl instanceof Element)) {
         return;
     }
@@ -1392,7 +861,7 @@ async function openAdminUserPopover(ev, project) {
 }
 
 function buildDisplayUser(slot) {
-    if (slot.kind === 'owner') {
+    if (slot.kind === 'owner' || slot.kind === 'executor' || slot.kind === 'follower') {
         return slot.user;
     }
 
@@ -1406,13 +875,25 @@ function participantSlotsEqual(a, b) {
         return false;
     }
 
-    return a.kind === 'owner' ? a.user?.id === b.user?.id : a.email === b.email;
+    if (a.kind === 'stakeholder') {
+        return a.email === b.email;
+    }
+
+    return a.user?.id === b.user?.id;
 }
 
 function otherParticipantLines(project, selectedSlot) {
     return participantAllSlots(project)
         .filter((s) => !participantSlotsEqual(s, selectedSlot))
-        .map((s) => (s.kind === 'owner' ? `${s.user.name} (${s.user.email})` : s.email));
+        .map((s) => {
+            if (s.kind === 'owner' || s.kind === 'executor' || s.kind === 'follower') {
+                const u = s.user;
+
+                return `${u.name} (${u.email})`;
+            }
+
+            return s.email;
+        });
 }
 
 async function openSingleParticipantPopover(ev, project, slot) {
@@ -1506,68 +987,6 @@ function setViewMode(mode) {
     scheduleUrlReplace();
 }
 
-function clampProgress(v) {
-    const n = Number(v);
-    if (Number.isNaN(n)) {
-        return 0;
-    }
-
-    return Math.min(100, Math.max(0, n));
-}
-
-function formatProgress(v) {
-    return clampProgress(v).toFixed(1);
-}
-
-function progressToneClass(v) {
-    const p = clampProgress(v);
-    if (p >= 100) {
-        return 'ppms-progress-fill--done';
-    }
-    if (p >= 70) {
-        return 'ppms-progress-fill--good';
-    }
-    if (p >= 30) {
-        return 'ppms-progress-fill--mid';
-    }
-
-    return 'ppms-progress-fill--low';
-}
-
-function deadlineTone(iso) {
-    if (!iso) {
-        return { cls: '', key: null };
-    }
-    const s = String(iso).slice(0, 10);
-    const parts = s.split('-');
-    if (parts.length !== 3) {
-        return { cls: 'ppms-deadline--ok', key: null };
-    }
-    const end = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
-    const diffDays = Math.round((end.getTime() - today.getTime()) / 86400000);
-    if (diffDays < 0) {
-        return { cls: 'ppms-deadline--overdue', key: 'projects.deadlineOverdue' };
-    }
-    if (diffDays <= 7) {
-        return { cls: 'ppms-deadline--soon', key: 'projects.deadlineSoon' };
-    }
-
-    return { cls: 'ppms-deadline--ok', key: null };
-}
-
-function formatDeadline(iso) {
-    if (!iso) {
-        return '';
-    }
-    const s = String(iso).slice(0, 10);
-    const [y, m, d] = s.split('-');
-
-    return d && m && y ? `${d}/${m}/${y}` : s;
-}
-
 function closeLabelsModal() {
     showLabelsModal.value = false;
 }
@@ -1585,13 +1004,6 @@ async function fetchLabelSuggestions() {
     } catch {
         labelsSuggestions.value = [];
     }
-}
-
-function parseCommaLabelTokens(s) {
-    return String(s || '')
-        .split(/[,;]/)
-        .map((x) => x.trim())
-        .filter(Boolean);
 }
 
 function toggleQuickLabel(project) {
@@ -1636,17 +1048,6 @@ async function submitQuickLabel(project) {
     } finally {
         quickLabelSavingId.value = null;
     }
-}
-
-function projectLabelList(p) {
-    return Array.isArray(p?.labels) ? p.labels.filter(Boolean) : [];
-}
-
-function projectLabelsPreview(p, max = 3) {
-    const list = projectLabelList(p);
-    const show = list.slice(0, max);
-
-    return { show, more: Math.max(0, list.length - max) };
 }
 
 function applyLabelFilterFromModal() {
@@ -1746,59 +1147,12 @@ function avatarColor(seed) {
 }
 
 function projectCode(p) {
-    return `DA-${String(p.id).padStart(5, '0')}`;
+    const c = p.code != null && String(p.code).trim() ? String(p.code).trim() : '';
+
+    return c || `DA-${String(p.id).padStart(5, '0')}`;
 }
 
 const PARTICIPANTS_AVATAR_MAX = 3;
-
-function participantStakeholderEmails(p) {
-    const emails = p.stakeholder_emails;
-
-    return Array.isArray(emails) ? emails.filter(Boolean) : [];
-}
-
-function initialsFromEmail(email) {
-    const local = String(email).split('@')[0].trim();
-    if (!local) {
-        return '?';
-    }
-    const parts = local.split(/[._+-]+/).filter(Boolean);
-    if (parts.length >= 2) {
-        return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-    }
-
-    return local.length >= 2 ? local.slice(0, 2).toUpperCase() : local.charAt(0).toUpperCase();
-}
-
-function displayNameFromEmail(email) {
-    const local = String(email).split('@')[0].trim();
-
-    return local.replace(/[._+-]+/g, ' ').trim() || String(email);
-}
-
-/** Thứ tự: owner trước, sau đó stakeholder theo email. */
-function participantAllSlots(p) {
-    const slots = [];
-    if (p.owner) {
-        const seed = p.owner.name || p.owner.email || '?';
-        slots.push({
-            kind: 'owner',
-            user: p.owner,
-            colorSeed: seed,
-            initials: userInitials(p.owner.name),
-        });
-    }
-    for (const em of participantStakeholderEmails(p)) {
-        slots.push({
-            kind: 'stakeholder',
-            email: em,
-            colorSeed: em,
-            initials: initialsFromEmail(em),
-        });
-    }
-
-    return slots;
-}
 
 function participantVisibleSlots(p) {
     return participantAllSlots(p).slice(0, PARTICIPANTS_AVATAR_MAX);
@@ -1813,7 +1167,7 @@ function participantOverflowCount(p) {
 }
 
 function participantSlotLabel(slot) {
-    if (slot.kind === 'owner') {
+    if (slot.kind === 'owner' || slot.kind === 'executor' || slot.kind === 'follower') {
         return slot.user?.name || slot.user?.email || '—';
     }
 
@@ -1823,7 +1177,7 @@ function participantSlotLabel(slot) {
 }
 
 function participantSlotAriaLabel(slot) {
-    if (slot.kind === 'owner') {
+    if (slot.kind === 'owner' || slot.kind === 'executor' || slot.kind === 'follower') {
         const n = slot.user?.name || slot.user?.email;
 
         return n ? `${t('projects.avatarInfoParticipants')}: ${n}` : t('projects.avatarInfoParticipants');
@@ -2122,11 +1476,14 @@ function onDocumentClickOutside(e) {
     if (!(target instanceof Node)) {
         return;
     }
-    if (toolbarMenuOpen.value && toolbarMenuEl.value && !toolbarMenuEl.value.contains(target)) {
+    const toolbarMenuEl = toolbarRef.value?.getMenuEl?.();
+    if (toolbarMenuOpen.value && toolbarMenuEl && !toolbarMenuEl.contains(target)) {
         toolbarMenuOpen.value = false;
     }
+    createModalRef.value?.handleDocumentClick?.(target);
     if (userPopover.open) {
-        if (userPopoverEl.value?.contains(target)) {
+        const popEl = unref(userPopoverRef.value?.rootEl);
+        if (popEl?.contains(target)) {
             return;
         }
         closeUserPopover();
@@ -2141,6 +1498,7 @@ function onDocumentClickOutside(e) {
 function onGlobalKeydown(e) {
     if (e.key === 'Escape') {
         toolbarMenuOpen.value = false;
+        createModalRef.value?.closeProgressCalc?.();
         closeUserPopover();
         closeQuickLabel();
         closeLabelsModal();
@@ -2207,8 +1565,9 @@ function openImportModal() {
     importPreviewRows.value = [];
     importSummary.value = { total: 0, valid: 0, invalid: 0 };
     importFileChosen.value = false;
-    if (importFileInput.value) {
-        importFileInput.value.value = '';
+    const input = importFileInputEl();
+    if (input) {
+        input.value = '';
     }
     showImportModal.value = true;
 }
@@ -2218,7 +1577,7 @@ function closeImportModal() {
 }
 
 function onImportFileChange() {
-    importFileChosen.value = Boolean(importFileInput.value?.files?.length);
+    importFileChosen.value = Boolean(importFileInputEl()?.files?.length);
     importPreviewId.value = null;
     importPreviewRows.value = [];
     importSummary.value = { total: 0, valid: 0, invalid: 0 };
@@ -2254,8 +1613,16 @@ async function downloadImportTemplateJson() {
     }
 }
 
+function onImportDownloadTemplate(kind) {
+    if (kind === 'csv') {
+        downloadImportTemplateCsv();
+    } else {
+        downloadImportTemplateJson();
+    }
+}
+
 async function runImportPreview() {
-    const input = importFileInput.value;
+    const input = importFileInputEl();
     const file = input?.files?.[0];
     if (!file) {
         return;
@@ -2419,13 +1786,15 @@ async function createProject() {
         return;
     }
     if (!form.owner_id) {
-        formError.value = t('projects.bulkNeedField');
+        formError.value = t('projects.createNeedOwner');
 
         return;
     }
     try {
         const suppliers = parseSuppliersPayload();
         const labelTokens = parseCommaLabelTokens(form.labels_text);
+        const execIds = (form.executor_user_ids || []).map((id) => Number(id)).filter((n) => n > 0);
+        const folIds = (form.follower_user_ids || []).map((id) => Number(id)).filter((n) => n > 0);
         const payload = {
             name: form.name,
             type: form.type,
@@ -2436,16 +1805,17 @@ async function createProject() {
             customer_name: form.customer_name?.trim() || null,
             customer_email: form.customer_email?.trim() || null,
             suppliers,
+            progress_calc: form.progress_calc || null,
+            permission_preset: form.permission_preset || 'org_default',
+            executor_user_ids: execIds,
+            follower_user_ids: folIds,
         };
         if (labelTokens.length) {
             payload.labels = labelTokens;
         }
         await axios.post('/api/projects', payload);
         showForm.value = false;
-        form.suppliers_text = '';
-        form.customer_name = '';
-        form.customer_email = '';
-        form.labels_text = '';
+        resetCreateForm();
         ppmsToastSuccess(t('projects.createOk'));
         page.value = 1;
         await load();

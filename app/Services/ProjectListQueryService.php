@@ -3,8 +3,11 @@
 namespace App\Services;
 
 use App\Models\Project;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 /**
  * Shared filter/sort logic for project list, CSV/PDF export, and counts.
@@ -94,5 +97,48 @@ class ProjectListQueryService
             'deadline_asc' => $q->orderByRaw('(deadline IS NULL) ASC, deadline ASC'),
             default => $q->orderByDesc('updated_at'),
         };
+    }
+
+    /**
+     * Attach executor_users / follower_users (id, name, email) for API consumers (list / cards).
+     */
+    public function hydrateParticipantUsers(LengthAwarePaginator $paginator): void
+    {
+        $this->hydrateParticipantUsersForProjects($paginator->getCollection());
+    }
+
+    /**
+     * @param  Collection<int, Project>  $projects
+     */
+    public function hydrateParticipantUsersForProjects(Collection $projects): void
+    {
+        $ids = [];
+        foreach ($projects as $p) {
+            foreach (array_merge($p->executor_user_ids ?? [], $p->follower_user_ids ?? []) as $id) {
+                $ids[(int) $id] = true;
+            }
+        }
+        $idList = array_keys($ids);
+        if ($idList === []) {
+            foreach ($projects as $p) {
+                $p->setAttribute('executor_users', collect());
+                $p->setAttribute('follower_users', collect());
+            }
+
+            return;
+        }
+        $users = User::query()->whereIn('id', $idList)->get(['id', 'name', 'email'])->keyBy('id');
+        foreach ($projects as $p) {
+            $ex = collect($p->executor_user_ids ?? [])
+                ->map(fn ($id) => $users->get((int) $id))
+                ->filter()
+                ->values();
+            $fo = collect($p->follower_user_ids ?? [])
+                ->map(fn ($id) => $users->get((int) $id))
+                ->filter()
+                ->values();
+            $p->setAttribute('executor_users', $ex);
+            $p->setAttribute('follower_users', $fo);
+        }
     }
 }

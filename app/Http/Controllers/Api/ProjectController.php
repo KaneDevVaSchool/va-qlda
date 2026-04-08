@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskAttachment;
 use App\Services\AuditLogger;
 use App\Services\ProjectListQueryService;
+use App\Services\ProjectMediaService;
 use App\Services\ProjectProgressService;
+use App\Services\TaskProgressDisplayService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -26,7 +30,10 @@ class ProjectController extends Controller
 
         $perPage = min(100, max(10, (int) $request->query('per_page', 50)));
 
-        return $this->projectListQuery->filteredQuery($request)->paginate($perPage);
+        $paginator = $this->projectListQuery->filteredQuery($request)->paginate($perPage);
+        $this->projectListQuery->hydrateParticipantUsers($paginator);
+
+        return $paginator;
     }
 
     /**
@@ -190,6 +197,7 @@ class ProjectController extends Controller
             'start_date' => 'nullable|date',
             'actual_start_date' => 'nullable|date',
             'description' => 'nullable|string',
+            'progress_calc' => 'nullable|in:weighted_tasks,average_task_pct,time_proportion',
             'customer_name' => 'nullable|string|max:255',
             'customer_email' => 'nullable|email|max:255',
             'suppliers' => 'nullable|array',
@@ -202,10 +210,22 @@ class ProjectController extends Controller
             'stakeholder_emails.*' => 'email',
             'labels' => 'nullable|array',
             'labels.*' => 'string|max:64',
+            'executor_user_ids' => 'nullable|array|max:40',
+            'executor_user_ids.*' => 'integer|exists:users,id',
+            'follower_user_ids' => 'nullable|array|max:40',
+            'follower_user_ids.*' => 'integer|exists:users,id',
+            'permission_preset' => 'nullable|in:org_default,members_only,owner_only',
         ]);
 
         if (array_key_exists('labels', $data)) {
             $data['labels'] = Project::normalizeLabelList($data['labels'] ?? []) ?? [];
+        }
+
+        $data['executor_user_ids'] = $this->normalizeProjectUserIdList($data['executor_user_ids'] ?? null);
+        $data['follower_user_ids'] = $this->normalizeProjectUserIdList($data['follower_user_ids'] ?? null);
+        $data['estimated_value'] = null;
+        if (empty($data['permission_preset'])) {
+            $data['permission_preset'] = 'org_default';
         }
 
         $project = Project::create(array_merge([
@@ -214,9 +234,17 @@ class ProjectController extends Controller
             'progress' => 0,
         ], $data));
 
+        if (trim((string) $project->code) === '') {
+            $project->code = 'PRJ-'.str_pad((string) $project->id, 6, '0', STR_PAD_LEFT);
+            $project->save();
+        }
+
         AuditLogger::log('project.created', $project, null, $project->only(array_keys($data)));
 
-        return response()->json($project->load('owner:id,name,email'), 201);
+        $project->load('owner:id,name,email');
+        $this->projectListQuery->hydrateParticipantUsersForProjects(collect([$project]));
+
+        return response()->json($project, 201);
     }
 
     public function show(Project $project)
@@ -225,7 +253,10 @@ class ProjectController extends Controller
 
         $project->load([
             'owner:id,name,email',
-            'tasks.assignee:id,name,email',
+            'phases',
+            'supplies',
+            'tasks.assignee:id,name,email,role',
+            'tasks.projectPhase:id,name',
             'tasks.children',
             'tasks.predecessors:id,name,status',
         ]);
@@ -233,13 +264,39 @@ class ProjectController extends Controller
 
         $inv = max(1, (int) $project->csat_invites_sent);
 
-        return response()->json(array_merge($project->toArray(), [
+        $this->projectListQuery->hydrateParticipantUsersForProjects(collect([$project]));
+
+        $payload = $project->toArray();
+        // Luôn trả mảng JSON thuần (id, name, email) để client không bị lệch kiểu object/map.
+        $payload['executor_users'] = $this->serializeProjectParticipantUsers($project->getAttribute('executor_users'));
+        $payload['follower_users'] = $this->serializeProjectParticipantUsers($project->getAttribute('follower_users'));
+
+        return response()->json(array_merge($payload, [
             'csat_metrics' => [
                 'response_count' => (int) $project->csat_responses_count,
                 'invites_sent' => (int) $project->csat_invites_sent,
                 'response_rate_pct' => round(min(100, ($project->csat_responses_count / $inv) * 100), 2),
             ],
         ]));
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, \App\Models\User>|null  $users
+     * @return list<array{id: int, name: string, email: string}>
+     */
+    private function serializeProjectParticipantUsers($users): array
+    {
+        return collect($users ?? [])
+            ->filter()
+            ->unique('id')
+            ->values()
+            ->map(fn ($u) => [
+                'id' => (int) $u->id,
+                'name' => (string) $u->name,
+                'email' => (string) ($u->email ?? ''),
+            ])
+            ->values()
+            ->all();
     }
 
     /**
@@ -257,13 +314,43 @@ class ProjectController extends Controller
     }
 
     /**
+     * Unified project library + task attachments for the media tab (scope + q optional).
+     */
+    public function media(Request $request, Project $project, ProjectMediaService $mediaService)
+    {
+        $this->authorize('view', $project);
+
+        $data = $request->validate([
+            'scope' => 'nullable|in:all,project,task',
+            'q' => 'nullable|string|max:2048',
+        ]);
+
+        $scope = $data['scope'] ?? 'all';
+        $q = $data['q'] ?? null;
+
+        $items = $mediaService->listForProject(
+            $project,
+            $scope === 'all' ? null : $scope,
+            $q
+        );
+
+        return collect($items)
+            ->map(fn (array $row) => Arr::except($row, ['sort_at']))
+            ->values();
+    }
+
+    /**
      * BR-PM-04: dữ liệu Gantt + meta layout (filter assignee, status, root_only).
      */
     public function gantt(Request $request, Project $project)
     {
         $this->authorize('view', $project);
 
-        $q = $project->tasks()->with(['assignee:id,name', 'predecessors:id,name']);
+        $q = $project->tasks()->with([
+            'assignee:id,name',
+            'predecessors:id,name',
+            'children.children',
+        ]);
 
         if ($request->filled('assignee_id')) {
             $q->where('assignee_id', (int) $request->query('assignee_id'));
@@ -315,7 +402,7 @@ class ProjectController extends Controller
                 'due_date' => $t->due_date?->toDateString(),
                 'start' => $start->toDateString(),
                 'end' => $end->toDateString(),
-                'progress_pct' => $t->status === 'done' ? 100 : ($t->status === 'in_progress' ? 50 : 0),
+                'progress_pct' => TaskProgressDisplayService::percent($t),
                 'layout' => [
                     'left_pct' => round(min(92, max(0, $leftPct)), 2),
                     'width_pct' => round(min(90, max(3, $widthPct)), 2),
@@ -345,6 +432,7 @@ class ProjectController extends Controller
         $before = $project->getAttributes();
         $data = $request->validate([
             'name' => 'sometimes|string|max:255',
+            'code' => 'nullable|string|max:64',
             'type' => 'sometimes|in:maintenance,delivery,rnd',
             'phase' => 'sometimes|in:planning,development,uat,done,maintenance,rnd',
             'status' => 'sometimes|in:on_track,at_risk,delayed,blocked',
@@ -353,6 +441,8 @@ class ProjectController extends Controller
             'start_date' => 'nullable|date',
             'actual_start_date' => 'nullable|date',
             'description' => 'nullable|string',
+            'estimated_value' => 'nullable|numeric|min:0',
+            'progress_calc' => 'nullable|in:weighted_tasks,average_task_pct,time_proportion',
             'customer_name' => 'nullable|string|max:255',
             'customer_email' => 'nullable|email|max:255',
             'suppliers' => 'nullable|array',
@@ -365,10 +455,24 @@ class ProjectController extends Controller
             'stakeholder_emails.*' => 'email',
             'labels' => 'nullable|array',
             'labels.*' => 'string|max:64',
+            'executor_user_ids' => 'nullable|array|max:40',
+            'executor_user_ids.*' => 'integer|exists:users,id',
+            'follower_user_ids' => 'nullable|array|max:40',
+            'follower_user_ids.*' => 'integer|exists:users,id',
+            'permission_preset' => 'nullable|in:org_default,members_only,owner_only',
         ]);
 
         if (array_key_exists('labels', $data)) {
             $data['labels'] = Project::normalizeLabelList($data['labels'] ?? []) ?? [];
+        }
+
+        if (array_key_exists('executor_user_ids', $data) || array_key_exists('follower_user_ids', $data) || array_key_exists('owner_id', $data)) {
+            if (array_key_exists('executor_user_ids', $data)) {
+                $data['executor_user_ids'] = $this->normalizeProjectUserIdList($data['executor_user_ids']);
+            }
+            if (array_key_exists('follower_user_ids', $data)) {
+                $data['follower_user_ids'] = $this->normalizeProjectUserIdList($data['follower_user_ids']);
+            }
         }
 
         $project->update($data);
@@ -376,7 +480,10 @@ class ProjectController extends Controller
 
         AuditLogger::log('project.updated', $project, $before, $project->getAttributes());
 
-        return $project->fresh()->load('owner:id,name,email');
+        $fresh = $project->fresh()->load('owner:id,name,email');
+        $this->projectListQuery->hydrateParticipantUsersForProjects(collect([$fresh]));
+
+        return $fresh;
     }
 
     public function destroy(Project $project)
@@ -427,6 +534,55 @@ class ProjectController extends Controller
     }
 
     /**
+     * Nhật ký thay đổi (audit) gắn dự án và công việc trong dự án.
+     */
+    public function activities(Project $project)
+    {
+        $this->authorize('view', $project);
+
+        $taskIds = Task::query()->where('project_id', $project->id)->pluck('id');
+
+        $logs = AuditLog::query()
+            ->where(function ($q) use ($project, $taskIds) {
+                $q->where(function ($q2) use ($project) {
+                    $q2->where('auditable_type', Project::class)->where('auditable_id', $project->id);
+                });
+                if ($taskIds->isNotEmpty()) {
+                    $q->orWhere(function ($q2) use ($taskIds) {
+                        $q2->where('auditable_type', Task::class)->whereIn('auditable_id', $taskIds);
+                    });
+                }
+            })
+            ->orderByDesc('id')
+            ->limit(80)
+            ->with('user:id,name')
+            ->get();
+
+        return response()->json(['activities' => $logs]);
+    }
+
+    /**
+     * Thêm email người dùng hiện tại vào danh sách bên liên quan (stakeholders).
+     */
+    public function joinStakeholder(Request $request, Project $project)
+    {
+        $this->authorize('view', $project);
+
+        $email = strtolower(trim((string) $request->user()->email));
+        if ($email === '') {
+            abort(422, 'User has no email.');
+        }
+
+        $emails = array_map('strtolower', $project->stakeholder_emails ?? []);
+        if (! in_array($email, $emails, true)) {
+            $emails[] = $email;
+            $project->update(['stakeholder_emails' => array_values(array_unique($emails))]);
+        }
+
+        return response()->json($project->fresh()->load('owner:id,name,email'));
+    }
+
+    /**
      * BR-PM-06: Clone project (optional reset dates / open tasks).
      */
     public function duplicate(Request $request, Project $project)
@@ -437,8 +593,11 @@ class ProjectController extends Controller
         $reset = $request->boolean('reset_dates', true);
 
         $newId = DB::transaction(function () use ($project, $reset) {
+            $project->loadMissing(['phases', 'supplies']);
+
             $np = $project->replicate();
             $np->name = $project->name.' (copy)';
+            $np->code = null;
             $np->progress = 0;
             $np->archived_at = null;
             $np->status = 'on_track';
@@ -450,6 +609,28 @@ class ProjectController extends Controller
             $np->csat_invites_sent = 0;
             $np->csat_survey_sent_at = null;
             $np->save();
+            if (trim((string) $np->code) === '') {
+                $np->code = 'PRJ-'.str_pad((string) $np->id, 6, '0', STR_PAD_LEFT);
+                $np->save();
+            }
+
+            $phaseMap = [];
+            foreach ($project->phases as $ph) {
+                $nph = $ph->replicate();
+                $nph->project_id = $np->id;
+                if ($reset) {
+                    $nph->start_date = null;
+                    $nph->end_date = null;
+                }
+                $nph->save();
+                $phaseMap[$ph->id] = $nph->id;
+            }
+
+            foreach ($project->supplies as $sup) {
+                $ns = $sup->replicate();
+                $ns->project_id = $np->id;
+                $ns->save();
+            }
 
             $tasks = $project->tasks()->orderBy('id')->get();
             $map = [];
@@ -457,6 +638,9 @@ class ProjectController extends Controller
                 $nt = $t->replicate();
                 $nt->project_id = $np->id;
                 $nt->parent_id = null;
+                if ($t->project_phase_id) {
+                    $nt->project_phase_id = $phaseMap[$t->project_phase_id] ?? null;
+                }
                 if ($reset) {
                     $nt->due_date = null;
                     $nt->blocked_at = null;
@@ -480,7 +664,36 @@ class ProjectController extends Controller
 
         $fresh = Project::query()->with('owner:id,name,email')->findOrFail($newId);
         $this->progressService->syncProjectProgress($fresh);
+        $fresh = $fresh->fresh()->load('owner:id,name,email');
+        $this->projectListQuery->hydrateParticipantUsersForProjects(collect([$fresh]));
 
-        return response()->json($fresh->fresh()->load('owner:id,name,email'), 201);
+        return response()->json($fresh, 201);
+    }
+
+    /**
+     * @param  list<int>|null  $raw
+     * @return list<int>
+     */
+    private function normalizeProjectUserIdList(?array $raw): array
+    {
+        if ($raw === null || $raw === []) {
+            return [];
+        }
+        $out = [];
+        $seen = [];
+        foreach ($raw as $id) {
+            $n = (int) $id;
+            // Giữ đúng danh sách người dùng chọn (kể cả owner nếu được tick) — trước đây bỏ owner_id nên UI "Người thực hiện" thiếu người.
+            if ($n < 1 || isset($seen[$n])) {
+                continue;
+            }
+            $seen[$n] = true;
+            $out[] = $n;
+            if (count($out) >= 40) {
+                break;
+            }
+        }
+
+        return $out;
     }
 }

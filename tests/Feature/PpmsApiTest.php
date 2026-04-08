@@ -417,16 +417,15 @@ class PpmsApiTest extends TestCase
 
         $folder = $this->postJson("/api/projects/{$projectId}/documents", [
             'doc_type' => 'folder',
-            'name' => 'Drive root',
-            'url' => 'https://drive.google.com/drive/folders/abc',
+            'name' => 'Hồ sơ',
         ])->assertCreated();
 
         $folderId = $folder->json('id');
 
         $this->postJson("/api/projects/{$projectId}/documents", [
-            'doc_type' => 'google_sheet',
-            'name' => 'Plan',
-            'url' => 'https://docs.google.com/spreadsheets/d/xyz/edit',
+            'doc_type' => 'link',
+            'name' => 'Tham chiếu web',
+            'url' => 'https://example.com/spec',
             'parent_id' => $folderId,
         ])->assertCreated();
 
@@ -474,6 +473,48 @@ class PpmsApiTest extends TestCase
             ->assertJsonCount(1)
             ->assertJsonPath('0.original_name', 'doc.pdf')
             ->assertJsonPath('0.task.name', 'Task With File');
+    }
+
+    public function test_project_media_unifies_documents_and_task_attachments(): void
+    {
+        Sanctum::actingAs($this->pmUser);
+        Storage::fake('public');
+
+        $projectId = $this->postJson('/api/projects', [
+            'name' => 'P Media Test',
+            'type' => 'delivery',
+            'owner_id' => $this->pmUser->id,
+        ])->json('id');
+
+        $this->postJson("/api/projects/{$projectId}/documents", [
+            'doc_type' => 'folder',
+            'name' => 'Docs',
+        ])->assertCreated();
+
+        $taskId = $this->postJson("/api/projects/{$projectId}/tasks", [
+            'name' => 'Task With File',
+            'estimate_hours' => 1,
+            'complexity' => 2,
+            'impact' => 2,
+        ])->json('id');
+
+        $file = UploadedFile::fake()->create('doc.pdf', 50, 'application/pdf');
+        $this->post("/api/tasks/{$taskId}/attachments", ['file' => $file])
+            ->assertCreated();
+
+        $this->getJson("/api/projects/{$projectId}/media")
+            ->assertOk()
+            ->assertJsonCount(2);
+
+        $this->getJson("/api/projects/{$projectId}/media?scope=project")
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.scope', 'project');
+
+        $this->getJson("/api/projects/{$projectId}/media?scope=task")
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.scope', 'task');
     }
 
     public function test_kpi_current_requires_authentication(): void

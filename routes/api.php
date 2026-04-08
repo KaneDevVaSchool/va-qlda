@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ProjectDocumentController;
 use App\Http\Controllers\Api\ProjectImportController;
+use App\Http\Controllers\Api\ProjectPhaseController;
+use App\Http\Controllers\Api\ProjectSupplyController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\TaskAttachmentController;
 use App\Http\Controllers\Api\TaskBulkController;
@@ -64,9 +66,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('projects/bulk-destroy', [ProjectController::class, 'bulkDestroy']);
     Route::get('projects/tab-counts', [ProjectController::class, 'tabCounts']);
     Route::get('projects/label-suggestions', [ProjectController::class, 'labelSuggestions']);
+    Route::get('projects/{project}/activities', [ProjectController::class, 'activities']);
+    Route::post('projects/{project}/join', [ProjectController::class, 'joinStakeholder']);
+    Route::get('projects/{project}/phases', [ProjectPhaseController::class, 'index']);
+    Route::post('projects/{project}/phases', [ProjectPhaseController::class, 'store']);
+    Route::put('project-phases/{phase}', [ProjectPhaseController::class, 'update'])->whereNumber('phase');
+    Route::delete('project-phases/{phase}', [ProjectPhaseController::class, 'destroy'])->whereNumber('phase');
+    Route::get('projects/{project}/supplies', [ProjectSupplyController::class, 'index']);
+    Route::post('projects/{project}/supplies', [ProjectSupplyController::class, 'store']);
+    Route::put('project-supplies/{supply}', [ProjectSupplyController::class, 'update'])->whereNumber('supply');
+    Route::delete('project-supplies/{supply}', [ProjectSupplyController::class, 'destroy'])->whereNumber('supply');
     Route::apiResource('projects', ProjectController::class);
     Route::get('projects/{project}/gantt', [ProjectController::class, 'gantt']);
     Route::get('projects/{project}/attachments', [ProjectController::class, 'attachments']);
+    Route::get('projects/{project}/media', [ProjectController::class, 'media']);
     Route::get('projects/{project}/documents', [ProjectDocumentController::class, 'index']);
     Route::post('projects/{project}/documents', [ProjectDocumentController::class, 'store']);
     Route::post('projects/{project}/documents/upload', [ProjectDocumentController::class, 'upload']);
@@ -78,6 +91,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('projects/{project}/tasks', [TaskController::class, 'index']);
     Route::post('projects/{project}/tasks', [TaskController::class, 'store']);
+    Route::post('projects/{project}/tasks/bulk-create', [TaskController::class, 'bulkStore']);
     Route::put('tasks/{task}', [TaskController::class, 'update']);
     Route::delete('tasks/{task}', [TaskController::class, 'destroy']);
     Route::post('tasks/bulk', [TaskBulkController::class, 'update']);
