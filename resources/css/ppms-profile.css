@@ -1,0 +1,356 @@
+/* Profile dashboard — SaaS-style shell (scoped under .ppms-profile) */
+.ppms-profile {
+    --ppms-pf-surface: var(--ppms-surface, #fff);
+    --ppms-pf-border: var(--ppms-border-subtle, rgba(15, 23, 42, 0.08));
+    --ppms-pf-muted: var(--ppms-text-muted, #64748b);
+    --ppms-pf-accent: var(--ppms-primary, #2563eb);
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.ppms-profile.ppms-profile--dark {
+    --ppms-pf-surface: rgba(15, 23, 42, 0.65);
+    --ppms-pf-border: rgba(148, 163, 184, 0.2);
+    --ppms-pf-muted: #94a3b8;
+}
+
+.ppms-profile-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    background: var(--ppms-pf-surface);
+    border: 1px solid var(--ppms-pf-border);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+.ppms-profile-header-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #475569;
+    flex-shrink: 0;
+}
+
+.ppms-profile-header-main {
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
+.ppms-profile-header-name {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.ppms-profile-header-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    margin-top: 0.35rem;
+    font-size: 0.9rem;
+    color: var(--ppms-pf-muted);
+}
+
+.ppms-profile-role-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ppms-profile-role-badge--admin {
+    background: rgba(239, 68, 68, 0.12);
+    color: #b91c1c;
+}
+.ppms-profile-role-badge--pm {
+    background: rgba(37, 99, 235, 0.12);
+    color: #1d4ed8;
+}
+.ppms-profile-role-badge--tl {
+    background: rgba(124, 58, 237, 0.12);
+    color: #6d28d9;
+}
+.ppms-profile-role-badge--hr {
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+}
+.ppms-profile-role-badge--developer {
+    background: rgba(100, 116, 139, 0.15);
+    color: #475569;
+}
+
+.ppms-profile-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+}
+
+.ppms-profile-status-pill::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+}
+
+.ppms-profile-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-left: auto;
+}
+
+.ppms-profile-tabs-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--ppms-pf-border);
+}
+
+.ppms-profile-tabs {
+    display: inline-flex;
+    gap: 0.25rem;
+    min-width: min-content;
+    padding: 0 0.25rem;
+}
+
+.ppms-profile-tab {
+    position: relative;
+    border: none;
+    background: none;
+    padding: 0.65rem 1rem;
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--ppms-pf-muted);
+    cursor: pointer;
+    white-space: nowrap;
+    border-radius: 8px 8px 0 0;
+    transition:
+        color 0.15s ease,
+        background 0.15s ease;
+}
+
+.ppms-profile-tab:hover {
+    color: var(--ppms-text, #0f172a);
+    background: rgba(15, 23, 42, 0.04);
+}
+
+.ppms-profile-tab--active {
+    color: var(--ppms-pf-accent);
+}
+
+.ppms-profile-tab--active::after {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: -1px;
+    height: 2px;
+    border-radius: 2px 2px 0 0;
+    background: var(--ppms-pf-accent);
+    animation: ppms-pf-tab-in 0.2s ease;
+}
+
+@keyframes ppms-pf-tab-in {
+    from {
+        transform: scaleX(0.6);
+        opacity: 0.5;
+    }
+    to {
+        transform: scaleX(1);
+        opacity: 1;
+    }
+}
+
+.ppms-profile-panel {
+    padding: 1.25rem 1.5rem;
+    background: var(--ppms-pf-surface);
+    border: 1px solid var(--ppms-pf-border);
+    border-radius: 12px;
+    min-height: 280px;
+}
+
+.ppms-profile-skel {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.ppms-profile-skel-line {
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
+    background-size: 200% 100%;
+    animation: ppms-pf-skel 1.2s ease infinite;
+}
+
+.ppms-profile.ppms-profile--dark .ppms-profile-skel-line {
+    background: linear-gradient(90deg, rgba(51, 65, 85, 0.5) 0%, rgba(71, 85, 105, 0.6) 50%, rgba(51, 65, 85, 0.5) 100%);
+    background-size: 200% 100%;
+}
+
+@keyframes ppms-pf-skel {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+.ppms-profile-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--ppms-pf-muted);
+    font-size: 0.95rem;
+}
+
+.ppms-profile-table-wrap {
+    overflow-x: auto;
+}
+
+.ppms-profile-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.ppms-profile-table th,
+.ppms-profile-table td {
+    padding: 0.55rem 0.65rem;
+    text-align: left;
+    border-bottom: 1px solid var(--ppms-pf-border);
+}
+
+.ppms-profile-table th {
+    font-weight: 600;
+    color: var(--ppms-pf-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ppms-profile-table tr:hover td {
+    background: rgba(15, 23, 42, 0.02);
+}
+
+.ppms-profile-device-current {
+    outline: 2px solid rgba(37, 99, 235, 0.35);
+    outline-offset: -2px;
+    background: rgba(37, 99, 235, 0.04);
+}
+
+.ppms-profile-badge-this {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    border-radius: 4px;
+    background: rgba(37, 99, 235, 0.15);
+    color: #1d4ed8;
+}
+
+.ppms-pf-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.85rem;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1px solid var(--ppms-pf-border);
+    background: var(--ppms-pf-surface);
+    cursor: pointer;
+    color: inherit;
+}
+
+.ppms-pf-btn--primary {
+    background: var(--ppms-pf-accent);
+    border-color: transparent;
+    color: #fff;
+}
+
+.ppms-pf-btn--danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #b91c1c;
+}
+
+.ppms-pf-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.ppms-profile-drop {
+    border: 2px dashed var(--ppms-pf-border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-align: center;
+    cursor: pointer;
+    transition:
+        border-color 0.15s,
+        background 0.15s;
+}
+
+.ppms-profile-drop:hover,
+.ppms-profile-drop--active {
+    border-color: var(--ppms-pf-accent);
+    background: rgba(37, 99, 235, 0.04);
+}
+
+.ppms-profile-crop-host {
+    max-height: 320px;
+    background: #0f172a;
+}
+
+.ppms-profile-meter {
+    height: 6px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+    margin-top: 0.35rem;
+}
+
+.ppms-profile-meter-fill {
+    height: 100%;
+    border-radius: inherit;
+    transition:
+        width 0.2s ease,
+        background 0.2s ease;
+}
+
+.ppms-profile-matrix th.ppms-profile-matrix-corner {
+    min-width: 120px;
+}
+
+.ppms-profile-matrix input[type='checkbox']:disabled {
+    cursor: default;
+    opacity: 0.85;
+}

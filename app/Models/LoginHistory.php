@@ -27,6 +27,12 @@ class LoginHistory extends Model
 
     public const EVENT_EMAIL_VERIFIED = 'email.verified';
 
+    public const EVENT_PROFILE_UPDATED = 'profile.updated';
+
+    public const EVENT_PERMISSION_UPDATED = 'permission.updated';
+
+    public const EVENT_SESSION_REVOKED = 'session.revoked';
+
     protected $fillable = [
         'user_id',
         'ip_address',

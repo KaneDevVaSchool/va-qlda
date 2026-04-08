@@ -20,7 +20,12 @@ use App\Http\Controllers\Api\TaskBulkController;
 use App\Http\Controllers\Api\TaskCommentController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TaskDependencyController;
+use App\Http\Controllers\Api\UserActivityLogController;
 use App\Http\Controllers\Api\UserLookupController;
+use App\Http\Controllers\Api\UserProfileController;
+use App\Http\Controllers\Api\UserRbacController;
+use App\Http\Controllers\Api\UserSecurityController;
+use App\Http\Controllers\Api\UserSessionController;
 use App\Http\Controllers\Auth\GoogleOAuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -33,11 +38,28 @@ Route::get('/auth/google/config', [GoogleOAuthController::class, 'config']);
 Route::get('/auth/google/redirect', [GoogleOAuthController::class, 'redirectUrl'])->middleware('throttle:google_oauth');
 Route::post('/auth/google/exchange', [GoogleOAuthController::class, 'exchange'])->middleware('throttle:google_oauth');
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::get('/me/profile', [UserProfileController::class, 'show']);
+    Route::patch('/me/profile', [UserProfileController::class, 'update']);
+    Route::post('/me/profile/avatar', [UserProfileController::class, 'avatar']);
+
+    Route::get('/me/security', [UserSecurityController::class, 'show']);
+    Route::put('/me/security/password', [UserSecurityController::class, 'password']);
+
+    Route::get('/me/sessions', [UserSessionController::class, 'index']);
+    Route::delete('/me/sessions/{session}', [UserSessionController::class, 'destroy'])->whereNumber('session');
+    Route::post('/me/sessions/revoke-others', [UserSessionController::class, 'revokeOthers']);
+
+    Route::get('/me/rbac', [UserRbacController::class, 'show']);
+    Route::patch('/me/rbac', [UserRbacController::class, 'update']);
+
+    Route::get('/me/activity', [UserActivityLogController::class, 'index']);
+    Route::get('/me/activity/export.csv', [UserActivityLogController::class, 'exportCsv']);
 
     Route::get('/users/lookup', [UserLookupController::class, 'index']);
     Route::get('/dashboard/summary', [DashboardController::class, 'summary']);

@@ -12,16 +12,25 @@ class ActiveSession extends Model
         'session_id_hash',
         'ip_address',
         'user_agent',
+        'browser',
+        'os',
+        'device_name',
         'device_label',
         'is_current',
+        'is_suspicious',
         'last_activity_at',
+        'login_at',
+        'logout_at',
         'expires_at',
         'personal_access_token_id',
     ];
 
     protected $casts = [
         'is_current' => 'boolean',
+        'is_suspicious' => 'boolean',
         'last_activity_at' => 'datetime',
+        'login_at' => 'datetime',
+        'logout_at' => 'datetime',
         'expires_at' => 'datetime',
     ];
 

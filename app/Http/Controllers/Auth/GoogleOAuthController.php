@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\LoginHistory;
+use App\Models\PersonalAccessToken;
 use App\Models\User;
+use App\Services\SessionDeviceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -110,11 +112,20 @@ class GoogleOAuthController extends Controller
             'via' => 'google_oauth',
         ]);
 
-        $token = $user->createToken('ppms-spa')->plainTextToken;
+        $previousLoginIp = $user->last_login_ip;
+        $user->forceFill([
+            'last_login_at' => now(),
+            'last_login_ip' => $request->ip() ?: null,
+            'last_login_device' => mb_substr((string) $request->userAgent(), 0, 512),
+        ])->save();
+
+        $tokenResult = $user->createToken('ppms-spa');
         $exchange = Str::random(48);
         Cache::put($this->cacheKey($exchange), [
-            'token' => $token,
+            'token' => $tokenResult->plainTextToken,
             'user_id' => $user->id,
+            'personal_access_token_id' => $tokenResult->accessToken->id,
+            'previous_login_ip' => $previousLoginIp,
         ], now()->addMinutes(5));
 
         return redirect()->to($this->loginUrl(['google_exchange' => $exchange]));
@@ -143,9 +154,22 @@ class GoogleOAuthController extends Controller
             ]);
         }
 
+        $tokenModel = ! empty($payload['personal_access_token_id'])
+            ? PersonalAccessToken::query()->find($payload['personal_access_token_id'])
+            : null;
+
+        if ($tokenModel) {
+            $prev = array_key_exists('previous_login_ip', $payload) ? $payload['previous_login_ip'] : null;
+            try {
+                app(SessionDeviceService::class)->registerSession($user, $tokenModel, $request, $prev);
+            } catch (Throwable) {
+                //
+            }
+        }
+
         return response()->json([
             'token' => $payload['token'],
-            'user' => $user,
+            'user' => $user->fresh(),
         ]);
     }
 

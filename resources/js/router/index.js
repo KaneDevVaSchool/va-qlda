@@ -121,6 +121,20 @@ const routes = [
                     breadcrumb: bc([{ label: 'Trang chủ', to: '/' }, { label: 'Thông báo' }]),
                 },
             },
+            {
+                path: 'profile',
+                name: 'profile',
+                component: () => import('../pages/profile/ProfileDashboard.vue'),
+                meta: {
+                    titleKey: 'profile.pageTitle',
+                    pageTitleKey: 'profile.pageTitle',
+                    pageDescriptionKey: 'profile.pageDescription',
+                    breadcrumb: bc([
+                        { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'profile.breadcrumb' },
+                    ]),
+                },
+            },
         ],
     },
 ];

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -38,6 +39,15 @@ class User extends Authenticatable
         'password',
         'role',
         'google_id',
+        'avatar_path',
+        'profile_updated_at',
+    ];
+
+    /**
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'avatar_url',
     ];
 
     /**
@@ -47,6 +57,7 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'password_history',
+        'avatar_path',
     ];
 
     /**
@@ -58,6 +69,7 @@ class User extends Authenticatable
         'password_changed_at' => 'datetime',
         'locked_until' => 'datetime',
         'last_login_at' => 'datetime',
+        'profile_updated_at' => 'datetime',
         'terms_accepted_at' => 'datetime',
         'must_change_password' => 'boolean',
         'security_banner_acknowledged' => 'boolean',
@@ -113,6 +125,11 @@ class User extends Authenticatable
         return $this->hasMany(OtpCode::class);
     }
 
+    public function permissionOverrides(): HasMany
+    {
+        return $this->hasMany(UserPermissionOverride::class);
+    }
+
     public function isLocked(): bool
     {
         if ($this->locked_until === null) {
@@ -151,5 +168,14 @@ class User extends Authenticatable
     public function hasAcknowledgedBanner(): bool
     {
         return (bool) $this->security_banner_acknowledged;
+    }
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (! $this->avatar_path) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->avatar_path);
     }
 }

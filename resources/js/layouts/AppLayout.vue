@@ -153,6 +153,15 @@
                             <span class="ppms-nav-text">{{ t('layout.navNotifications') }}</span>
                             <span v-if="unread > 0" class="ppms-badge">{{ unread > 9 ? '9+' : String(unread) }}</span>
                         </router-link>
+                        <router-link to="/profile" :title="t('layout.navAccount')">
+                            <span class="ppms-nav-ico-wrap" aria-hidden="true">
+                                <svg class="ppms-nav-ico-svg" viewBox="0 0 24 24">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                    <circle cx="12" cy="7" r="4" />
+                                </svg>
+                            </span>
+                            <span class="ppms-nav-text">{{ t('layout.navAccount') }}</span>
+                        </router-link>
                     </div>
                 </nav>
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LoginHistory;
 use App\Models\User;
 use App\Services\LoginMfaService;
+use App\Services\SessionDeviceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -29,11 +30,16 @@ class AuthController extends Controller
             'role' => 'developer',
         ]);
 
-        $token = $user->createToken('ppms-spa')->plainTextToken;
+        $tokenResult = $user->createToken('ppms-spa');
+        try {
+            app(SessionDeviceService::class)->registerSession($user, $tokenResult->accessToken, $request, null);
+        } catch (\Throwable) {
+            //
+        }
 
         return response()->json([
-            'token' => $token,
-            'user' => $user,
+            'token' => $tokenResult->plainTextToken,
+            'user' => $user->fresh(),
         ], 201);
     }
 
@@ -118,6 +124,8 @@ class AuthController extends Controller
      */
     protected function issueTokenResponse(Request $request, User $user, array $historyMeta = []): JsonResponse
     {
+        $previousLoginIp = $user->last_login_ip;
+
         $user->forceFill([
             'failed_login_count' => 0,
             'locked_until' => null,
@@ -128,11 +136,23 @@ class AuthController extends Controller
 
         $this->writeLoginHistory($request, $user, LoginHistory::EVENT_LOGIN_SUCCESS, $historyMeta);
 
-        $token = $user->createToken('ppms-spa')->plainTextToken;
+        $tokenResult = $user->createToken('ppms-spa');
+        $plain = $tokenResult->plainTextToken;
+
+        try {
+            app(SessionDeviceService::class)->registerSession(
+                $user,
+                $tokenResult->accessToken,
+                $request,
+                $previousLoginIp
+            );
+        } catch (\Throwable) {
+            //
+        }
 
         return response()->json([
-            'token' => $token,
-            'user' => $user,
+            'token' => $plain,
+            'user' => $user->fresh(),
         ]);
     }
 
@@ -157,7 +177,10 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $token = $request->user()->currentAccessToken();
+        if ($token) {
+            app(SessionDeviceService::class)->logoutToken((int) $token->id);
+        }
 
         return response()->json(['message' => 'Logged out']);
     }
