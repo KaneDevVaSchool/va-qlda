@@ -114,12 +114,40 @@
                 @submit="submitNewPhase"
                 @delete-phase="deletePhase"
             />
+            <ProjectDetailModalTaskRegular
+                v-model="showRegularTaskModal"
+                :project="project"
+                :project-phases="projectPhases"
+                @submit="submitRegularTask"
+            />
             <ProjectDetailModalBulk
                 v-model="showBulkModal"
                 :bulk-rows="bulkRows"
                 :project-phases="projectPhases"
+                :project="project"
                 @add-row="addBulkRow"
+                @remove-row="removeBulkRow"
                 @submit="submitBulkTasks"
+            />
+            <ProjectDetailModalTaskByList
+                v-model="showCategoryTaskModal"
+                variant="category"
+                :project="project"
+                :project-phases="projectPhases"
+                @submit="submitGroupTasks"
+            />
+            <ProjectDetailModalTaskByList
+                v-model="showPhaseTaskModal"
+                variant="phase"
+                :project="project"
+                :project-phases="projectPhases"
+                @submit="submitGroupTasks"
+            />
+            <ProjectDetailModalTaskProcess
+                v-model="showProcessTaskModal"
+                :project="project"
+                :project-phases="projectPhases"
+                @submit="submitProcessTask"
             />
         </template>
     </div>
@@ -137,6 +165,9 @@ import { TIMELINE_PHASES } from './constants/projectDetail';
 import {
     ProjectDetailHeader,
     ProjectDetailModalBulk,
+    ProjectDetailModalTaskByList,
+    ProjectDetailModalTaskProcess,
+    ProjectDetailModalTaskRegular,
     ProjectDetailModalMeta,
     ProjectDetailModalPhase,
     ProjectDetailTabAttachments,
@@ -186,6 +217,10 @@ const tabTasksRef = ref(null);
 const projectActivities = ref([]);
 const showPhaseModal = ref(false);
 const showBulkModal = ref(false);
+const showRegularTaskModal = ref(false);
+const showCategoryTaskModal = ref(false);
+const showPhaseTaskModal = ref(false);
+const showProcessTaskModal = ref(false);
 const bulkRows = ref([]);
 const supplyNew = reactive({ name: '', quantity: 0, unit: '', notes: '' });
 const phaseNew = reactive({
@@ -696,20 +731,13 @@ function openTaskForAttachment(a) {
     ppmsToastWarning(t('projects.taskUpdateErr'));
 }
 
-function goAddTask() {
-    activeTab.value = 'tasks';
-    requestAnimationFrame(() => {
-        tabTasksRef.value?.scrollBoardIntoView?.();
-    });
-}
-
 function closeAddTaskMenu() {
     detailHeaderRef.value?.closeAddTaskMenu?.();
 }
 
 function menuAddRegular() {
     closeAddTaskMenu();
-    goAddTask();
+    showRegularTaskModal.value = true;
 }
 
 function menuAddBulk() {
@@ -720,28 +748,22 @@ function menuAddBulk() {
 
 function menuAddByCategory() {
     closeAddTaskMenu();
-    activeTab.value = 'tasks';
-    ppmsToastWarning(t('projects.pdCategoryHint'));
-    requestAnimationFrame(() => {
-        tabTasksRef.value?.scrollBoardIntoView?.();
-    });
+    showCategoryTaskModal.value = true;
 }
 
 function menuAddProcess() {
     closeAddTaskMenu();
-    goAddTask();
-    ppmsToastWarning(t('projects.pdProcessTaskHint'));
+    showProcessTaskModal.value = true;
 }
 
 function menuAddByPhase() {
     closeAddTaskMenu();
-    activeTab.value = 'tasks';
-    requestAnimationFrame(() => {
-        tabTasksRef.value?.scrollBoardIntoView?.();
-    });
     if (!projectPhases.value.length) {
         ppmsToastWarning(t('projects.pdPhaseTaskNoPhases'));
+
+        return;
     }
+    showPhaseTaskModal.value = true;
 }
 
 async function joinProject() {
@@ -799,13 +821,16 @@ async function deletePhase(ph) {
 
 function initBulkRows() {
     bulkRows.value = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
         bulkRows.value.push({
             name: '',
+            owner_id: '',
+            assignee_id: '',
+            due_date: '',
+            start_date: '',
             estimate_hours: 8,
             complexity: 3,
             impact: 3,
-            due_date: '',
             project_phase_id: '',
         });
     }
@@ -814,25 +839,52 @@ function initBulkRows() {
 function addBulkRow() {
     bulkRows.value.push({
         name: '',
+        owner_id: '',
+        assignee_id: '',
+        due_date: '',
+        start_date: '',
         estimate_hours: 8,
         complexity: 3,
         impact: 3,
-        due_date: '',
         project_phase_id: '',
     });
+}
+
+function removeBulkRow(ri) {
+    if (bulkRows.value.length <= 1) {
+        return;
+    }
+    bulkRows.value.splice(ri, 1);
 }
 
 async function submitBulkTasks() {
     const tasks = bulkRows.value
         .filter((r) => String(r.name || '').trim())
-        .map((r) => ({
-            name: String(r.name).trim(),
-            estimate_hours: Number(r.estimate_hours) || 0,
-            complexity: Number(r.complexity) || 3,
-            impact: Number(r.impact) || 3,
-            due_date: r.due_date || null,
-            project_phase_id: r.project_phase_id ? Number(r.project_phase_id) : null,
-        }));
+        .map((r) => {
+            const row = {
+                name: String(r.name).trim(),
+                estimate_hours: Number(r.estimate_hours) || 0,
+                complexity: Math.min(5, Math.max(1, Number(r.complexity) || 3)),
+                impact: Math.min(5, Math.max(1, Number(r.impact) || 3)),
+                due_date: r.due_date || null,
+                project_phase_id: r.project_phase_id ? Number(r.project_phase_id) : null,
+            };
+            if (r.assignee_id) {
+                row.assignee_id = Number(r.assignee_id);
+            }
+            const bits = [];
+            if (r.owner_id) {
+                bits.push(`owner:${r.owner_id}`);
+            }
+            if (r.start_date) {
+                bits.push(`start:${r.start_date}`);
+            }
+            if (bits.length) {
+                row.description = bits.join(' ');
+            }
+
+            return row;
+        });
     if (!tasks.length) {
         ppmsToastWarning(t('projects.pdBulkEmpty'));
 
@@ -842,6 +894,48 @@ async function submitBulkTasks() {
         await axios.post(`/api/projects/${props.id}/tasks/bulk-create`, { tasks });
         ppmsToastSuccess(t('projects.pdBulkOk'));
         showBulkModal.value = false;
+        await load();
+    } catch (e) {
+        ppmsToastError(formatApiUserMessage(e, t('projects.taskCreateErr')));
+    }
+}
+
+async function submitRegularTask(payload) {
+    try {
+        await axios.post(`/api/projects/${props.id}/tasks`, payload);
+        ppmsToastSuccess(t('projects.taskCreateOk'));
+        showRegularTaskModal.value = false;
+        activeTab.value = 'tasks';
+        await load();
+    } catch (e) {
+        ppmsToastError(formatApiUserMessage(e, t('projects.taskCreateErr')));
+    }
+}
+
+async function submitProcessTask(payload) {
+    try {
+        await axios.post(`/api/projects/${props.id}/tasks`, payload);
+        ppmsToastSuccess(t('projects.taskCreateOk'));
+        showProcessTaskModal.value = false;
+        activeTab.value = 'tasks';
+        await load();
+    } catch (e) {
+        ppmsToastError(formatApiUserMessage(e, t('projects.taskCreateErr')));
+    }
+}
+
+async function submitGroupTasks({ tasks }) {
+    if (!tasks?.length) {
+        ppmsToastWarning(t('projects.pdBulkEmpty'));
+
+        return;
+    }
+    try {
+        await axios.post(`/api/projects/${props.id}/tasks/bulk-create`, { tasks });
+        ppmsToastSuccess(t('projects.pdBulkOk'));
+        showCategoryTaskModal.value = false;
+        showPhaseTaskModal.value = false;
+        activeTab.value = 'tasks';
         await load();
     } catch (e) {
         ppmsToastError(formatApiUserMessage(e, t('projects.taskCreateErr')));
