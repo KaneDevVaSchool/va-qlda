@@ -1,6 +1,6 @@
 <template>
     <div class="ppms-page ppms-page--project-detail">
-        <div v-if="loading" class="pbi-loading" role="status">
+        <div v-if="loading" class="pbi-loading" role="status" aria-busy="true" aria-live="polite">
             <span class="pbi-loading-bar" aria-hidden="true" />
             {{ t('common.loading') }}
         </div>
@@ -15,7 +15,7 @@
                         :can-manage-project="canManageProject"
                         @open-meta="openMetaEdit"
                         @join="joinProject"
-                        @group-labels="openGroupLabels"
+                        @go-tasks="activeTab = 'tasks'"
                         @menu-add-regular="menuAddRegular"
                         @menu-add-bulk="menuAddBulk"
                         @menu-add-category="menuAddByCategory"
@@ -61,6 +61,11 @@
                         @task-file="onFile"
                         @download-attachment="downloadFile"
                     />
+                    <ProjectDetailTabFinance
+                        v-show="activeTab === 'finance'"
+                        :project="project"
+                        @open-meta="openMetaEdit"
+                    />
                     <ProjectDetailTabSupplies
                         v-show="activeTab === 'supplies'"
                         :project-supplies="projectSupplies"
@@ -74,6 +79,7 @@
                         :project="project"
                         :can-pdf="canPdf"
                         :can-csv="canCsv"
+                        @go-tasks="activeTab = 'tasks'"
                         @dl-weekly-pdf="dlWeeklyPdf"
                         @dl-projects-csv="dlProjectsCsv"
                     />
@@ -154,14 +160,15 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import axios from 'axios';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { formatApiUserMessage } from '@/bootstrap';
 import { ppmsConfirm, ppmsToastError, ppmsToastSuccess, ppmsToastWarning } from '@/ppmsUi';
 import { parseCommaLabelTokens } from './utils/projectLabels';
-import { TIMELINE_PHASES } from './constants/projectDetail';
+import { useProjectDetailTabRoute } from './composables/useProjectDetailTabRoute';
+import { projectGanttFiltersStorageKey, TIMELINE_PHASES } from './constants/projectDetail';
 import {
     ProjectDetailHeader,
     ProjectDetailModalBulk,
@@ -171,6 +178,7 @@ import {
     ProjectDetailModalMeta,
     ProjectDetailModalPhase,
     ProjectDetailTabAttachments,
+    ProjectDetailTabFinance,
     ProjectDetailTabInfo,
     ProjectDetailTabReports,
     ProjectDetailTabSupplies,
@@ -199,8 +207,53 @@ const ganttFilters = reactive({
     status: '',
     root_only: false,
 });
+const skipGanttFilterWatch = ref(false);
+
+function loadGanttFiltersFromStorage() {
+    try {
+        const raw = localStorage.getItem(projectGanttFiltersStorageKey(props.id));
+        if (!raw) {
+            return;
+        }
+        const o = JSON.parse(raw);
+        if (!o || typeof o !== 'object') {
+            return;
+        }
+        skipGanttFilterWatch.value = true;
+        if (typeof o.assignee_id === 'string') {
+            ganttFilters.assignee_id = o.assignee_id;
+        }
+        if (typeof o.status === 'string') {
+            ganttFilters.status = o.status;
+        }
+        if (typeof o.root_only === 'boolean') {
+            ganttFilters.root_only = o.root_only;
+        }
+        nextTick(() => {
+            skipGanttFilterWatch.value = false;
+        });
+    } catch {
+        skipGanttFilterWatch.value = false;
+    }
+}
+
+function saveGanttFiltersToStorage() {
+    try {
+        localStorage.setItem(
+            projectGanttFiltersStorageKey(props.id),
+            JSON.stringify({
+                assignee_id: ganttFilters.assignee_id,
+                status: ganttFilters.status,
+                root_only: ganttFilters.root_only,
+            }),
+        );
+    } catch {
+        /* ignore */
+    }
+}
 
 const activeTab = ref('info');
+useProjectDetailTabRoute(activeTab, router, route);
 const projectMedia = ref([]);
 const projectDocuments = ref([]);
 const docAddMode = ref(null);
@@ -272,6 +325,7 @@ const progressModeOptions = computed(() =>
 const detailTabs = computed(() => [
     { id: 'info', label: t('projects.pdTabInfo') },
     { id: 'tasks', label: t('projects.pdTabTasks'), badge: project.value?.tasks?.length },
+    { id: 'finance', label: t('projects.pdTabFinance') },
     {
         id: 'supplies',
         label: t('projects.pdTabSupplies'),
@@ -701,6 +755,7 @@ async function load() {
         projectMedia.value = mediaRes.data;
         projectDocuments.value = docsRes.data;
         projectActivities.value = actRes.data.activities || [];
+        loadGanttFiltersFromStorage();
         await loadGantt();
     } catch (e) {
         if (e?.response?.status === 404) {
@@ -718,9 +773,10 @@ let ganttDebounce = null;
 watch(
     ganttFilters,
     () => {
-        if (!project.value) {
+        if (skipGanttFilterWatch.value || !project.value) {
             return;
         }
+        saveGanttFiltersToStorage();
         clearTimeout(ganttDebounce);
         ganttDebounce = setTimeout(() => loadGantt(), 350);
     },
@@ -806,10 +862,6 @@ async function joinProject() {
     } catch (e) {
         ppmsToastError(formatApiUserMessage(e, t('projects.pdJoinErr')));
     }
-}
-
-function openGroupLabels() {
-    openMetaEdit();
 }
 
 function openPhaseModal() {

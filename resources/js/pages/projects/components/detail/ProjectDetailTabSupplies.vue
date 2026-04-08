@@ -5,7 +5,12 @@
             <h2>{{ t('projects.pdTabSupplies') }}</h2>
             <p class="ppms-muted ppms-mt-sm">{{ t('projects.pdSuppliesHint') }}</p>
             <form v-if="canManageProject" class="ppms-task-form ppms-mt-sm" @submit.prevent="$emit('submit')">
-                <input v-model="supplyNew.name" :placeholder="t('projects.pdSupplyName')" required />
+                <input
+                    ref="supplyNameInputRef"
+                    v-model="supplyNew.name"
+                    :placeholder="t('projects.pdSupplyName')"
+                    required
+                />
                 <input
                     v-model.number="supplyNew.quantity"
                     type="number"
@@ -17,7 +22,22 @@
                 <input v-model="supplyNew.notes" :placeholder="t('projects.pdSupplyNotes')" />
                 <button type="submit" class="ppms-btn-primary ppms-btn-sm">{{ t('projects.pdSupplyAdd') }}</button>
             </form>
-            <div v-if="!projectSupplies.length" class="ppms-muted ppms-mt-sm">{{ t('projects.pdSuppliesEmpty') }}</div>
+            <PpmsPdEmptyState
+                v-if="!projectSupplies.length"
+                class="ppms-mt-sm"
+                :title="t('projects.pdSuppliesEmpty')"
+                :description="t('projects.pdEmptySuppliesDesc')"
+                heading-id="pd-supplies-empty-h"
+            >
+                <button
+                    v-if="canManageProject"
+                    type="button"
+                    class="ppms-btn-primary ppms-btn-sm"
+                    @click="focusSupplyForm"
+                >
+                    {{ t('projects.pdEmptySuppliesCta') }}
+                </button>
+            </PpmsPdEmptyState>
             <div v-else class="ppms-table-scroll ppms-mt-sm">
                 <table class="ppms-table">
                     <thead>
@@ -49,7 +69,9 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PpmsPdEmptyState from './PpmsPdEmptyState.vue';
 
 const { t } = useI18n();
 
@@ -60,4 +82,13 @@ defineProps({
 });
 
 defineEmits(['submit', 'delete']);
+
+const supplyNameInputRef = ref(null);
+
+function focusSupplyForm() {
+    const el = supplyNameInputRef.value;
+    if (el && typeof el.focus === 'function') {
+        el.focus();
+    }
+}
 </script>

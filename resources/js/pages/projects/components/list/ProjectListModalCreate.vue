@@ -275,17 +275,17 @@
                                             </button>
                                         </li>
                                     </ul>
-                                    <p v-if="!form.owner_id && ownerQuery.trim().length > 0 && ownerQuery.trim().length < 2" class="ppms-pc-field-hint">
+                                    <p v-if="!form.owner_id && ownerQuery.trim().length > 0 && ownerQuery.trim().length < LOOKUP_MIN_LEN" class="ppms-pc-field-hint">
                                         {{ t('projects.createUserSearchMinHint') }}
                                     </p>
                                     <p
-                                        v-if="!form.owner_id && ownerQuery.trim().length >= 2 && ownerLookupPending"
+                                        v-if="!form.owner_id && ownerQuery.trim().length >= LOOKUP_MIN_LEN && ownerLookupPending"
                                         class="ppms-muted ppms-pc-field-hint"
                                     >
                                         {{ t('common.loading') }}
                                     </p>
                                     <p
-                                        v-else-if="!form.owner_id && ownerQuery.trim().length >= 2 && !ownerHits.length"
+                                        v-else-if="!form.owner_id && ownerQuery.trim().length >= LOOKUP_MIN_LEN && !ownerHits.length"
                                         class="ppms-pc-userpick__empty"
                                     >
                                         {{ t('projects.createUserSearchEmpty') }}
@@ -327,22 +327,22 @@
                                             enterkeyhint="search"
                                             @input="scheduleExecutorLookup"
                                         />
-                                        <p v-if="executorSearch.trim().length > 0 && executorSearch.trim().length < 2" class="ppms-pc-field-hint">
+                                        <p v-if="executorSearch.trim().length > 0 && executorSearch.trim().length < LOOKUP_MIN_LEN" class="ppms-pc-field-hint">
                                             {{ t('projects.createUserSearchMinHint') }}
                                         </p>
                                         <p
-                                            v-else-if="executorSearch.trim().length >= 2 && executorLookupPending"
+                                            v-else-if="executorSearch.trim().length >= LOOKUP_MIN_LEN && executorLookupPending"
                                             class="ppms-muted ppms-pc-field-hint"
                                         >
                                             {{ t('common.loading') }}
                                         </p>
                                         <div
-                                            v-else-if="executorSearch.trim().length >= 2 && executorHits.length === 0"
+                                            v-else-if="executorSearch.trim().length >= LOOKUP_MIN_LEN && executorHits.length === 0"
                                             class="ppms-pc-userpick__empty"
                                         >
                                             {{ t('projects.createUserSearchEmpty') }}
                                         </div>
-                                        <div v-else-if="executorSearch.trim().length >= 2" class="ppms-pc-userpick__list" role="group">
+                                        <div v-else-if="executorSearch.trim().length >= LOOKUP_MIN_LEN" class="ppms-pc-userpick__list" role="group">
                                             <label
                                                 v-for="u in executorHits"
                                                 :key="'ex-' + u.id"
@@ -396,22 +396,22 @@
                                             enterkeyhint="search"
                                             @input="scheduleFollowerLookup"
                                         />
-                                        <p v-if="followerSearch.trim().length > 0 && followerSearch.trim().length < 2" class="ppms-pc-field-hint">
+                                        <p v-if="followerSearch.trim().length > 0 && followerSearch.trim().length < LOOKUP_MIN_LEN" class="ppms-pc-field-hint">
                                             {{ t('projects.createUserSearchMinHint') }}
                                         </p>
                                         <p
-                                            v-else-if="followerSearch.trim().length >= 2 && followerLookupPending"
+                                            v-else-if="followerSearch.trim().length >= LOOKUP_MIN_LEN && followerLookupPending"
                                             class="ppms-muted ppms-pc-field-hint"
                                         >
                                             {{ t('common.loading') }}
                                         </p>
                                         <div
-                                            v-else-if="followerSearch.trim().length >= 2 && followerHits.length === 0"
+                                            v-else-if="followerSearch.trim().length >= LOOKUP_MIN_LEN && followerHits.length === 0"
                                             class="ppms-pc-userpick__empty"
                                         >
                                             {{ t('projects.createUserSearchEmpty') }}
                                         </div>
-                                        <div v-else-if="followerSearch.trim().length >= 2" class="ppms-pc-userpick__list" role="group">
+                                        <div v-else-if="followerSearch.trim().length >= LOOKUP_MIN_LEN" class="ppms-pc-userpick__list" role="group">
                                             <label
                                                 v-for="u in followerHits"
                                                 :key="'fw-' + u.id"
@@ -647,7 +647,7 @@ const followerSelectedCount = computed(() => {
 });
 
 const LOOKUP_DEBOUNCE_MS = 300;
-const LOOKUP_MIN_LEN = 2;
+const LOOKUP_MIN_LEN = 1;
 
 const userCache = reactive({});
 

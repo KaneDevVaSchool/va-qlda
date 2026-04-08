@@ -20,21 +20,29 @@
                             </div>
                             <div class="o1tf-field w-user">
                                 <label class="o1tf-label">{{ t('projects.o1Owner') }}</label>
-                                <select v-model="row.owner_id">
-                                    <option value="">{{ t('projects.o1SelectOwner') }}</option>
-                                    <option v-for="u in userOptions" :key="'ow-' + u.id" :value="String(u.id)">
-                                        {{ userLabel(u) }}
-                                    </option>
-                                </select>
+                                <O1UserLookupSelect
+                                    v-model="row.owner_id"
+                                    :base-users="userOptions"
+                                    :search-placeholder="t('projects.createUserSearchPlaceholder')"
+                                    :search-aria="t('projects.o1UserAriaSearchOwners')"
+                                    :min-hint="t('projects.createUserSearchMinHint')"
+                                    :empty-text="t('projects.createUserSearchEmpty')"
+                                    :loading-text="t('common.loading')"
+                                    :clear-aria="t('common.close')"
+                                />
                             </div>
                             <div class="o1tf-field w-user">
                                 <label class="o1tf-label">{{ t('projects.thAssigneeFull') }}</label>
-                                <select v-model="row.assignee_id">
-                                    <option value="">{{ t('projects.o1SelectAssignee') }}</option>
-                                    <option v-for="u in userOptions" :key="'as-' + u.id" :value="String(u.id)">
-                                        {{ userLabel(u) }}
-                                    </option>
-                                </select>
+                                <O1UserLookupSelect
+                                    v-model="row.assignee_id"
+                                    :base-users="userOptions"
+                                    :search-placeholder="t('projects.createUserSearchPlaceholder')"
+                                    :search-aria="t('projects.o1UserAriaSearchAssignees')"
+                                    :min-hint="t('projects.createUserSearchMinHint')"
+                                    :empty-text="t('projects.createUserSearchEmpty')"
+                                    :loading-text="t('common.loading')"
+                                    :clear-aria="t('common.close')"
+                                />
                             </div>
                             <div class="o1tf-field w-dates">
                                 <label class="o1tf-label">{{ t('projects.o1PlanRange') }}</label>
@@ -88,6 +96,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import O1UserLookupSelect from './O1UserLookupSelect.vue';
 
 const { t } = useI18n();
 
@@ -119,11 +128,5 @@ const userOptions = computed(() => {
 
     return [...m.values()].sort((a, b) => String(a.name).localeCompare(String(b.name)));
 });
-
-function userLabel(u) {
-    const mail = u.email ? ` — ${u.email}` : '';
-
-    return `${u.name || u.id}${mail}`;
-}
 
 </script>

@@ -12,40 +12,7 @@
             </div>
         </div>
 
-        <div class="ppms-pd-report-subtabs" role="tablist">
-            <button
-                type="button"
-                role="tab"
-                class="ppms-pd-report-subtab"
-                :class="{ 'is-active': reportSub === 'tasks' }"
-                :aria-selected="reportSub === 'tasks'"
-                @click="reportSub = 'tasks'"
-            >
-                {{ t('projects.pdReportSubTabTasks') }}
-            </button>
-            <button
-                type="button"
-                role="tab"
-                class="ppms-pd-report-subtab"
-                :class="{ 'is-active': reportSub === 'finance' }"
-                :aria-selected="reportSub === 'finance'"
-                @click="reportSub = 'finance'"
-            >
-                {{ t('projects.pdReportSubTabFinance') }}
-            </button>
-            <button
-                type="button"
-                role="tab"
-                class="ppms-pd-report-subtab"
-                :class="{ 'is-active': reportSub === 'supplies' }"
-                :aria-selected="reportSub === 'supplies'"
-                @click="reportSub = 'supplies'"
-            >
-                {{ t('projects.pdReportSubTabSupplies') }}
-            </button>
-        </div>
-
-        <section v-show="reportSub === 'tasks'" class="ppms-card ppms-pd-section ppms-pd-report-section" aria-labelledby="pd-report-tasks-title">
+        <section class="ppms-card ppms-pd-section ppms-pd-report-section" aria-labelledby="pd-report-tasks-title">
             <h2 id="pd-report-tasks-title" class="ppms-pd-report-section-title">{{ t('projects.pdReportTasksSectionTitle') }}</h2>
             <p class="ppms-muted ppms-mt-sm">{{ t('projects.pdReportTableHint') }}</p>
             <div class="ppms-table-scroll ppms-mt-sm ppms-pd-report-table-wrap">
@@ -88,60 +55,26 @@
                         </tr>
                     </tbody>
                 </table>
-                <p v-else class="ppms-muted ppms-mt-sm">{{ t('projects.pdReportEmptyTasks') }}</p>
-            </div>
-        </section>
-
-        <section v-show="reportSub === 'finance'" class="ppms-card ppms-pd-section ppms-pd-report-section">
-            <h2 class="ppms-pd-report-section-title">{{ t('projects.pdReportFinanceTitle') }}</h2>
-            <div class="ppms-pd-report-finance-grid ppms-mt-sm">
-                <div class="ppms-pd-report-finance-card">
-                    <span class="ppms-muted">{{ t('projects.createFieldEstimatedValue') }}</span>
-                    <strong class="ppms-pd-report-finance-value">{{ financeEstimated }}</strong>
-                </div>
-                <div class="ppms-pd-report-finance-card">
-                    <span class="ppms-muted">{{ t('projects.pdReportFinanceTotalEstHours') }}</span>
-                    <strong class="ppms-pd-report-finance-value">{{ financeEstHours }}</strong>
-                </div>
-                <div class="ppms-pd-report-finance-card">
-                    <span class="ppms-muted">{{ t('projects.pdReportFinanceTotalActHours') }}</span>
-                    <strong class="ppms-pd-report-finance-value">{{ financeActHours }}</strong>
+                <div v-else class="ppms-pd-report-empty-wrap">
+                    <PpmsPdEmptyState
+                        :title="t('projects.pdReportEmptyTasks')"
+                        :description="t('projects.pdEmptyReportsDesc')"
+                        heading-id="pd-report-empty-h"
+                    >
+                        <button type="button" class="ppms-btn-primary ppms-btn-sm" @click="$emit('go-tasks')">
+                            {{ t('projects.pdEmptyReportsCta') }}
+                        </button>
+                    </PpmsPdEmptyState>
                 </div>
             </div>
-            <p class="ppms-muted ppms-mt-sm">{{ t('projects.pdReportFinanceFootnote') }}</p>
-        </section>
-
-        <section v-show="reportSub === 'supplies'" class="ppms-card ppms-pd-section ppms-pd-report-section">
-            <h2 class="ppms-pd-report-section-title">{{ t('projects.pdReportSuppliesTitle') }}</h2>
-            <p class="ppms-muted ppms-mt-sm">{{ t('projects.pdReportSuppliesHint') }}</p>
-            <div v-if="suppliesList.length" class="ppms-table-scroll ppms-mt-sm">
-                <table class="ppms-table">
-                    <thead>
-                        <tr>
-                            <th>{{ t('projects.pdSupplyName') }}</th>
-                            <th>{{ t('projects.pdSupplyQty') }}</th>
-                            <th>{{ t('projects.pdSupplyUnit') }}</th>
-                            <th>{{ t('projects.pdSupplyNotes') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="s in suppliesList" :key="'rps-' + s.id">
-                            <td>{{ s.name }}</td>
-                            <td class="ppms-td-num">{{ s.quantity }}</td>
-                            <td>{{ s.unit || '—' }}</td>
-                            <td class="ppms-muted">{{ s.notes || '—' }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <p v-else class="ppms-muted ppms-mt-sm">{{ t('projects.pdSuppliesEmpty') }}</p>
         </section>
     </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PpmsPdEmptyState from './PpmsPdEmptyState.vue';
 import { buildPersonnelTaskReportRows, pct } from '../../utils/projectReportTaskTable';
 
 const { t } = useI18n();
@@ -152,17 +85,13 @@ const props = defineProps({
     canCsv: { type: Boolean, default: false },
 });
 
-defineEmits(['dl-weekly-pdf', 'dl-projects-csv']);
-
-const reportSub = ref('tasks');
+defineEmits(['dl-weekly-pdf', 'dl-projects-csv', 'go-tasks']);
 
 const taskReportRows = computed(() =>
     buildPersonnelTaskReportRows(props.project.tasks || [], {
         unassignedLabel: t('projects.pdReportUnassigned'),
     }),
 );
-
-const suppliesList = computed(() => props.project.supplies || []);
 
 function deptLabel(role) {
     if (!role) {
@@ -210,32 +139,4 @@ function fmtDoneLate(row) {
     const p = pct(n, tot);
     return p != null ? `${n} (${p}%)` : String(n);
 }
-
-const financeEstimated = computed(() => {
-    const v = props.project.estimated_value;
-    if (v == null || v === '') {
-        return '—';
-    }
-    const n = Number(v);
-    if (Number.isNaN(n)) {
-        return String(v);
-    }
-    return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(n);
-});
-
-const financeEstHours = computed(() => {
-    let s = 0;
-    for (const tk of props.project.tasks || []) {
-        s += Number(tk.estimate_hours) || 0;
-    }
-    return s.toFixed(1);
-});
-
-const financeActHours = computed(() => {
-    let s = 0;
-    for (const tk of props.project.tasks || []) {
-        s += Number(tk.actual_hours) || 0;
-    }
-    return s.toFixed(1);
-});
 </script>

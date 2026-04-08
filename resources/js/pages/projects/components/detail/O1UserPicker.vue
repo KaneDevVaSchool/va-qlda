@@ -16,6 +16,13 @@
             @keydown.enter.prevent="toggleActive"
             @keydown.space.prevent="toggleActive"
         />
+        <p
+            v-if="remoteLookup && lookupPending && search.trim().length >= lookupMinChars"
+            class="o1-user-picker__pending"
+            role="status"
+        >
+            {{ remoteLoadingText }}
+        </p>
         <div
             :id="listboxId"
             class="o1-user-picker__list"
@@ -50,6 +57,7 @@
 </template>
 
 <script setup>
+import axios from 'axios';
 import { computed, ref, watch } from 'vue';
 
 const props = defineProps({
@@ -62,6 +70,10 @@ const props = defineProps({
     listAria: { type: String, required: true },
     emptyText: { type: String, required: true },
     removeChipLabel: { type: Function, required: true },
+    /** Gộp kết quả /api/users/lookup khi gõ tìm để thêm người ngoài nhóm dự án */
+    remoteLookup: { type: Boolean, default: false },
+    lookupMinChars: { type: Number, default: 1 },
+    remoteLoadingText: { type: String, default: '' },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -69,6 +81,10 @@ const emit = defineEmits(['update:modelValue']);
 const search = ref('');
 const activeIndex = ref(-1);
 const listboxId = `o1-up-lb-${Math.random().toString(36).slice(2, 9)}`;
+const remoteLookupHits = ref([]);
+const lookupPending = ref(false);
+const lookupCache = ref({});
+let lookupTimer = null;
 
 const idSet = computed(() => {
     const raw = props.modelValue || [];
@@ -93,11 +109,23 @@ function norm(s) {
 
 const filteredUsers = computed(() => {
     const q = norm(search.value.trim());
-    const list = [...(props.users || [])].sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'vi'));
+    const baseSorted = [...(props.users || [])].sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'vi'));
 
     if (!q) {
-        return list;
+        return baseSorted;
     }
+
+    const m = new Map();
+    for (const u of props.users || []) {
+        m.set(Number(u.id), u);
+    }
+    if (props.remoteLookup && q.length >= props.lookupMinChars) {
+        for (const u of remoteLookupHits.value) {
+            m.set(Number(u.id), u);
+        }
+    }
+
+    const list = [...m.values()].sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'vi'));
 
     return list.filter((u) => {
         const hay = `${u.name || ''} ${u.email || ''}`;
@@ -106,18 +134,78 @@ const filteredUsers = computed(() => {
     });
 });
 
+watch(search, () => {
+    if (!props.remoteLookup) {
+        return;
+    }
+    clearTimeout(lookupTimer);
+    const raw = search.value.trim();
+    if (raw.length < props.lookupMinChars) {
+        remoteLookupHits.value = [];
+        lookupPending.value = false;
+
+        return;
+    }
+    lookupTimer = setTimeout(async () => {
+        lookupPending.value = true;
+        try {
+            const { data } = await axios.get('/api/users/lookup', { params: { q: raw } });
+            remoteLookupHits.value = Array.isArray(data) ? data : [];
+            for (const u of remoteLookupHits.value) {
+                lookupCache.value[String(u.id)] = { id: u.id, name: u.name, email: u.email };
+            }
+        } catch {
+            remoteLookupHits.value = [];
+        } finally {
+            lookupPending.value = false;
+        }
+    }, 300);
+});
+
 watch(filteredUsers, () => {
     activeIndex.value = filteredUsers.value.length ? 0 : -1;
 });
 
-watch(search, () => {
-    activeIndex.value = filteredUsers.value.length ? 0 : -1;
-});
+watch(
+    () => props.modelValue,
+    async (ids) => {
+        const need = [];
+        const fromUsers = new Set((props.users || []).map((u) => Number(u?.id)));
+        for (const x of ids || []) {
+            const n = Number(x);
+            if (!Number.isFinite(n) || n <= 0) {
+                continue;
+            }
+            if (!fromUsers.has(n) && !lookupCache.value[String(n)]) {
+                need.push(n);
+            }
+        }
+        if (!need.length) {
+            return;
+        }
+        try {
+            const { data } = await axios.get('/api/users/lookup', { params: { ids: need } });
+            const arr = Array.isArray(data) ? data : [];
+            for (const u of arr) {
+                lookupCache.value[String(u.id)] = { id: u.id, name: u.name, email: u.email };
+            }
+        } catch {
+            /* ignore */
+        }
+    },
+    { immediate: true, deep: true },
+);
 
 const userById = computed(() => {
     const m = new Map();
     for (const u of props.users || []) {
         m.set(Number(u.id), u);
+    }
+    for (const u of Object.values(lookupCache.value)) {
+        const id = Number(u.id);
+        if (!m.has(id)) {
+            m.set(id, u);
+        }
     }
 
     return m;
@@ -170,6 +258,11 @@ function toggle(id) {
     const n = Number(id);
     if (!Number.isFinite(n) || n <= 0) {
         return;
+    }
+
+    const u = filteredUsers.value.find((x) => Number(x.id) === n);
+    if (u) {
+        lookupCache.value[String(u.id)] = { id: u.id, name: u.name, email: u.email };
     }
 
     const next = new Set(idSet.value);

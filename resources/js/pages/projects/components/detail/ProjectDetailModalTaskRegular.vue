@@ -159,6 +159,9 @@
                                                 :list-aria="t('projects.o1UserListAssignees')"
                                                 :empty-text="t('projects.o1UserEmpty')"
                                                 :remove-chip-label="chipRemoveLabel"
+                                                remote-lookup
+                                                :lookup-min-chars="1"
+                                                :remote-loading-text="t('common.loading')"
                                             />
                                             <span class="o1tf-field-hint">{{ t('projects.o1PhAssignees') }} — {{ t('projects.o1MultiHint') }}</span>
                                         </div>
@@ -172,6 +175,9 @@
                                                 :list-aria="t('projects.o1UserListOwners')"
                                                 :empty-text="t('projects.o1UserEmpty')"
                                                 :remove-chip-label="chipRemoveLabel"
+                                                remote-lookup
+                                                :lookup-min-chars="1"
+                                                :remote-loading-text="t('common.loading')"
                                             />
                                             <span class="o1tf-field-hint">{{ t('projects.o1PhOwners') }}</span>
                                         </div>
@@ -185,6 +191,9 @@
                                                 :list-aria="t('projects.o1UserListFollowers')"
                                                 :empty-text="t('projects.o1UserEmpty')"
                                                 :remove-chip-label="chipRemoveLabel"
+                                                remote-lookup
+                                                :lookup-min-chars="1"
+                                                :remote-loading-text="t('common.loading')"
                                             />
                                             <span class="o1tf-field-hint">{{ t('projects.o1PhFollowers') }}</span>
                                         </div>

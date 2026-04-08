@@ -458,6 +458,7 @@ import {
     PPMS_PROJECT_LIST_VIEW_MODE_KEY,
     PPMS_PROJECT_VIEWS_KEY,
 } from './constants/projectList';
+import { PPMS_PROJECT_LIST_FILTERS_KEY } from './constants/projectListStorage';
 import ProjectListBulkDeleteDock from './components/list/ProjectListBulkDeleteDock.vue';
 import ProjectListLoadingState from './components/list/ProjectListLoadingState.vue';
 import ProjectListModalCreate from './components/list/ProjectListModalCreate.vue';
@@ -1297,6 +1298,119 @@ function serializeUrlQuery() {
     return q;
 }
 
+function isDefaultProjectListQuery(q) {
+    const has =
+        (q.search && String(q.search).trim()) ||
+        q.type ||
+        q.phase ||
+        q.status ||
+        (q.label && String(q.label).trim()) ||
+        q.progress_min !== undefined ||
+        q.progress_max !== undefined ||
+        (q.sort && q.sort !== 'type_asc') ||
+        q.owner_id ||
+        q.archived === '1' ||
+        q.active_phase === '1' ||
+        (q.page && String(q.page) !== '1') ||
+        (q.per_page && String(q.per_page) !== '50') ||
+        q.view === 'kanban';
+
+    return !has;
+}
+
+function saveProjectListFiltersToStorage() {
+    try {
+        localStorage.setItem(
+            PPMS_PROJECT_LIST_FILTERS_KEY,
+            JSON.stringify({
+                search: filters.search,
+                type: filters.type,
+                phase: filters.phase,
+                status: filters.status,
+                label: filters.label,
+                progress_min: filters.progress_min,
+                progress_max: filters.progress_max,
+                sort: filters.sort,
+                owner_id: filters.owner_id,
+                archived: filters.archived,
+                activePhase: filters.activePhase,
+                viewMode: viewMode.value,
+                page: page.value,
+                perPage: perPage.value,
+            }),
+        );
+    } catch {
+        /* ignore */
+    }
+}
+
+function applySavedProjectListFilters() {
+    try {
+        const raw = localStorage.getItem(PPMS_PROJECT_LIST_FILTERS_KEY);
+        if (!raw) {
+            return;
+        }
+        const o = JSON.parse(raw);
+        if (!o || typeof o !== 'object') {
+            return;
+        }
+        if (typeof o.search === 'string') {
+            filters.search = o.search;
+        }
+        if (typeof o.type === 'string') {
+            filters.type = o.type;
+        }
+        if (typeof o.phase === 'string') {
+            filters.phase = o.phase;
+        }
+        if (typeof o.status === 'string') {
+            filters.status = o.status;
+        }
+        if (typeof o.label === 'string') {
+            filters.label = o.label;
+        }
+        if (o.progress_min !== undefined && o.progress_min !== null && o.progress_min !== '') {
+            const n = Number(o.progress_min);
+            filters.progress_min = Number.isNaN(n) ? null : n;
+        }
+        if (o.progress_max !== undefined && o.progress_max !== null && o.progress_max !== '') {
+            const n = Number(o.progress_max);
+            filters.progress_max = Number.isNaN(n) ? null : n;
+        }
+        if (typeof o.sort === 'string') {
+            filters.sort = o.sort;
+        }
+        if (typeof o.owner_id === 'string') {
+            filters.owner_id = o.owner_id;
+        }
+        if (typeof o.archived === 'boolean') {
+            filters.archived = o.archived;
+        }
+        if (typeof o.activePhase === 'boolean') {
+            filters.activePhase = o.activePhase;
+        }
+        if (typeof o.viewMode === 'string' && (o.viewMode === 'list' || o.viewMode === 'kanban')) {
+            viewMode.value = o.viewMode;
+        }
+        if (typeof o.page === 'number' && o.page >= 1) {
+            page.value = Math.floor(o.page);
+        }
+        if (typeof o.perPage === 'number') {
+            perPage.value = Math.min(100, Math.max(10, Math.floor(o.perPage)));
+        }
+    } catch {
+        /* ignore */
+    }
+}
+
+let saveListFiltersTimer = null;
+function scheduleSaveListFiltersToStorage() {
+    clearTimeout(saveListFiltersTimer);
+    saveListFiltersTimer = setTimeout(() => saveProjectListFiltersToStorage(), 450);
+}
+watch(filters, scheduleSaveListFiltersToStorage, { deep: true });
+watch([viewMode, page, perPage], scheduleSaveListFiltersToStorage);
+
 function scheduleUrlReplace() {
     clearTimeout(urlDebounce);
     urlDebounce = setTimeout(async () => {
@@ -1861,7 +1975,10 @@ onMounted(async () => {
     document.addEventListener('click', onDocumentClickOutside);
     document.addEventListener('keydown', onGlobalKeydown);
     hydrateFromRouteQuery(route.query);
-    if (route.query.view !== 'kanban' && route.query.view !== 'list') {
+    if (isDefaultProjectListQuery(route.query)) {
+        applySavedProjectListFilters();
+        scheduleUrlReplace();
+    } else if (route.query.view !== 'kanban' && route.query.view !== 'list') {
         viewMode.value = readStoredViewMode();
     }
     loadSavedViews();

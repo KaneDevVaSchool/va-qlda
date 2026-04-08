@@ -59,12 +59,16 @@
                         <div class="o1tf-row">
                             <div class="o1tf-field" style="flex: 1 1 240px">
                                 <label class="o1tf-label">{{ t('projects.o1Manager') }} <span class="req">*</span></label>
-                                <select v-model="form.assignee_id">
-                                    <option value="">{{ t('projects.o1SelectAssignee') }}</option>
-                                    <option v-for="u in userOptions" :key="'mg-' + u.id" :value="String(u.id)">
-                                        {{ userLabel(u) }}
-                                    </option>
-                                </select>
+                                <O1UserLookupSelect
+                                    v-model="form.assignee_id"
+                                    :base-users="userOptions"
+                                    :search-placeholder="t('projects.createUserSearchPlaceholder')"
+                                    :search-aria="t('projects.o1UserAriaSearchAssignees')"
+                                    :min-hint="t('projects.createUserSearchMinHint')"
+                                    :empty-text="t('projects.createUserSearchEmpty')"
+                                    :loading-text="t('common.loading')"
+                                    :clear-aria="t('common.close')"
+                                />
                             </div>
                         </div>
                         <div class="o1tf-row">
@@ -116,6 +120,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import O1UserLookupSelect from './O1UserLookupSelect.vue';
 
 const { t } = useI18n();
 
@@ -159,12 +164,6 @@ const userOptions = computed(() => {
 
     return [...m.values()].sort((a, b) => String(a.name).localeCompare(String(b.name)));
 });
-
-function userLabel(u) {
-    const mail = u.email ? ` — ${u.email}` : '';
-
-    return `${u.name || u.id}${mail}`;
-}
 
 const parentTaskOptions = computed(() => (props.project?.tasks || []).filter((tk) => !tk.parent_id));
 
