@@ -342,6 +342,8 @@
         "ganttAssignee": "Assignee",
         "ganttStatusPh": "status: todo,in_progress,done",
         "ganttRootOnly": "Root tasks only",
+        "ganttFilterAssigneeAll": "All assignees",
+        "ganttFilterStatusAll": "All statuses",
         "ganttRefresh": "Refresh",
         "ganttWindow": "Window: {start} → {end} ({days} days)",
         "ganttEmpty": "No tasks match filters.",

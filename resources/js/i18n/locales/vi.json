@@ -342,6 +342,8 @@
         "ganttAssignee": "Assignee",
         "ganttStatusPh": "status: todo,in_progress,done",
         "ganttRootOnly": "Chỉ task gốc",
+        "ganttFilterAssigneeAll": "Tất cả người thực hiện",
+        "ganttFilterStatusAll": "Tất cả trạng thái",
         "ganttRefresh": "Làm mới",
         "ganttWindow": "Cửa sổ: {start} → {end} ({days} ngày)",
         "ganttEmpty": "Không có task khớp bộ lọc.",

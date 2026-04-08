@@ -15,18 +15,42 @@
                     </div>
                 </div>
                 <div class="ppms-pd-tasks-filters ppms-task-form">
-                    <select v-model="ganttFilters.assignee_id" class="ppms-pd-tasks-select">
-                        <option value="">— {{ t('projects.thAssigneeFull') }} —</option>
-                        <option v-for="o in assigneeOptions" :key="o.id" :value="String(o.id)">
-                            {{ o.name }}
-                        </option>
-                    </select>
-                    <input v-model="ganttFilters.status" type="search" class="ppms-pd-tasks-input" :placeholder="t('projects.ganttStatusPh')" />
-                    <label class="ppms-pd-tasks-check">
-                        <input v-model="ganttFilters.root_only" type="checkbox" />
-                        {{ t('projects.ganttRootOnly') }}
-                    </label>
-                    <button type="button" class="ppms-btn-secondary ppms-pd-tasks-refresh" @click="$emit('refresh-gantt')">
+                    <div class="ppms-pd-filter-field">
+                        <label class="ppms-pd-filter-label" for="ppms-pd-filter-assignee">{{ t('projects.thAssigneeFull') }}</label>
+                        <div class="ppms-pd-filter-control">
+                            <select id="ppms-pd-filter-assignee" v-model="ganttFilters.assignee_id" class="ppms-pd-tasks-select">
+                                <option value="">{{ t('projects.ganttFilterAssigneeAll') }}</option>
+                                <option v-for="o in assigneeOptions" :key="o.id" :value="String(o.id)">
+                                    {{ o.name }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="ppms-pd-filter-field">
+                        <label class="ppms-pd-filter-label" for="ppms-pd-filter-status">{{ t('projects.thStatus') }}</label>
+                        <div class="ppms-pd-filter-control">
+                            <select id="ppms-pd-filter-status" v-model="ganttFilters.status" class="ppms-pd-tasks-select">
+                                <option value="">{{ t('projects.ganttFilterStatusAll') }}</option>
+                                <option v-for="sid in TASK_STATUS_IDS" :key="sid" :value="sid">
+                                    {{ t('projects.taskStatus.' + sid) }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="ppms-pd-filter-field ppms-pd-filter-field--switch">
+                        <span class="ppms-pd-filter-label ppms-pd-filter-label--spacer" aria-hidden="true">&nbsp;</span>
+                        <label class="ppms-pd-filter-switch">
+                            <input
+                                id="ppms-pd-filter-root"
+                                v-model="ganttFilters.root_only"
+                                type="checkbox"
+                                class="ppms-pd-filter-switch-input"
+                            />
+                            <span class="ppms-pd-filter-switch-ui" aria-hidden="true" />
+                            <span class="ppms-pd-filter-switch-text">{{ t('projects.ganttRootOnly') }}</span>
+                        </label>
+                    </div>
+                    <button type="button" class="ppms-pd-tasks-refresh" @click="$emit('refresh-gantt')">
                         {{ t('projects.ganttRefresh') }}
                     </button>
                 </div>
@@ -265,6 +289,9 @@ const ganttZoom = ref(1);
 const collapsedPhaseKeys = ref([]);
 
 const BASE_DAY_PX = 26;
+
+/** Trùng rule backend `TaskController` — lọc Gantt theo một trạng thái. */
+const TASK_STATUS_IDS = ['todo', 'in_progress', 'done', 'blocked'];
 
 const taskById = computed(() => {
     const m = new Map();
@@ -566,30 +593,152 @@ defineExpose({ tasksBoardRef, scrollBoardIntoView });
 .ppms-pd-tasks-filters {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem 0.65rem;
+    align-items: flex-end;
+    gap: 0.75rem 1rem;
 }
 
-.ppms-pd-tasks-select,
-.ppms-pd-tasks-input {
-    min-width: 10rem;
-    padding: 0.35rem 0.5rem;
-    border: 1px solid #c8c6c4;
-    border-radius: 4px;
+.ppms-pd-filter-field--switch {
+    padding-top: 0.1rem;
+}
+
+.ppms-pd-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.ppms-pd-filter-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #605e5c;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    min-height: 0.9rem;
+}
+
+.ppms-pd-filter-label--spacer {
+    user-select: none;
+}
+
+.ppms-pd-filter-control {
+    position: relative;
+    min-width: 11rem;
+    max-width: 16rem;
+}
+
+.ppms-pd-tasks-select {
+    width: 100%;
+    min-height: 2.5rem;
+    padding: 0.45rem 2.25rem 0.45rem 0.75rem;
+    border: 1px solid #d2d0ce;
+    border-radius: 8px;
     font: inherit;
-    background: #fff;
+    font-size: 0.875rem;
+    color: #323130;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23605e5c' stroke-width='2.2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.65rem center;
+    background-size: 12px;
+    appearance: none;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
 }
 
-.ppms-pd-tasks-check {
+.ppms-pd-tasks-select:hover {
+    border-color: #b3b0ad;
+}
+
+.ppms-pd-tasks-select:focus {
+    outline: none;
+    border-color: #0078d4;
+    box-shadow:
+        inset 0 1px 2px rgba(0, 0, 0, 0.04),
+        0 0 0 2px rgba(0, 120, 212, 0.22);
+}
+
+.ppms-pd-filter-switch {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+    padding: 0.35rem 0;
     font-size: 0.875rem;
     color: #323130;
 }
 
+.ppms-pd-filter-switch-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.ppms-pd-filter-switch-ui {
+    position: relative;
+    width: 2.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: #c8c6c4;
+    transition: background 0.2s ease;
+}
+
+.ppms-pd-filter-switch-ui::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: calc(1.25rem - 4px);
+    height: calc(1.25rem - 4px);
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease;
+}
+
+.ppms-pd-filter-switch-input:checked + .ppms-pd-filter-switch-ui {
+    background: #0078d4;
+}
+
+.ppms-pd-filter-switch-input:checked + .ppms-pd-filter-switch-ui::after {
+    transform: translateX(1rem);
+}
+
+.ppms-pd-filter-switch-input:focus-visible + .ppms-pd-filter-switch-ui {
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.35);
+}
+
+.ppms-pd-filter-switch-text {
+    line-height: 1.3;
+}
+
 .ppms-pd-tasks-refresh {
+    min-height: 2.5rem;
+    padding: 0 1rem;
     font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1px solid #0078d4;
+    background: #fff;
+    color: #0078d4;
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+.ppms-pd-tasks-refresh:hover {
+    background: #f3f9fd;
+}
+
+.ppms-pd-tasks-refresh:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.35);
 }
 
 .ppms-pd-tasks-window {
