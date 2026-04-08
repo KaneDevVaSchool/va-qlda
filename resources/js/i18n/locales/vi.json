@@ -318,6 +318,8 @@
         "timelineCurrent": "Hiện tại",
         "timelinePlanned": "Chưa có ngày",
         "editStakeholders": "Cập nhật khách hàng, NCC & timeline",
+        "editMetaModalTitle": "Chỉnh sửa dự án & thành viên",
+        "metaNeedName": "Vui lòng nhập tên dự án.",
         "fieldSupplierName": "Tên NCC",
         "fieldSupplierContact": "Liên hệ NCC (SĐT / email — tùy chọn)",
         "supplierContactShort": "LH",

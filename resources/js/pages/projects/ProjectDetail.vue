@@ -107,6 +107,7 @@
                 v-model="showMetaEdit"
                 :meta-form="metaForm"
                 :meta-err="metaErr"
+                :can-manage-project="canManageProject"
                 @save="saveMeta"
                 @add-supplier="addMetaSupplier"
                 @remove-supplier="removeMetaSupplier"
@@ -287,6 +288,10 @@ const phaseNew = reactive({
 const showMetaEdit = ref(false);
 const metaErr = ref('');
 const metaForm = reactive({
+    name: '',
+    owner_id: '',
+    executor_user_ids: [],
+    follower_user_ids: [],
     customer_name: '',
     customer_email: '',
     labels_text: '',
@@ -469,6 +474,10 @@ function openMetaEdit() {
         return;
     }
     metaErr.value = '';
+    metaForm.name = p.name || '';
+    metaForm.owner_id = p.owner_id != null ? String(p.owner_id) : '';
+    metaForm.executor_user_ids = (p.executor_users || []).map((u) => String(u.id));
+    metaForm.follower_user_ids = (p.follower_users || []).map((u) => String(u.id));
     metaForm.customer_name = p.customer_name || '';
     metaForm.customer_email = p.customer_email || '';
     metaForm.labels_text = Array.isArray(p.labels) && p.labels.length ? p.labels.join(', ') : '';
@@ -519,16 +528,36 @@ async function saveMeta() {
         phase,
         completed_at: metaForm.timelineDates[phase],
     }));
+    const payload = {
+        customer_name: metaForm.customer_name.trim() || null,
+        customer_email: metaForm.customer_email.trim() || null,
+        labels: parseCommaLabelTokens(metaForm.labels_text),
+        start_date: metaForm.start_date || null,
+        actual_start_date: metaForm.actual_start_date || null,
+        suppliers: suppliers.length ? suppliers : null,
+        process_timeline: process_timeline.length ? process_timeline : null,
+    };
+    if (canManageProject.value) {
+        const nm = String(metaForm.name || '').trim();
+        if (!nm) {
+            metaErr.value = t('projects.metaNeedName');
+
+            return;
+        }
+        if (!metaForm.owner_id) {
+            metaErr.value = t('projects.createNeedOwner');
+
+            return;
+        }
+        payload.name = nm;
+        payload.owner_id = Number(metaForm.owner_id);
+        const execIds = (metaForm.executor_user_ids || []).map((id) => Number(id)).filter((n) => n > 0);
+        const folIds = (metaForm.follower_user_ids || []).map((id) => Number(id)).filter((n) => n > 0);
+        payload.executor_user_ids = execIds;
+        payload.follower_user_ids = folIds;
+    }
     try {
-        await axios.patch(`/api/projects/${props.id}`, {
-            customer_name: metaForm.customer_name.trim() || null,
-            customer_email: metaForm.customer_email.trim() || null,
-            labels: parseCommaLabelTokens(metaForm.labels_text),
-            start_date: metaForm.start_date || null,
-            actual_start_date: metaForm.actual_start_date || null,
-            suppliers: suppliers.length ? suppliers : null,
-            process_timeline: process_timeline.length ? process_timeline : null,
-        });
+        await axios.patch(`/api/projects/${props.id}`, payload);
         showMetaEdit.value = false;
         ppmsToastSuccess(t('projects.saveMetaOk'));
         await load();

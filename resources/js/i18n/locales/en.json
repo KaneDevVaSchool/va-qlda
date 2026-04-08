@@ -318,6 +318,8 @@
         "timelineCurrent": "Current",
         "timelinePlanned": "No date yet",
         "editStakeholders": "Update customer, suppliers & timeline",
+        "editMetaModalTitle": "Edit project & members",
+        "metaNeedName": "Please enter a project name.",
         "fieldSupplierName": "Vendor name",
         "fieldSupplierContact": "Vendor contact (phone / email — optional)",
         "supplierContactShort": "Contact",

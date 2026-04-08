@@ -223,16 +223,46 @@
                                 </td>
                                 <td v-if="colVis('actions')" class="ppms-td-actions">
                                     <div class="ppms-pl-actions-cell">
-                                        <router-link :to="'/projects/' + p.id" class="ppms-btn-ghost ppms-btn-sm">{{
-                                            t('projects.openDetail')
-                                        }}</router-link>
+                                        <router-link
+                                            :to="'/projects/' + p.id"
+                                            class="ppms-btn-ghost ppms-pl-page-btn"
+                                            :title="t('projects.openDetail')"
+                                            :aria-label="t('projects.openDetail')"
+                                        >
+                                            <svg
+                                                class="ppms-pl-ico-svg"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                aria-hidden="true"
+                                            >
+                                                <path d="M5 12h14M12 5l7 7-7 7" />
+                                            </svg>
+                                        </router-link>
                                         <button
                                             v-if="canEditProject"
                                             type="button"
-                                            class="ppms-btn-ghost ppms-btn-sm"
+                                            class="ppms-btn-ghost ppms-pl-page-btn"
+                                            :title="t('common.edit')"
+                                            :aria-label="t('common.edit')"
                                             @click.stop="openEditModal(p)"
                                         >
-                                            {{ t('common.edit') }}
+                                            <svg
+                                                class="ppms-pl-ico-svg"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                aria-hidden="true"
+                                            >
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                            </svg>
                                         </button>
                                     </div>
                                 </td>
@@ -367,9 +397,25 @@
                                             </span>
                                             <span class="ppms-pl-username ppms-pl-kanban-owner-name">{{ p.owner?.name || '—' }}</span>
                                         </button>
-                                        <router-link :to="'/projects/' + p.id" class="ppms-btn-ghost ppms-btn-sm ppms-pl-kanban-open">{{
-                                            t('projects.openDetail')
-                                        }}</router-link>
+                                        <router-link
+                                            :to="'/projects/' + p.id"
+                                            class="ppms-btn-ghost ppms-pl-page-btn ppms-pl-kanban-open"
+                                            :title="t('projects.openDetail')"
+                                            :aria-label="t('projects.openDetail')"
+                                        >
+                                            <svg
+                                                class="ppms-pl-ico-svg"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                aria-hidden="true"
+                                            >
+                                                <path d="M5 12h14M12 5l7 7-7 7" />
+                                            </svg>
+                                        </router-link>
                                     </div>
                                 </article>
                             </div>
