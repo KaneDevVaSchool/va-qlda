@@ -291,3 +291,213 @@
     font-size: 0.85rem;
     font-weight: normal;
 }
+
+/* —— Modal lead / grid / outlined (Fluent-like) —— */
+.o1tf-modal-lead {
+    margin: -0.25rem 0 1rem;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: #605e5c;
+}
+
+.o1tf-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 0.65rem 1rem;
+    align-items: start;
+}
+
+.o1tf-grid > * {
+    min-width: 0;
+}
+
+.o1tf-span-4 {
+    grid-column: span 4;
+}
+
+.o1tf-span-5 {
+    grid-column: span 5;
+}
+
+.o1tf-span-6 {
+    grid-column: span 6;
+}
+
+.o1tf-span-7 {
+    grid-column: span 7;
+}
+
+.o1tf-span-8 {
+    grid-column: span 8;
+}
+
+.o1tf-span-12 {
+    grid-column: span 12;
+}
+
+@media (max-width: 720px) {
+    .o1tf-span-4,
+    .o1tf-span-5,
+    .o1tf-span-6,
+    .o1tf-span-7,
+    .o1tf-span-8 {
+        grid-column: span 12;
+    }
+}
+
+.o1tf-field--outlined label.o1tf-label,
+.o1tf-field--outlined > .o1tf-label {
+    display: block;
+    margin-bottom: 0.28rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #323130;
+}
+
+.o1tf-field--outlined .o1tf-input-el,
+.o1tf-field--outlined input:not([type='checkbox']):not([type='radio']),
+.o1tf-field--outlined select,
+.o1tf-field--outlined textarea {
+    width: 100%;
+    min-height: 2.35rem;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid #8a8886;
+    border-radius: 4px;
+    font: inherit;
+    background: #fff;
+    color: #201f1e;
+    transition:
+        border-color 0.12s ease,
+        box-shadow 0.12s ease;
+}
+
+.o1tf-field--outlined textarea {
+    min-height: 96px;
+    resize: vertical;
+}
+
+.o1tf-field--outlined select[multiple].o1tf-multiselect {
+    min-height: 6.5rem;
+    padding: 0.35rem;
+    line-height: 1.35;
+}
+
+.o1tf-field--outlined :focus-visible {
+    outline: none;
+}
+
+.o1tf-field--outlined:focus-within .o1tf-input-el,
+.o1tf-field--outlined input:focus-visible,
+.o1tf-field--outlined select:focus-visible,
+.o1tf-field--outlined textarea:focus-visible {
+    border-color: #0078d4;
+    box-shadow: 0 0 0 1px #0078d4;
+}
+
+.o1tf-field--outlined .is-disabled {
+    opacity: 0.42;
+    pointer-events: none;
+    background: #f3f2f1 !important;
+}
+
+.o1tf-field-hint {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    color: #605e5c;
+}
+
+.o1tf-datepair {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.o1tf-datepair .o1tf-time-input {
+    flex: 0 0 6.25rem;
+    min-width: 5.5rem;
+}
+
+.o1tf-datepair .o1tf-date-input {
+    flex: 1 1 10rem;
+    min-width: 8rem;
+}
+
+.o1tf-subgroup-label {
+    display: block;
+    margin: 0 0 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #323130;
+}
+
+.o1tf-section-title--btn {
+    width: 100%;
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    border: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    background: #fff;
+    border-radius: 6px 6px 0 0;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #252423;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.o1tf-section-title--btn:hover {
+    background: #fafaf9;
+}
+
+.o1tf-caret-sec {
+    display: inline-block;
+    font-size: 0.65rem;
+    opacity: 0.55;
+    transition: transform 0.15s ease;
+}
+
+.o1tf-caret-sec.is-open {
+    transform: rotate(90deg);
+}
+
+.o1tf-check-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem 1.25rem;
+    align-items: flex-start;
+}
+
+.o1tf-check-row .o1tf-check {
+    max-width: 100%;
+}
+
+.o1tf-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.o1tf-tab-head[role='tablist'] {
+    gap: 0.25rem;
+}
+
+.o1tf-tab-label[role='tab'] {
+    border-radius: 4px 4px 0 0;
+}
+
+.o1tf-tab-label[role='tab']:focus-visible {
+    outline: 2px solid #0078d4;
+    outline-offset: 2px;
+}
