@@ -522,7 +522,7 @@
         "o1ModalSubtitle": "Fill in the details; * fields are required. Use Ctrl/Cmd + click to select multiple people.",
         "o1PhTitle": "Task title *",
         "o1PhDesc": "Details, acceptance criteria…",
-        "o1PhCode": "DA_{year}_{seq} — generated on save",
+        "o1PhCode": "DA_<year>_<seq> — generated on save",
         "o1PhPhase": "Select project phase",
         "o1PhDateStart": "dd/mm/yyyy",
         "o1PhDateEnd": "Deadline or planned end",

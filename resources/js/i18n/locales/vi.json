@@ -522,7 +522,7 @@
         "o1ModalSubtitle": "Điền thông tin chi tiết; các trường * là bắt buộc. Dùng Ctrl/Cmd + click để chọn nhiều người.",
         "o1PhTitle": "Nhập tên công việc *",
         "o1PhDesc": "Mô tả chi tiết, tiêu chí nghiệm thu…",
-        "o1PhCode": "DA_{năm}_{số thứ tự} — tự sinh khi lưu",
+        "o1PhCode": "DA_<năm>_<STT> — tự sinh khi lưu",
         "o1PhPhase": "Chọn phase dự án",
         "o1PhDateStart": "dd/mm/yyyy",
         "o1PhDateEnd": "Hạn hoặc ngày kết thúc kế hoạch",
