@@ -118,9 +118,9 @@
             "openTasks": "Số task mở"
         },
         "projectType": {
-            "maintenance": "Vận hành (Type 1)",
-            "delivery": "Delivery (Type 2)",
-            "rnd": "R&D (Type 3)"
+            "maintenance": "Vận hành - Nâng cấp",
+            "delivery": "Triển khai - Nghiệm thu",
+            "rnd": "Nghiên cứu - Phát triển"
         },
         "projectStatus": {
             "on_track": "On track",
@@ -321,9 +321,9 @@
             "rnd": "R&D"
         },
         "type": {
-            "maintenance": "Vận hành (Type 1)",
-            "delivery": "Delivery (Type 2)",
-            "rnd": "R&D (Type 3)"
+            "maintenance": "Vận hành - Nâng cấp",
+            "delivery": "Triển khai - Nghiệm thu",
+            "rnd": "Nghiên cứu - Phát triển"
         },
         "status": {
             "on_track": "Đang thực hiện",
@@ -675,14 +675,14 @@
         "scopeTabsAria": "Phạm vi danh sách dự án",
         "typeTabAll": "Mọi loại",
         "typeShort": {
-            "maintenance": "Vận hành",
-            "delivery": "Delivery",
-            "rnd": "R&D"
+            "maintenance": "Vận hành - NC",
+            "delivery": "Triển khai - NT",
+            "rnd": "NC - PT"
         },
         "typeGroup": {
-            "maintenance": "Vận hành (Type 1)",
-            "delivery": "Delivery (Type 2)",
-            "rnd": "R&D (Type 3)"
+            "maintenance": "Vận hành - Nâng cấp",
+            "delivery": "Triển khai - Nghiệm thu",
+            "rnd": "Nghiên cứu - Phát triển"
         },
         "viewModeList": "Danh sách",
         "viewModeListHint": "Chế độ xem danh sách",

@@ -118,9 +118,9 @@
             "openTasks": "Open tasks"
         },
         "projectType": {
-            "maintenance": "Operations (Type 1)",
-            "delivery": "Delivery (Type 2)",
-            "rnd": "R&D (Type 3)"
+            "maintenance": "Operations — upgrade",
+            "delivery": "Deployment — acceptance",
+            "rnd": "Research & development"
         },
         "projectStatus": {
             "on_track": "On track",
@@ -321,9 +321,9 @@
             "rnd": "R&D"
         },
         "type": {
-            "maintenance": "Operations (Type 1)",
-            "delivery": "Delivery (Type 2)",
-            "rnd": "R&D (Type 3)"
+            "maintenance": "Operations — upgrade",
+            "delivery": "Deployment — acceptance",
+            "rnd": "Research & development"
         },
         "status": {
             "on_track": "On track",
@@ -674,14 +674,14 @@
         "scopeTabsAria": "Project list scope",
         "typeTabAll": "All types",
         "typeShort": {
-            "maintenance": "Ops",
-            "delivery": "Delivery",
+            "maintenance": "Ops — upg.",
+            "delivery": "Deploy — acc.",
             "rnd": "R&D"
         },
         "typeGroup": {
-            "maintenance": "Operations (Type 1)",
-            "delivery": "Delivery (Type 2)",
-            "rnd": "R&D (Type 3)"
+            "maintenance": "Operations — upgrade",
+            "delivery": "Deployment — acceptance",
+            "rnd": "Research & development"
         },
         "viewModeList": "List",
         "viewModeListHint": "List view",
