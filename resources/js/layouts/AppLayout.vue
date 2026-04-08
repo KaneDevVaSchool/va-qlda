@@ -170,19 +170,38 @@
                     </div>
                 </nav>
 
-                <button
-                    type="button"
-                    class="ppms-sidebar-collapse-toggle"
-                    :aria-expanded="!sidebarCollapsed"
-                    :aria-label="sidebarCollapsed ? t('layout.expandSidebar') : t('layout.collapseSidebar')"
-                    @click="toggleSidebarCollapsed"
-                >
-                    <span
-                        class="ppms-sidebar-collapse-icon"
-                        :class="{ 'is-collapsed': sidebarCollapsed }"
-                        aria-hidden="true"
-                    />
-                </button>
+                <div class="ppms-sidebar-collapse-zone">
+                    <div class="ppms-sidebar-divider" aria-hidden="true" />
+                    <button
+                        type="button"
+                        class="ppms-sidebar-collapse-toggle"
+                        :aria-expanded="!sidebarCollapsed"
+                        :aria-label="sidebarCollapsed ? t('layout.expandSidebar') : t('layout.collapseSidebar')"
+                        @click="toggleSidebarCollapsed"
+                    >
+                        <span class="ppms-sidebar-collapse-face">
+                            <svg
+                                class="ppms-sidebar-collapse-svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                            >
+                                <template v-if="!sidebarCollapsed">
+                                    <polyline points="11 6 6 12 11 18" />
+                                    <polyline points="18 6 13 12 18 18" />
+                                </template>
+                                <template v-else>
+                                    <polyline points="6 6 11 12 6 18" />
+                                    <polyline points="13 6 18 12 13 18" />
+                                </template>
+                            </svg>
+                        </span>
+                    </button>
+                </div>
 
                 <div class="ppms-user">
                     <div class="ppms-user-card">
