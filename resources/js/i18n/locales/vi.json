@@ -331,7 +331,14 @@
             "delayed": "Trễ tiến độ",
             "blocked": "Bị chặn"
         },
-        "ganttTitle": "Gantt (API — lọc assignee / status / root)",
+        "ganttTitle": "Công việc & tiến độ",
+        "pdTasksBoardTitle": "Công việc",
+        "pdTasksPhaseUncat": "Không gán phase",
+        "pdOverdueFmt": "Quá hạn {days}d {hours}h",
+        "thTaskWork": "Công việc",
+        "thAssigneeFull": "Người thực hiện",
+        "thWeightPct": "Tỷ trọng",
+        "thDeadlineCol": "Hạn",
         "ganttAssignee": "Assignee",
         "ganttStatusPh": "status: todo,in_progress,done",
         "ganttRootOnly": "Chỉ task gốc",
@@ -817,7 +824,7 @@
         "deadlineSoon": "Sắp đến hạn",
         "taskStatus": {
             "todo": "Chưa làm",
-            "in_progress": "Đang làm",
+            "in_progress": "Đang thực hiện",
             "done": "Hoàn thành",
             "blocked": "Bị chặn"
         }

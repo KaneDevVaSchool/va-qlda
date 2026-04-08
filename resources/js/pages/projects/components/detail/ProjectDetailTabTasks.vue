@@ -1,7 +1,184 @@
 <!-- eslint-disable vue/no-mutating-props -- parent reactive ganttFilters, csat -->
 <template>
     <div class="ppms-pd-tab-panel">
-        <section v-if="project.type === 'delivery'" class="ppms-card ppms-pd-section">
+        <section ref="tasksBoardRef" class="ppms-pd-tasks-shell ppms-card ppms-pd-section">
+            <div class="ppms-pd-tasks-topbar">
+                <div class="ppms-pd-tasks-topbar__title">
+                    <h2 class="ppms-pd-tasks-board-title">{{ t('projects.pdTasksBoardTitle') }}</h2>
+                    <div class="ppms-pd-tasks-topbar__icons" role="toolbar" :aria-label="t('projects.pdTasksBoardHint')">
+                        <button type="button" class="ppms-pd-tasks-ico-btn" :title="t('projects.pdTasksZoomOut')" @click="zoomOut">
+                            −
+                        </button>
+                        <button type="button" class="ppms-pd-tasks-ico-btn" :title="t('projects.pdTasksZoomIn')" @click="zoomIn">
+                            +
+                        </button>
+                    </div>
+                </div>
+                <div class="ppms-pd-tasks-filters ppms-task-form">
+                    <select v-model="ganttFilters.assignee_id" class="ppms-pd-tasks-select">
+                        <option value="">— {{ t('projects.thAssigneeFull') }} —</option>
+                        <option v-for="o in assigneeOptions" :key="o.id" :value="String(o.id)">
+                            {{ o.name }}
+                        </option>
+                    </select>
+                    <input v-model="ganttFilters.status" type="search" class="ppms-pd-tasks-input" :placeholder="t('projects.ganttStatusPh')" />
+                    <label class="ppms-pd-tasks-check">
+                        <input v-model="ganttFilters.root_only" type="checkbox" />
+                        {{ t('projects.ganttRootOnly') }}
+                    </label>
+                    <button type="button" class="ppms-btn-secondary ppms-pd-tasks-refresh" @click="$emit('refresh-gantt')">
+                        {{ t('projects.ganttRefresh') }}
+                    </button>
+                </div>
+            </div>
+
+            <p v-if="gantt.window?.start" class="ppms-pd-tasks-window ppms-muted">
+                {{
+                    t('projects.ganttWindow', {
+                        start: gantt.window.start,
+                        end: gantt.window.end,
+                        days: gantt.window.days,
+                    })
+                }}
+            </p>
+
+            <div class="ppms-pd-tasks-split">
+                <div class="ppms-pd-tasks-col-left">
+                    <div ref="leftScrollRef" class="ppms-pd-tasks-scroll" @scroll="onLeftScroll">
+                        <table class="ppms-pd-tasks-table">
+                            <thead>
+                                <tr>
+                                    <th class="ppms-pd-th-task">{{ t('projects.thTaskWork') }}</th>
+                                    <th class="ppms-pd-th-assignee">{{ t('projects.thAssigneeFull') }}</th>
+                                    <th class="ppms-pd-th-status">{{ t('projects.thStatus') }}</th>
+                                    <th class="ppms-pd-th-date">{{ t('projects.thStart') }}</th>
+                                    <th class="ppms-pd-th-date">{{ t('projects.thEnd') }}</th>
+                                    <th class="ppms-pd-th-num">{{ t('projects.thWeightPct') }}</th>
+                                    <th class="ppms-pd-th-due">{{ t('projects.thDeadlineCol') }}</th>
+                                    <th class="ppms-pd-th-act" aria-label="actions" />
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-if="!boardRows.length">
+                                    <td colspan="8" class="ppms-pd-tasks-empty">{{ t('projects.ganttEmpty') }}</td>
+                                </tr>
+                                <template v-for="(row, idx) in boardRows" :key="row.kind === 'phase' ? 'ph-' + row.phaseKey : 'tk-' + row.task.id + '-' + idx">
+                                    <tr v-if="row.kind === 'phase'" class="ppms-pd-tr-phase">
+                                        <td colspan="8" class="ppms-pd-td-phase">
+                                            <button
+                                                type="button"
+                                                class="ppms-pd-phase-toggle"
+                                                :aria-expanded="!isPhaseCollapsed(row.phaseKey)"
+                                                @click="togglePhase(row.phaseKey)"
+                                            >
+                                                <span
+                                                    class="ppms-pd-phase-caret"
+                                                    :class="{ 'is-collapsed': isPhaseCollapsed(row.phaseKey) }"
+                                                    aria-hidden="true"
+                                                    >▾</span
+                                                >
+                                                <span class="ppms-pd-phase-name">{{ phaseTitle(row) }}</span>
+                                                <span class="ppms-pd-phase-count">({{ row.taskCount }})</span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr v-else class="ppms-pd-tr-task" :class="{ 'is-overdue-row': isTaskOverdue(row.task) }">
+                                        <td class="ppms-pd-td-name">
+                                            <button
+                                                type="button"
+                                                class="ppms-pd-task-name"
+                                                :class="{ 'is-overdue-text': isTaskOverdue(row.task) }"
+                                                :style="{ paddingLeft: `${12 + row.depth * 16}px` }"
+                                                @click="$emit('toggle-focus', row.task || { id: row.bar.task_id, name: row.bar.name })"
+                                            >
+                                                {{ row.bar.name }}
+                                            </button>
+                                        </td>
+                                        <td class="ppms-pd-td-assignee">
+                                            <span
+                                                class="ppms-pd-tasks-avatar"
+                                                :style="{ background: avatarColor(row.bar.assignee_name || row.bar.assignee_id || '?') }"
+                                                :title="row.bar.assignee_name || t('projects.pdUnassigned')"
+                                            >
+                                                {{ initials(row.bar.assignee_name) }}
+                                            </span>
+                                        </td>
+                                        <td class="ppms-pd-td-status">
+                                            <span :class="['ppms-pd-status-pill', statusPillClass(row.bar.status)]">
+                                                {{ ganttTaskStatusLabel(t, row.bar.status) }}
+                                            </span>
+                                        </td>
+                                        <td class="ppms-pd-td-date">{{ formatYmdDisplay(row.bar.start) }}</td>
+                                        <td class="ppms-pd-td-date">{{ formatYmdDisplay(row.bar.end) }}</td>
+                                        <td class="ppms-pd-td-pct">{{ formatWeightPct(row.task) }}</td>
+                                        <td class="ppms-pd-td-due">
+                                            <span v-if="overdueParts(row.task)" class="ppms-pd-due-pill">
+                                                {{ overdueLabel(row.task) }}
+                                            </span>
+                                            <span v-else class="ppms-pd-due-dash">—</span>
+                                        </td>
+                                        <td class="ppms-pd-td-actions">
+                                            <button
+                                                v-if="row.task"
+                                                type="button"
+                                                class="ppms-pd-task-del"
+                                                :title="t('projects.deleteTask')"
+                                                @click.stop="$emit('remove-task', row.task)"
+                                            >
+                                                ×
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="ppms-pd-tasks-col-right">
+                    <div
+                        ref="rightScrollRef"
+                        class="ppms-pd-tasks-scroll ppms-pd-tasks-scroll--gantt"
+                        :style="{ '--pd-gantt-day-w': dayColWidthPx + 'px' }"
+                        @scroll="onRightScroll"
+                    >
+                        <div class="ppms-pd-gantt-hscroll-inner" :style="{ width: timelineInnerWidthPx + 'px' }">
+                            <div class="ppms-pd-gantt-head">
+                                <div class="ppms-pd-gantt-month">{{ ganttMonthLabel }}</div>
+                                <div v-if="dayColumns.length" class="ppms-pd-gantt-daycols ppms-pd-gantt-daycols--nums" :style="dayGridStyle">
+                                    <div v-for="col in dayColumns" :key="'n-' + col.key" class="ppms-pd-gantt-daycell">
+                                        {{ col.dayNum }}
+                                    </div>
+                                </div>
+                                <div v-if="dayColumns.length" class="ppms-pd-gantt-daycols ppms-pd-gantt-daycols--dow" :style="dayGridStyle">
+                                    <div v-for="col in dayColumns" :key="'w-' + col.key" class="ppms-pd-gantt-daycell">
+                                        {{ col.dowShort }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-if="!boardRows.length" class="ppms-pd-gantt-track-row ppms-pd-gantt-track-row--empty">
+                                <span class="ppms-muted">{{ t('projects.ganttEmpty') }}</span>
+                            </div>
+                            <template v-for="(row, gidx) in boardRows" :key="row.kind === 'phase' ? 'g-ph-' + row.phaseKey : 'g-tk-' + row.task.id + '-' + gidx">
+                                <div v-if="row.kind === 'phase'" class="ppms-pd-gantt-track-row ppms-pd-gantt-track-row--phase" />
+                                <div v-else class="ppms-pd-gantt-track-row">
+                                    <div class="ppms-pd-gantt-track-bg">
+                                        <div
+                                            class="ppms-pd-gantt-bar-fill"
+                                            :style="{
+                                                marginLeft: `${row.bar.layout.left_pct}%`,
+                                                width: `${row.bar.layout.width_pct}%`,
+                                            }"
+                                        />
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section v-if="project.type === 'delivery'" class="ppms-card ppms-pd-section ppms-pd-csat-block">
             <h2>{{ t('projects.csatTitle') }}</h2>
             <p v-if="project.csat_metrics" class="ppms-muted ppms-mt-sm">
                 {{
@@ -20,168 +197,13 @@
             <p v-if="csatMsg" class="ppms-muted">{{ csatMsg }}</p>
         </section>
 
-        <section ref="tasksBoardRef" class="ppms-card ppms-pd-section ppms-pd-tasks-board">
-            <div class="ppms-pd-tasks-toolbar">
-                <h2 class="ppms-pd-tasks-board-title">{{ t('projects.ganttTitle') }}</h2>
-                <div class="ppms-gantt-filters ppms-task-form">
-                    <select v-model="ganttFilters.assignee_id">
-                        <option value="">— {{ t('projects.ganttAssignee') }} —</option>
-                        <option v-for="o in assigneeOptions" :key="o.id" :value="String(o.id)">
-                            {{ o.name }}
-                        </option>
-                    </select>
-                    <input v-model="ganttFilters.status" type="text" :placeholder="t('projects.ganttStatusPh')" />
-                    <label class="ppms-inline-check">
-                        <input v-model="ganttFilters.root_only" type="checkbox" />
-                        {{ t('projects.ganttRootOnly') }}
-                    </label>
-                    <button type="button" class="ppms-btn-ghost" @click="$emit('refresh-gantt')">
-                        {{ t('projects.ganttRefresh') }}
-                    </button>
-                </div>
-                <div class="ppms-pd-tasks-toolbar-tools" role="group" :aria-label="t('projects.pdTasksBoardHint')">
-                    <button type="button" :title="t('projects.pdTasksZoomOut')" @click="zoomOut">−</button>
-                    <button type="button" :title="t('projects.pdTasksZoomIn')" @click="zoomIn">+</button>
-                </div>
-            </div>
-            <p v-if="gantt.window?.start" class="ppms-muted ppms-mt-sm">
-                {{
-                    t('projects.ganttWindow', {
-                        start: gantt.window.start,
-                        end: gantt.window.end,
-                        days: gantt.window.days,
-                    })
-                }}
-            </p>
-            <p class="ppms-muted ppms-mt-sm">{{ t('projects.pdTasksBoardHint') }}</p>
-
-            <div class="ppms-pd-tasks-split">
-                <div class="ppms-pd-tasks-col-left">
-                    <div ref="leftScrollRef" class="ppms-pd-tasks-scroll" @scroll="onLeftScroll">
-                        <table class="ppms-pd-tasks-table">
-                            <thead>
-                                <tr>
-                                    <th>{{ t('projects.thTask') }}</th>
-                                    <th>{{ t('projects.thAssignee') }}</th>
-                                    <th>{{ t('projects.thStatus') }}</th>
-                                    <th>{{ t('projects.thStart') }}</th>
-                                    <th>{{ t('projects.thEnd') }}</th>
-                                    <th>{{ t('projects.thEstAct') }}</th>
-                                    <th>{{ t('projects.thActions') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-if="!ganttRows.length">
-                                    <td colspan="7" class="ppms-muted">{{ t('projects.ganttEmpty') }}</td>
-                                </tr>
-                                <tr v-for="row in ganttRows" :key="row.bar.task_id">
-                                    <td class="ppms-td-task-name">
-                                        <button
-                                            type="button"
-                                            class="ppms-linklike ppms-task-name-btn"
-                                            :style="{ paddingLeft: `${0.65 + row.depth * 0.75}rem` }"
-                                            @click="$emit('toggle-focus', row.task || { id: row.bar.task_id, name: row.bar.name })"
-                                        >
-                                            {{ row.bar.name }}
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <span
-                                            class="ppms-pd-tasks-avatar"
-                                            :title="row.bar.assignee_name || t('projects.pdUnassigned')"
-                                        >
-                                            {{ initials(row.bar.assignee_name) }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span :class="['ppms-task-status-pill', statusPillClass(row.bar.status)]">
-                                            {{ ganttTaskStatusLabel(t, row.bar.status) }}
-                                        </span>
-                                    </td>
-                                    <td>{{ formatYmdDisplay(row.bar.start) }}</td>
-                                    <td>{{ formatYmdDisplay(row.bar.end) }}</td>
-                                    <td>
-                                        <span v-if="row.task">
-                                            {{ row.task.estimate_hours }} / {{ row.task.actual_hours }}
-                                        </span>
-                                        <span v-else>—</span>
-                                    </td>
-                                    <td>
-                                        <button
-                                            v-if="row.task"
-                                            type="button"
-                                            class="ppms-btn-ghost ppms-btn-sm"
-                                            @click="$emit('remove-task', row.task)"
-                                        >
-                                            {{ t('common.delete') }}
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="ppms-pd-tasks-col-right">
-                    <div
-                        ref="rightScrollRef"
-                        class="ppms-pd-tasks-scroll"
-                        :style="{ '--pd-gantt-day-w': dayColWidthPx + 'px' }"
-                        @scroll="onRightScroll"
-                    >
-                        <div class="ppms-pd-gantt-hscroll-inner" :style="{ width: timelineInnerWidthPx + 'px' }">
-                            <div class="ppms-pd-gantt-head">
-                                <div class="ppms-pd-gantt-month">{{ ganttMonthLabel }}</div>
-                                <div
-                                    v-if="dayColumns.length"
-                                    class="ppms-pd-gantt-daycols ppms-pd-gantt-daycols--nums"
-                                    :style="dayGridStyle"
-                                >
-                                    <div v-for="col in dayColumns" :key="'n-' + col.key" class="ppms-pd-gantt-daycell">
-                                        {{ col.dayNum }}
-                                    </div>
-                                </div>
-                                <div
-                                    v-if="dayColumns.length"
-                                    class="ppms-pd-gantt-daycols ppms-pd-gantt-daycols--dow"
-                                    :style="dayGridStyle"
-                                >
-                                    <div v-for="col in dayColumns" :key="'w-' + col.key" class="ppms-pd-gantt-daycell">
-                                        {{ col.dowShort }}
-                                    </div>
-                                </div>
-                            </div>
-                            <div v-if="!ganttRows.length" class="ppms-pd-gantt-track-row">
-                                <span class="ppms-muted">{{ t('projects.ganttEmpty') }}</span>
-                            </div>
-                            <div v-for="row in ganttRows" :key="'g-' + row.bar.task_id" class="ppms-pd-gantt-track-row">
-                                <div class="ppms-pd-gantt-track-bg">
-                                    <div
-                                        class="ppms-pd-gantt-bar-fill"
-                                        :style="{
-                                            marginLeft: `${row.bar.layout.left_pct}%`,
-                                            width: `${row.bar.layout.width_pct}%`,
-                                        }"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
         <section v-if="focusTask" class="ppms-card ppms-pd-section">
             <h2>{{ t('projects.taskDetailTitle', { id: focusTask.id }) }}</h2>
             <div class="ppms-split">
                 <div>
                     <h3>{{ t('projects.depTitle') }}</h3>
                     <form class="ppms-task-form" @submit.prevent="$emit('add-dep')">
-                        <input
-                            v-model.number="depPredId"
-                            type="number"
-                            :placeholder="t('projects.depPredPh')"
-                            required
-                        />
+                        <input v-model.number="depPredId" type="number" :placeholder="t('projects.depPredPh')" required />
                         <button type="submit" class="ppms-btn-primary">{{ t('common.add') }}</button>
                     </form>
                     <p v-if="depErr" class="ppms-error">{{ depErr }}</p>
@@ -205,6 +227,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { barsWithTasks, buildBoardRows } from '../../utils/projectTasksBoard';
 import { ganttTaskStatusLabel, initials } from '../../utils/projectDetailFormatters';
 
 const { t, locale } = useI18n();
@@ -238,6 +261,8 @@ const leftScrollRef = ref(null);
 const rightScrollRef = ref(null);
 const syncingScroll = ref(false);
 const ganttZoom = ref(1);
+/** Các phaseKey đang thu gọn (ẩn danh sách task). */
+const collapsedPhaseKeys = ref([]);
 
 const BASE_DAY_PX = 26;
 
@@ -249,29 +274,48 @@ const taskById = computed(() => {
     return m;
 });
 
-function taskDepth(taskId) {
-    let d = 0;
-    let cur = taskById.value.get(taskId);
-    const seen = new Set();
-    while (cur?.parent_id != null && d < 48) {
-        if (seen.has(cur.id)) {
-            break;
-        }
-        seen.add(cur.id);
-        d += 1;
-        cur = taskById.value.get(cur.parent_id);
-    }
-    return d;
+const ganttItems = computed(() => barsWithTasks(props.gantt?.bars, taskById.value));
+
+function isPhaseCollapsed(key) {
+    return collapsedPhaseKeys.value.includes(key);
 }
 
-const ganttRows = computed(() => {
-    const bars = props.gantt?.bars || [];
-    return bars.map((bar) => ({
-        bar,
-        task: taskById.value.get(bar.task_id) || null,
-        depth: taskDepth(bar.task_id),
-    }));
-});
+const boardRows = computed(() =>
+    buildBoardRows(ganttItems.value, props.project?.phases || [], isPhaseCollapsed),
+);
+
+function togglePhase(key) {
+    const i = collapsedPhaseKeys.value.indexOf(key);
+    if (i >= 0) {
+        collapsedPhaseKeys.value = collapsedPhaseKeys.value.filter((k) => k !== key);
+    } else {
+        collapsedPhaseKeys.value = [...collapsedPhaseKeys.value, key];
+    }
+}
+
+function phaseTitle(row) {
+    if (row.isOther) {
+        return t('projects.pdTasksPhaseUncat');
+    }
+
+    return row.title || '—';
+}
+
+function hashHue(seed) {
+    const s = String(seed ?? '');
+    let h = 0;
+    for (let i = 0; i < s.length; i++) {
+        h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    }
+
+    return h % 360;
+}
+
+function avatarColor(seed) {
+    const hue = hashHue(seed);
+
+    return `hsl(${hue} 48% 40%)`;
+}
 
 function parseYmd(s) {
     if (!s) {
@@ -286,6 +330,68 @@ function parseYmd(s) {
     const d = Number(parts[2]);
 
     return new Date(y, m, d);
+}
+
+function isTaskOverdue(task) {
+    if (!task?.due_date || task.status === 'done') {
+        return false;
+    }
+    const due = parseYmd(String(task.due_date).slice(0, 10));
+    if (!due) {
+        return false;
+    }
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    due.setHours(0, 0, 0, 0);
+
+    return due < now;
+}
+
+function overdueParts(task) {
+    if (!task?.due_date || task.status === 'done') {
+        return null;
+    }
+    const due = parseYmd(String(task.due_date).slice(0, 10));
+    if (!due) {
+        return null;
+    }
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    due.setHours(0, 0, 0, 0);
+    if (due >= now) {
+        return null;
+    }
+    const ms = now.getTime() - due.getTime();
+    const days = Math.floor(ms / 86400000);
+    const hours = Math.floor((ms % 86400000) / 3600000);
+
+    return { days, hours };
+}
+
+function overdueLabel(task) {
+    const p = overdueParts(task);
+    if (!p) {
+        return '';
+    }
+
+    return t('projects.pdOverdueFmt', { days: p.days, hours: p.hours });
+}
+
+function formatWeightPct(task) {
+    if (!task) {
+        return '—';
+    }
+    const w = Number(task.weight);
+    if (!Number.isFinite(w)) {
+        return '—';
+    }
+    if (w >= 0 && w <= 1) {
+        const pct = w * 100;
+
+        return `${pct % 1 === 0 ? pct.toFixed(0) : pct.toFixed(2)}%`;
+    }
+
+    return `${w.toFixed(2)}%`;
 }
 
 const dayColumns = computed(() => {
@@ -325,6 +431,7 @@ const ganttMonthLabel = computed(() => {
         return '—';
     }
     const loc = locale.value === 'vi' ? 'vi-VN' : 'en-US';
+
     return new Intl.DateTimeFormat(loc, { month: 'long', year: 'numeric' }).format(d).toUpperCase();
 });
 
@@ -362,33 +469,33 @@ function formatYmdDisplay(ymd) {
 function statusPillClass(status) {
     const s = String(status || '');
     if (['todo', 'in_progress', 'done', 'blocked'].includes(s)) {
-        return `ppms-task-status-pill--${s}`;
+        return `ppms-pd-status-pill--${s}`;
     }
 
-    return 'ppms-task-status-pill--todo';
+    return 'ppms-pd-status-pill--todo';
 }
 
 function onLeftScroll(e) {
-    const t = e.target;
+    const el = e.target;
     const r = rightScrollRef.value;
     if (!r || syncingScroll.value) {
         return;
     }
     syncingScroll.value = true;
-    r.scrollTop = t.scrollTop;
+    r.scrollTop = el.scrollTop;
     requestAnimationFrame(() => {
         syncingScroll.value = false;
     });
 }
 
 function onRightScroll(e) {
-    const t = e.target;
+    const el = e.target;
     const l = leftScrollRef.value;
     if (!l || syncingScroll.value) {
         return;
     }
     syncingScroll.value = true;
-    l.scrollTop = t.scrollTop;
+    l.scrollTop = el.scrollTop;
     requestAnimationFrame(() => {
         syncingScroll.value = false;
     });
@@ -402,26 +509,404 @@ defineExpose({ tasksBoardRef, scrollBoardIntoView });
 </script>
 
 <style scoped>
-.ppms-pd-tasks-board-title {
-    margin: 0;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #252423;
-    width: 100%;
-    flex-basis: 100%;
+.ppms-pd-tasks-shell {
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    background: #fff;
 }
 
-@media (min-width: 640px) {
-    .ppms-pd-tasks-board-title {
-        width: auto;
-        flex-basis: auto;
+.ppms-pd-tasks-topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    background: linear-gradient(180deg, #fafaf9 0%, #fff 100%);
+}
+
+.ppms-pd-tasks-topbar__title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.ppms-pd-tasks-board-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #252423;
+}
+
+.ppms-pd-tasks-topbar__icons {
+    display: inline-flex;
+    gap: 0.25rem;
+}
+
+.ppms-pd-tasks-ico-btn {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: #fff;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: #323130;
+}
+
+.ppms-pd-tasks-ico-btn:hover {
+    background: #f3f2f1;
+}
+
+.ppms-pd-tasks-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.65rem;
+}
+
+.ppms-pd-tasks-select,
+.ppms-pd-tasks-input {
+    min-width: 10rem;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #c8c6c4;
+    border-radius: 4px;
+    font: inherit;
+    background: #fff;
+}
+
+.ppms-pd-tasks-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.875rem;
+    color: #323130;
+}
+
+.ppms-pd-tasks-refresh {
+    font-size: 0.875rem;
+}
+
+.ppms-pd-tasks-window {
+    margin: 0;
+    padding: 0.35rem 1rem 0;
+    font-size: 0.8rem;
+}
+
+.ppms-pd-tasks-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 46%);
+    gap: 0;
+    min-height: 320px;
+}
+
+@media (max-width: 1100px) {
+    .ppms-pd-tasks-split {
+        grid-template-columns: 1fr;
     }
+    .ppms-pd-tasks-col-right {
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+        max-height: 50vh;
+    }
+}
+
+.ppms-pd-tasks-col-left {
+    border-right: 1px solid rgba(0, 0, 0, 0.08);
+    min-width: 0;
+}
+
+.ppms-pd-tasks-scroll {
+    max-height: min(70vh, 720px);
+    overflow: auto;
+}
+
+.ppms-pd-tasks-scroll--gantt {
+    background: #fafaf9;
+}
+
+.ppms-pd-tasks-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.ppms-pd-tasks-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 0.55rem 0.5rem;
+    text-align: left;
+    font-weight: 600;
+    color: #605e5c;
+    background: #f3f2f1;
+    border-bottom: 1px solid #e1dfdd;
+    white-space: nowrap;
+}
+
+.ppms-pd-th-task {
+    min-width: 220px;
+}
+
+.ppms-pd-th-assignee {
+    width: 88px;
+}
+
+.ppms-pd-th-status {
+    width: 120px;
+}
+
+.ppms-pd-th-date {
+    width: 96px;
+}
+
+.ppms-pd-th-num {
+    width: 72px;
+}
+
+.ppms-pd-th-due {
+    width: 120px;
+}
+
+.ppms-pd-th-act {
+    width: 36px;
+}
+
+.ppms-pd-tasks-empty {
+    padding: 1.5rem 1rem;
+    text-align: center;
+}
+
+.ppms-pd-tr-phase td {
+    padding: 0;
+    background: #edebe9;
+    border-bottom: 1px solid #e1dfdd;
+}
+
+.ppms-pd-phase-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    width: 100%;
+    text-align: left;
+    padding: 0.45rem 0.65rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 600;
+    color: #201f1e;
+}
+
+.ppms-pd-phase-toggle:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.ppms-pd-phase-caret {
+    display: inline-block;
+    transition: transform 0.15s ease;
+    color: #605e5c;
+}
+
+.ppms-pd-phase-caret.is-collapsed {
+    transform: rotate(-90deg);
+}
+
+.ppms-pd-phase-count {
+    color: #605e5c;
+    font-weight: 500;
+}
+
+.ppms-pd-tr-task td {
+    padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid #f3f2f1;
+    vertical-align: middle;
+}
+
+.ppms-pd-tr-task.is-overdue-row {
+    background: #fff8f8;
+}
+
+.ppms-pd-task-name {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font: inherit;
+    color: #201f1e;
+    line-height: 1.35;
+}
+
+.ppms-pd-task-name:hover {
+    text-decoration: underline;
+}
+
+.ppms-pd-task-name.is-overdue-text {
+    color: #c50f1f;
+    font-weight: 600;
+}
+
+.ppms-pd-tasks-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.ppms-pd-status-pill {
+    display: inline-block;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.ppms-pd-status-pill--done {
+    background: #dff6dd;
+    color: #107c10;
+}
+
+.ppms-pd-status-pill--in_progress {
+    background: #deecf9;
+    color: #0078d4;
+}
+
+.ppms-pd-status-pill--todo {
+    background: #edebe9;
+    color: #605e5c;
+}
+
+.ppms-pd-status-pill--blocked {
+    background: #fed9cc;
+    color: #d83b01;
+}
+
+.ppms-pd-td-date {
+    color: #323130;
+    white-space: nowrap;
+}
+
+.ppms-pd-td-pct {
+    font-variant-numeric: tabular-nums;
+    color: #323130;
+}
+
+.ppms-pd-due-pill {
+    display: inline-block;
+    padding: 0.12rem 0.4rem;
+    border-radius: 999px;
+    background: #fde7e9;
+    color: #a4262c;
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.ppms-pd-due-dash {
+    color: #a19f9d;
+}
+
+.ppms-pd-td-actions {
+    text-align: center;
+    width: 36px;
+}
+
+.ppms-pd-task-del {
+    width: 1.75rem;
+    height: 1.75rem;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: #a19f9d;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.ppms-pd-task-del:hover {
+    background: rgba(196, 15, 31, 0.08);
+    color: #c50f1f;
 }
 
 .ppms-pd-gantt-head {
     position: sticky;
     top: 0;
     z-index: 3;
+    background: #fafaf9;
+    border-bottom: 1px solid #e1dfdd;
+}
+
+.ppms-pd-gantt-month {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #605e5c;
+    text-align: center;
+}
+
+.ppms-pd-gantt-daycols {
+    display: grid;
+    border-bottom: 1px solid #edebe9;
+}
+
+.ppms-pd-gantt-daycell {
+    text-align: center;
+    font-size: 0.65rem;
+    color: #605e5c;
+    padding: 0.15rem 0;
+    border-left: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.ppms-pd-gantt-track-row {
+    height: 38px;
+    box-sizing: border-box;
+    border-bottom: 1px solid #f3f2f1;
+    display: flex;
+    align-items: center;
+    padding: 0 0.25rem;
     background: #fff;
+}
+
+.ppms-pd-gantt-track-row--phase {
+    height: 38px;
+    background: #edebe9;
+    border-bottom: 1px solid #e1dfdd;
+}
+
+.ppms-pd-gantt-track-row--empty {
+    padding: 1rem;
+    justify-content: center;
+}
+
+.ppms-pd-gantt-track-bg {
+    position: relative;
+    width: 100%;
+    height: 18px;
+    border-radius: 4px;
+    background: rgba(0, 120, 212, 0.08);
+}
+
+.ppms-pd-gantt-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #62abf5 0%, #0078d4 100%);
+    min-width: 4px;
+}
+
+.ppms-pd-csat-block {
+    margin-top: 1rem;
 }
 </style>
