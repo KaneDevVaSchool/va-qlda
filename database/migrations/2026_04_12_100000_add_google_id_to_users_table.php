@@ -8,14 +8,22 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        if (Schema::connection('cms')->hasColumn('users', 'google_id')) {
+            return;
+        }
+
+        Schema::connection('cms')->table('users', function (Blueprint $table) {
             $table->string('google_id')->nullable()->unique()->after('email');
         });
     }
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        if (! Schema::connection('cms')->hasColumn('users', 'google_id')) {
+            return;
+        }
+
+        Schema::connection('cms')->table('users', function (Blueprint $table) {
             $table->dropColumn('google_id');
         });
     }

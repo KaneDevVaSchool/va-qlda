@@ -7,11 +7,16 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * App users live in the shared CMS database (connection `cms`).
+     * If `cms_db_staging.users` already exists, this migration does nothing.
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        if (Schema::connection('cms')->hasTable('users')) {
+            return;
+        }
+
+        Schema::connection('cms')->create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
@@ -22,11 +27,8 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        // Do not drop shared CMS `users`.
     }
 };

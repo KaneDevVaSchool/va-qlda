@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\MigrationCms;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -8,9 +9,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        $cmsUsers = MigrationCms::usersTable();
+
         Schema::create('login_histories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id');
             $table->string('ip_address', 45);
             $table->text('user_agent')->nullable();
             $table->string('device_fingerprint', 64);
@@ -25,6 +28,10 @@ return new class extends Migration
             $table->index('created_at');
             $table->index(['user_id', 'created_at']);
             $table->index(['event', 'created_at']);
+        });
+
+        Schema::table('login_histories', function (Blueprint $table) use ($cmsUsers) {
+            $table->foreign('user_id')->references('id')->on($cmsUsers)->cascadeOnDelete();
         });
     }
 

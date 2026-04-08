@@ -8,15 +8,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('role', 32)->default('developer')->after('password');
-        });
+        if (! Schema::connection('cms')->hasColumn('users', 'role')) {
+            Schema::connection('cms')->table('users', function (Blueprint $table) {
+                $table->string('role', 32)->default('developer')->after('password');
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('role');
-        });
+        if (Schema::connection('cms')->hasColumn('users', 'role')) {
+            Schema::connection('cms')->table('users', function (Blueprint $table) {
+                $table->dropColumn('role');
+            });
+        }
     }
 };
