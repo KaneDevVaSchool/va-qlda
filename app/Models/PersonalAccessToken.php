@@ -13,4 +13,15 @@ class PersonalAccessToken extends SanctumPersonalAccessToken
 {
     /** @var string */
     protected $connection = 'cms';
+
+    public function getConnectionName(): ?string
+    {
+        if ($this->connection === 'cms'
+            && app()->environment('testing')
+            && config('database.default') === 'sqlite') {
+            return config('database.default');
+        }
+
+        return $this->connection;
+    }
 }
