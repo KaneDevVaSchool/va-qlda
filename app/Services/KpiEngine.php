@@ -67,37 +67,44 @@ class KpiEngine
         return round(($onTime / $total) * 100, 4);
     }
 
-    public function teamAveragePerformance(): float
+    /**
+     * @param  list<int>|null  $userIds  null = toàn bộ người dùng hệ thống
+     */
+    public function teamAveragePerformance(?array $userIds = null): float
     {
-        $dist = $this->teamPerformanceDistribution();
+        $dist = $this->teamPerformanceDistribution($userIds);
 
         return count($dist) > 0 ? round(array_sum($dist) / count($dist), 4) : 0.0;
     }
 
     /**
+     * @param  list<int>|null  $userIds  null = toàn bộ người dùng hệ thống
      * @return array<int, float> user_id => performance %
      */
-    public function teamPerformanceDistribution(): array
+    public function teamPerformanceDistribution(?array $userIds = null): array
     {
+        $ids = $userIds ?? User::query()->pluck('id')->all();
         $out = [];
-        foreach (User::query()->pluck('id') as $id) {
-            $out[(int) $id] = $this->personPerformancePercent((int) $id);
+        foreach ($ids as $id) {
+            $id = (int) $id;
+            $out[$id] = $this->personPerformancePercent($id);
         }
 
         return $out;
     }
 
     /**
-     * BR-KPI-07: percentile xếp hạng performance trong team (0–100).
+     * BR-KPI-07: percentile xếp hạng performance trong tập peer (0–100).
+     *
+     * @param  list<int>|null  $peerUserIds  null = toàn bộ người dùng hệ thống
      */
-    public function performancePercentileForUser(int $userId): ?float
+    public function performancePercentileForUser(int $userId, ?array $peerUserIds = null): ?float
     {
-        $scores = array_values($this->teamPerformanceDistribution());
+        $scores = array_values($this->teamPerformanceDistribution($peerUserIds));
         if ($scores === []) {
             return null;
         }
 
-        sort($scores);
         $mine = $this->personPerformancePercent($userId);
         $below = 0;
         foreach ($scores as $s) {
@@ -117,9 +124,10 @@ class KpiEngine
     /**
      * Histogram buckets for charts (0–20, …, 80–100).
      *
+     * @param  list<int>|null  $userIds
      * @return array<string, int>
      */
-    public function teamPerformanceHistogram(): array
+    public function teamPerformanceHistogram(?array $userIds = null): array
     {
         $buckets = [
             '0-20' => 0,
@@ -129,7 +137,7 @@ class KpiEngine
             '81-100' => 0,
         ];
 
-        foreach ($this->teamPerformanceDistribution() as $pct) {
+        foreach ($this->teamPerformanceDistribution($userIds) as $pct) {
             if ($pct <= 20) {
                 $buckets['0-20']++;
             } elseif ($pct <= 40) {

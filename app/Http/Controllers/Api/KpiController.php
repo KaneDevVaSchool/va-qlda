@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\KpiSnapshot;
+use App\Models\Team;
+use App\Models\User;
 use App\Services\KpiEngine;
 use App\Services\KpiWeeklySnapshotService;
 use Illuminate\Http\Request;
@@ -18,12 +20,16 @@ class KpiController extends Controller
     public function current(Request $request)
     {
         $user = $request->user();
-        $teamAvg = $this->kpiEngine->teamAveragePerformance();
+        $peerIds = $this->resolveTeamPeerUserIds($request, $user);
+        $teamMeta = $this->teamScopeMeta($request);
+
+        $teamAvg = $this->kpiEngine->teamAveragePerformance($peerIds);
         $perf = $this->kpiEngine->personPerformancePercent((int) $user->id);
         $eff = $this->kpiEngine->personEfficiencyRatio((int) $user->id);
         $sla = $this->kpiEngine->maintenanceSlaRateForUser((int) $user->id);
 
         return response()->json([
+            'scope' => $teamMeta,
             'person' => [
                 'performance_pct' => $perf,
                 'efficiency_ratio' => $eff,
@@ -31,8 +37,8 @@ class KpiController extends Controller
                 'sla_rate_pct' => $sla,
                 'sla_critical' => $sla !== null && $sla < 80,
                 'benchmark_team_avg_performance' => $teamAvg,
-                'performance_percentile' => $this->kpiEngine->performancePercentileForUser((int) $user->id),
-                'team_histogram' => $this->kpiEngine->teamPerformanceHistogram(),
+                'performance_percentile' => $this->kpiEngine->performancePercentileForUser((int) $user->id, $peerIds),
+                'team_histogram' => $this->kpiEngine->teamPerformanceHistogram($peerIds),
             ],
             'innovation_funnel' => $this->kpiEngine->innovationFunnelCounts(),
         ]);
@@ -44,13 +50,15 @@ class KpiController extends Controller
     public function benchmark(Request $request)
     {
         $user = $request->user();
-        $dist = $this->kpiEngine->teamPerformanceDistribution();
+        $peerIds = $this->resolveTeamPeerUserIds($request, $user);
+        $dist = $this->kpiEngine->teamPerformanceDistribution($peerIds);
 
         return response()->json([
+            'scope' => $this->teamScopeMeta($request),
             'your_performance_pct' => $this->kpiEngine->personPerformancePercent((int) $user->id),
-            'your_percentile' => $this->kpiEngine->performancePercentileForUser((int) $user->id),
-            'team_avg' => $this->kpiEngine->teamAveragePerformance(),
-            'histogram' => $this->kpiEngine->teamPerformanceHistogram(),
+            'your_percentile' => $this->kpiEngine->performancePercentileForUser((int) $user->id, $peerIds),
+            'team_avg' => $this->kpiEngine->teamAveragePerformance($peerIds),
+            'histogram' => $this->kpiEngine->teamPerformanceHistogram($peerIds),
             'team_scores' => $dist,
         ]);
     }
@@ -81,5 +89,56 @@ class KpiController extends Controller
         $this->snapshotService->run();
 
         return response()->json(['ok' => true, 'week_ending' => $this->snapshotService->weekEndingDate()->toDateString()]);
+    }
+
+    /**
+     * @return list<int>|null null = toàn tổ chức
+     */
+    protected function resolveTeamPeerUserIds(Request $request, User $user): ?array
+    {
+        if (! $request->filled('team_id')) {
+            return null;
+        }
+
+        $team = Team::query()->with('members')->findOrFail((int) $request->query('team_id'));
+        $this->assertUserCanAccessTeam($user, $team);
+
+        return $team->members->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+    }
+
+    /**
+     * @return array{team_id: int|null, team_name: string|null, mode: string}
+     */
+    protected function teamScopeMeta(Request $request): array
+    {
+        if (! $request->filled('team_id')) {
+            return [
+                'team_id' => null,
+                'team_name' => null,
+                'mode' => 'organization',
+            ];
+        }
+
+        $team = Team::query()->find((int) $request->query('team_id'));
+
+        return [
+            'team_id' => $team?->id,
+            'team_name' => $team?->name,
+            'mode' => 'team',
+        ];
+    }
+
+    protected function assertUserCanAccessTeam(User $user, Team $team): void
+    {
+        if (in_array($user->role, ['admin', 'pm'], true)) {
+            return;
+        }
+
+        $isMember = $team->members()->where('user_id', $user->id)->exists();
+        $isCreator = (int) $team->created_by === (int) $user->id;
+
+        if (! $isMember && ! $isCreator) {
+            abort(403, 'Bạn không thuộc team này.');
+        }
     }
 }

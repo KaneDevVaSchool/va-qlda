@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\TaskBulkController;
 use App\Http\Controllers\Api\TaskCommentController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TaskDependencyController;
+use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\UserActivityLogController;
 use App\Http\Controllers\Api\UserLookupController;
 use App\Http\Controllers\Api\UserProfileController;
@@ -67,6 +68,14 @@ Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markRead']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
+
+    Route::get('/teams', [TeamController::class, 'index']);
+    Route::post('/teams', [TeamController::class, 'store']);
+    Route::get('/teams/{team}', [TeamController::class, 'show']);
+    Route::patch('/teams/{team}', [TeamController::class, 'update']);
+    Route::delete('/teams/{team}', [TeamController::class, 'destroy']);
+    Route::post('/teams/{team}/members', [TeamController::class, 'addMembers']);
+    Route::delete('/teams/{team}/members/{userId}', [TeamController::class, 'removeMember'])->whereNumber('userId');
 
     Route::get('/kpi/current', [KpiController::class, 'current']);
     Route::get('/kpi/benchmark', [KpiController::class, 'benchmark']);

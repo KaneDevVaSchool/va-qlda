@@ -60,10 +60,27 @@ const routes = [
                 name: 'kpi',
                 component: () => import('../pages/KpiPage.vue'),
                 meta: {
-                    title: 'KPI',
-                    pageTitle: 'KPI Engine',
-                    pageDescription: 'Performance, efficiency, SLA, benchmark và snapshot tuần.',
-                    breadcrumb: bc([{ label: 'Trang chủ', to: '/' }, { label: 'KPI' }]),
+                    titleKey: 'layout.navKpi',
+                    pageTitleKey: 'layout.navKpi',
+                    pageDescriptionKey: 'kpiPage.scopeHint',
+                    breadcrumb: bc([
+                        { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'layout.navKpi' },
+                    ]),
+                },
+            },
+            {
+                path: 'teams',
+                name: 'teams',
+                component: () => import('../pages/TeamsPage.vue'),
+                meta: {
+                    titleKey: 'layout.navTeams',
+                    pageTitleKey: 'teams.title',
+                    pageDescriptionKey: 'teams.subtitle',
+                    breadcrumb: bc([
+                        { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'layout.navTeams' },
+                    ]),
                 },
             },
             {

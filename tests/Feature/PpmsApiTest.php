@@ -528,6 +528,6 @@ class PpmsApiTest extends TestCase
 
         $this->getJson('/api/kpi/current')
             ->assertOk()
-            ->assertJsonStructure(['person']);
+            ->assertJsonStructure(['scope', 'person']);
     }
 }
