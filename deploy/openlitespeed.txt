@@ -41,6 +41,11 @@ PPMS / Laravel — triển khai trên OpenLiteSpeed (OLS)
    - Trong .env: APP_URL=https://ten-mien-cua-ban
    - Bật SSL trong OLS/CyberPanel; Laravel TrustProxies nếu đứng sau CDN/proxy.
 
+6b) API SPA + Sanctum (Bearer token) — nếu đăng nhập OK nhưng GET /api/user trả 401
+   - PHP/CGI đôi khi không đưa header Authorization vào $_SERVER → Laravel không thấy token.
+   - Repo đã chuẩn hóa trong index.php (gốc project) + public/.htaccess (Handle Authorization).
+   - Nếu vẫn 401: kiểm tra Virtual Host / proxy có strip Authorization; bật forward header tương đương Apache RewriteRule Authorization.
+
 7) Cron (scheduler)
    - Thêm cron * * * * * cd /đường-dẫn-dự-án && php artisan schedule:run >> /dev/null 2>&1
 

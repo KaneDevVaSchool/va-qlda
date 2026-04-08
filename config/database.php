@@ -65,16 +65,17 @@ return [
 
         /*
         | Shared CMS database (users, user_info) on the same MySQL server as the app DB.
+        | Use CMS_DB_USERNAME / CMS_DB_PASSWORD when the app user cannot access cms_db_staging.
         */
         'cms' => [
             'driver' => 'mysql',
-            'url' => env('DATABASE_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
+            'url' => env('CMS_DATABASE_URL'),
+            'host' => env('CMS_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('CMS_DB_PORT', env('DB_PORT', '3306')),
             'database' => env('CMS_DB_DATABASE', 'cms_db_staging'),
-            'username' => env('DB_USERNAME', 'forge'),
-            'password' => env('DB_PASSWORD', ''),
-            'unix_socket' => env('DB_SOCKET', ''),
+            'username' => env('CMS_DB_USERNAME', env('DB_USERNAME', 'forge')),
+            'password' => env('CMS_DB_PASSWORD', env('DB_PASSWORD', '')),
+            'unix_socket' => env('CMS_DB_SOCKET', env('DB_SOCKET', '')),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',
