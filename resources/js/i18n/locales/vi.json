@@ -253,6 +253,7 @@
         "createFollowers": "Người theo dõi",
         "createFollowersHint": "Tương tự — chỉ nhận cập nhật, không bao gồm owner (đã chọn ở trên).",
         "createUserSearchPlaceholder": "Tìm tên hoặc email…",
+        "createUserSearchMinHint": "Nhập ít nhất 2 ký tự để tìm theo tên hoặc email.",
         "createUserSearchEmpty": "Không có người dùng khớp.",
         "createSelectOwner": "Chọn người quản trị (owner)",
         "createNeedOwner": "Vui lòng chọn owner (người quản trị dự án).",

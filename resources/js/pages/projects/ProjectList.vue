@@ -437,7 +437,6 @@
             v-model:open="showForm"
             :form="form"
             :form-error="formError"
-            :user-options="userOptions"
             @submit="createProject"
         />
 
@@ -505,7 +504,6 @@ const rangeFrom = ref(0);
 const rangeTo = ref(0);
 const perPage = ref(50);
 
-const userOptions = ref([]);
 const currentUser = ref(null);
 const selectedProjectIds = ref([]);
 
@@ -1499,6 +1497,7 @@ function onGlobalKeydown(e) {
     if (e.key === 'Escape') {
         toolbarMenuOpen.value = false;
         createModalRef.value?.closeProgressCalc?.();
+        createModalRef.value?.closeOwnerLookup?.();
         closeUserPopover();
         closeQuickLabel();
         closeLabelsModal();
@@ -1750,15 +1749,6 @@ async function runBulkDelete() {
     }
 }
 
-async function loadUsers() {
-    try {
-        const { data } = await axios.get('/api/users/lookup');
-        userOptions.value = Array.isArray(data) ? data : [];
-    } catch {
-        userOptions.value = [];
-    }
-}
-
 async function loadCurrentUser() {
     try {
         const { data } = await axios.get('/api/user');
@@ -1851,7 +1841,7 @@ onMounted(async () => {
         viewMode.value = readStoredViewMode();
     }
     loadSavedViews();
-    await Promise.all([loadCurrentUser(), loadUsers(), fetchLabelSuggestions()]);
+    await Promise.all([loadCurrentUser(), fetchLabelSuggestions()]);
     await load();
 });
 

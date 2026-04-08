@@ -253,6 +253,7 @@
         "createFollowers": "Followers",
         "createFollowersHint": "Same pattern — followers receive updates only.",
         "createUserSearchPlaceholder": "Search name or email…",
+        "createUserSearchMinHint": "Enter at least 2 characters to search by name or email.",
         "createUserSearchEmpty": "No matching users.",
         "createSelectOwner": "Select administrator (owner)",
         "createNeedOwner": "Please select an owner (project administrator).",

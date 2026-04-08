@@ -174,18 +174,59 @@
                     <section class="ppms-pc-card" aria-labelledby="ppms-pc-card-team">
                         <h3 id="ppms-pc-card-team" class="ppms-pc-card__title">{{ t('projects.createSectionTeam') }}</h3>
                         <div class="ppms-pc-row">
-                            <label class="ppms-field ppms-pc-col ppms-pc-col--12">
+                            <div class="ppms-field ppms-pc-col ppms-pc-col--12">
                                 <div class="ppms-pc-label-row">
                                     <span>{{ t('projects.fieldOwner') }}</span>
                                     <span class="ppms-req" aria-hidden="true">*</span>
                                 </div>
-                                <select v-model="form.owner_id" class="ppms-pc-select" name="owner_id" required>
-                                    <option value="" disabled>{{ t('projects.createSelectOwner') }}</option>
-                                    <option v-for="u in userOptions" :key="'f-' + u.id" :value="String(u.id)">
-                                        {{ u.name }} ({{ u.email }})
-                                    </option>
-                                </select>
-                            </label>
+                                <div v-if="form.owner_id" class="ppms-pc-owner-picked">
+                                    <span class="ppms-pc-owner-picked__text">
+                                        {{ userCache[form.owner_id]?.name }} ({{ userCache[form.owner_id]?.email }})
+                                    </span>
+                                    <button
+                                        type="button"
+                                        class="ppms-pc-owner-picked__clear"
+                                        :aria-label="t('common.close')"
+                                        @click="clearOwnerSelection"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                                <div v-else ref="ownerLookupEl" class="ppms-pc-lookup-combo">
+                                    <input
+                                        v-model="ownerQuery"
+                                        type="search"
+                                        name="owner_lookup"
+                                        class="ppms-pc-userpick__search"
+                                        :placeholder="t('projects.createUserSearchPlaceholder')"
+                                        autocomplete="off"
+                                        enterkeyhint="search"
+                                        @input="scheduleOwnerLookup"
+                                    />
+                                    <ul v-if="ownerLookupOpen && ownerHits.length" class="ppms-pc-lookup-hits" role="listbox">
+                                        <li v-for="u in ownerHits" :key="'ow-' + u.id" role="none">
+                                            <button type="button" class="ppms-pc-lookup-hit" @click="pickOwner(u)">
+                                                {{ u.name }} — {{ u.email }}
+                                            </button>
+                                        </li>
+                                    </ul>
+                                    <p v-if="!form.owner_id && ownerQuery.trim().length > 0 && ownerQuery.trim().length < 2" class="ppms-pc-field-hint">
+                                        {{ t('projects.createUserSearchMinHint') }}
+                                    </p>
+                                    <p
+                                        v-if="!form.owner_id && ownerQuery.trim().length >= 2 && ownerLookupPending"
+                                        class="ppms-muted ppms-pc-field-hint"
+                                    >
+                                        {{ t('common.loading') }}
+                                    </p>
+                                    <p
+                                        v-else-if="!form.owner_id && ownerQuery.trim().length >= 2 && !ownerHits.length"
+                                        class="ppms-pc-userpick__empty"
+                                    >
+                                        {{ t('projects.createUserSearchEmpty') }}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                         <div class="ppms-pc-ms-grid">
                             <div
@@ -198,6 +239,19 @@
                                     <span class="ppms-pc-ms-panel__badge" aria-hidden="true">{{ executorSelectedCount }}</span>
                                 </div>
                                 <div class="ppms-pc-ms-panel__body">
+                                    <div v-if="executorChipsOnly.length" class="ppms-pc-chips" aria-label="selected">
+                                        <span v-for="u in executorChipsOnly" :key="'exc-' + u.id" class="ppms-pc-chip">
+                                            <span class="ppms-pc-chip__text">{{ u.name }}</span>
+                                            <button
+                                                type="button"
+                                                class="ppms-pc-chip__remove"
+                                                :aria-label="t('common.close')"
+                                                @click="toggleExecutor(u.id)"
+                                            >
+                                                ×
+                                            </button>
+                                        </span>
+                                    </div>
                                     <div class="ppms-pc-userpick">
                                         <input
                                             v-model="executorSearch"
@@ -206,16 +260,26 @@
                                             :placeholder="t('projects.createUserSearchPlaceholder')"
                                             autocomplete="off"
                                             enterkeyhint="search"
+                                            @input="scheduleExecutorLookup"
                                         />
+                                        <p v-if="executorSearch.trim().length > 0 && executorSearch.trim().length < 2" class="ppms-pc-field-hint">
+                                            {{ t('projects.createUserSearchMinHint') }}
+                                        </p>
+                                        <p
+                                            v-else-if="executorSearch.trim().length >= 2 && executorLookupPending"
+                                            class="ppms-muted ppms-pc-field-hint"
+                                        >
+                                            {{ t('common.loading') }}
+                                        </p>
                                         <div
-                                            v-if="filteredExecutors.length === 0"
+                                            v-else-if="executorSearch.trim().length >= 2 && executorHits.length === 0"
                                             class="ppms-pc-userpick__empty"
                                         >
                                             {{ t('projects.createUserSearchEmpty') }}
                                         </div>
-                                        <div v-else class="ppms-pc-userpick__list" role="group">
+                                        <div v-else-if="executorSearch.trim().length >= 2" class="ppms-pc-userpick__list" role="group">
                                             <label
-                                                v-for="u in filteredExecutors"
+                                                v-for="u in executorHits"
                                                 :key="'ex-' + u.id"
                                                 class="ppms-pc-userpick__row"
                                             >
@@ -244,6 +308,19 @@
                                     <span class="ppms-pc-ms-panel__badge" aria-hidden="true">{{ followerSelectedCount }}</span>
                                 </div>
                                 <div class="ppms-pc-ms-panel__body">
+                                    <div v-if="followerChipsOnly.length" class="ppms-pc-chips" aria-label="selected">
+                                        <span v-for="u in followerChipsOnly" :key="'fwc-' + u.id" class="ppms-pc-chip">
+                                            <span class="ppms-pc-chip__text">{{ u.name }}</span>
+                                            <button
+                                                type="button"
+                                                class="ppms-pc-chip__remove"
+                                                :aria-label="t('common.close')"
+                                                @click="toggleFollower(u.id)"
+                                            >
+                                                ×
+                                            </button>
+                                        </span>
+                                    </div>
                                     <div class="ppms-pc-userpick">
                                         <input
                                             v-model="followerSearch"
@@ -252,16 +329,26 @@
                                             :placeholder="t('projects.createUserSearchPlaceholder')"
                                             autocomplete="off"
                                             enterkeyhint="search"
+                                            @input="scheduleFollowerLookup"
                                         />
+                                        <p v-if="followerSearch.trim().length > 0 && followerSearch.trim().length < 2" class="ppms-pc-field-hint">
+                                            {{ t('projects.createUserSearchMinHint') }}
+                                        </p>
+                                        <p
+                                            v-else-if="followerSearch.trim().length >= 2 && followerLookupPending"
+                                            class="ppms-muted ppms-pc-field-hint"
+                                        >
+                                            {{ t('common.loading') }}
+                                        </p>
                                         <div
-                                            v-if="filteredFollowers.length === 0"
+                                            v-else-if="followerSearch.trim().length >= 2 && followerHits.length === 0"
                                             class="ppms-pc-userpick__empty"
                                         >
                                             {{ t('projects.createUserSearchEmpty') }}
                                         </div>
-                                        <div v-else class="ppms-pc-userpick__list" role="group">
+                                        <div v-else-if="followerSearch.trim().length >= 2" class="ppms-pc-userpick__list" role="group">
                                             <label
-                                                v-for="u in filteredFollowers"
+                                                v-for="u in followerHits"
                                                 :key="'fw-' + u.id"
                                                 class="ppms-pc-userpick__row"
                                             >
@@ -407,7 +494,8 @@
 </template>
 
 <script setup>
-import { computed, ref, useId, watch } from 'vue';
+import axios from 'axios';
+import { computed, reactive, ref, useId, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import enLocale from '@/i18n/locales/en.json';
 import viLocale from '@/i18n/locales/vi.json';
@@ -417,7 +505,6 @@ const { t, locale } = useI18n();
 const props = defineProps({
     form: { type: Object, required: true },
     formError: { type: String, default: '' },
-    userOptions: { type: Array, required: true },
 });
 
 defineEmits(['submit']);
@@ -478,26 +565,147 @@ const followerSelectedCount = computed(() => {
     return Array.isArray(v) ? v.length : 0;
 });
 
+const LOOKUP_DEBOUNCE_MS = 300;
+const LOOKUP_MIN_LEN = 2;
+
+const userCache = reactive({});
+
+function mergeUsersToCache(users) {
+    for (const u of users) {
+        if (u && u.id != null) {
+            userCache[String(u.id)] = { id: u.id, name: u.name, email: u.email };
+        }
+    }
+}
+
+const ownerLookupEl = ref(null);
+const ownerQuery = ref('');
+const ownerHits = ref([]);
+const ownerLookupOpen = ref(false);
+const ownerLookupPending = ref(false);
+let ownerLookupTimer = null;
+
+function scheduleOwnerLookup() {
+    clearTimeout(ownerLookupTimer);
+    const q = ownerQuery.value.trim();
+    if (q.length < LOOKUP_MIN_LEN) {
+        ownerHits.value = [];
+        ownerLookupOpen.value = false;
+        ownerLookupPending.value = false;
+
+        return;
+    }
+    ownerLookupTimer = setTimeout(async () => {
+        ownerLookupPending.value = true;
+        try {
+            const { data } = await axios.get('/api/users/lookup', { params: { q } });
+            ownerHits.value = Array.isArray(data) ? data : [];
+            mergeUsersToCache(ownerHits.value);
+            ownerLookupOpen.value = ownerHits.value.length > 0;
+        } catch {
+            ownerHits.value = [];
+            ownerLookupOpen.value = false;
+        } finally {
+            ownerLookupPending.value = false;
+        }
+    }, LOOKUP_DEBOUNCE_MS);
+}
+
+function pickOwner(u) {
+    // eslint-disable-next-line vue/no-mutating-props -- intentional shared form state
+    props.form.owner_id = String(u.id);
+    mergeUsersToCache([u]);
+    ownerQuery.value = '';
+    ownerHits.value = [];
+    ownerLookupOpen.value = false;
+}
+
+function clearOwnerSelection() {
+    // eslint-disable-next-line vue/no-mutating-props -- intentional shared form state
+    props.form.owner_id = '';
+    ownerQuery.value = '';
+    ownerHits.value = [];
+    ownerLookupOpen.value = false;
+}
+
 const executorSearch = ref('');
 const followerSearch = ref('');
+const executorHits = ref([]);
+const followerHits = ref([]);
+const executorLookupPending = ref(false);
+const followerLookupPending = ref(false);
+let executorLookupTimer = null;
+let followerLookupTimer = null;
+
+function scheduleExecutorLookup() {
+    clearTimeout(executorLookupTimer);
+    const q = executorSearch.value.trim();
+    if (q.length < LOOKUP_MIN_LEN) {
+        executorHits.value = [];
+        executorLookupPending.value = false;
+
+        return;
+    }
+    executorLookupTimer = setTimeout(async () => {
+        executorLookupPending.value = true;
+        try {
+            const { data } = await axios.get('/api/users/lookup', { params: { q } });
+            executorHits.value = Array.isArray(data) ? data : [];
+            mergeUsersToCache(executorHits.value);
+        } catch {
+            executorHits.value = [];
+        } finally {
+            executorLookupPending.value = false;
+        }
+    }, LOOKUP_DEBOUNCE_MS);
+}
+
+function scheduleFollowerLookup() {
+    clearTimeout(followerLookupTimer);
+    const q = followerSearch.value.trim();
+    if (q.length < LOOKUP_MIN_LEN) {
+        followerHits.value = [];
+        followerLookupPending.value = false;
+
+        return;
+    }
+    followerLookupTimer = setTimeout(async () => {
+        followerLookupPending.value = true;
+        try {
+            const { data } = await axios.get('/api/users/lookup', { params: { q } });
+            followerHits.value = Array.isArray(data) ? data : [];
+            mergeUsersToCache(followerHits.value);
+        } catch {
+            followerHits.value = [];
+        } finally {
+            followerLookupPending.value = false;
+        }
+    }, LOOKUP_DEBOUNCE_MS);
+}
 
 const executorIdSet = computed(() => new Set((props.form.executor_user_ids || []).map(String)));
 
 const followerIdSet = computed(() => new Set((props.form.follower_user_ids || []).map(String)));
 
-function userMatchesQuery(u, q) {
-    const needle = q.trim().toLowerCase();
-    if (!needle) {
-        return true;
-    }
-    const hay = `${u.name ?? ''} ${u.email ?? ''}`.toLowerCase();
+const executorHitIdSet = computed(() => new Set(executorHits.value.map((u) => String(u.id))));
 
-    return hay.includes(needle);
-}
+const followerHitIdSet = computed(() => new Set(followerHits.value.map((u) => String(u.id))));
 
-const filteredExecutors = computed(() => props.userOptions.filter((u) => userMatchesQuery(u, executorSearch.value)));
+const executorChipsOnly = computed(() => {
+    const ids = props.form.executor_user_ids || [];
+    return ids
+        .filter((id) => !executorHitIdSet.value.has(String(id)))
+        .map((id) => userCache[String(id)])
+        .filter(Boolean);
+});
 
-const filteredFollowers = computed(() => props.userOptions.filter((u) => userMatchesQuery(u, followerSearch.value)));
+const followerChipsOnly = computed(() => {
+    const ids = props.form.follower_user_ids || [];
+    return ids
+        .filter((id) => !followerHitIdSet.value.has(String(id)))
+        .map((id) => userCache[String(id)])
+        .filter(Boolean);
+});
 
 function toggleExecutor(userId) {
     const sid = String(userId);
@@ -505,8 +713,18 @@ function toggleExecutor(userId) {
     const i = arr.indexOf(sid);
     if (i >= 0) {
         arr.splice(i, 1);
+        const still =
+            String(props.form.owner_id) === sid ||
+            (props.form.follower_user_ids || []).map(String).includes(sid);
+        if (!still) {
+            delete userCache[sid];
+        }
     } else {
         arr.push(sid);
+        const u = executorHits.value.find((x) => String(x.id) === sid);
+        if (u) {
+            mergeUsersToCache([u]);
+        }
     }
     // eslint-disable-next-line vue/no-mutating-props -- intentional shared form state
     props.form.executor_user_ids = arr;
@@ -518,11 +736,44 @@ function toggleFollower(userId) {
     const i = arr.indexOf(sid);
     if (i >= 0) {
         arr.splice(i, 1);
+        const still =
+            String(props.form.owner_id) === sid ||
+            (props.form.executor_user_ids || []).map(String).includes(sid);
+        if (!still) {
+            delete userCache[sid];
+        }
     } else {
         arr.push(sid);
+        const u = followerHits.value.find((x) => String(x.id) === sid);
+        if (u) {
+            mergeUsersToCache([u]);
+        }
     }
     // eslint-disable-next-line vue/no-mutating-props -- intentional shared form state
     props.form.follower_user_ids = arr;
+}
+
+async function hydrateUserCachesFromForm() {
+    const ids = [];
+    if (props.form.owner_id) {
+        ids.push(Number(props.form.owner_id));
+    }
+    for (const id of props.form.executor_user_ids || []) {
+        ids.push(Number(id));
+    }
+    for (const id of props.form.follower_user_ids || []) {
+        ids.push(Number(id));
+    }
+    const uniq = [...new Set(ids.filter((n) => Number.isFinite(n) && n > 0))];
+    if (uniq.length === 0) {
+        return;
+    }
+    try {
+        const { data } = await axios.get('/api/users/lookup', { params: { ids: uniq } });
+        mergeUsersToCache(Array.isArray(data) ? data : []);
+    } catch {
+        /* ignore */
+    }
 }
 
 const permissionPresets = computed(() => {
@@ -605,12 +856,23 @@ function selectProgressCalc(value) {
     progressCalcOpen.value = false;
 }
 
-watch(open, (isOpen) => {
+watch(open, async (isOpen) => {
     if (!isOpen) {
         progressCalcOpen.value = false;
         executorSearch.value = '';
         followerSearch.value = '';
+        ownerQuery.value = '';
+        ownerHits.value = [];
+        executorHits.value = [];
+        followerHits.value = [];
+        ownerLookupOpen.value = false;
+        ownerLookupPending.value = false;
+        executorLookupPending.value = false;
+        followerLookupPending.value = false;
+
+        return;
     }
+    await hydrateUserCachesFromForm();
 });
 
 function handleDocumentClick(target) {
@@ -620,11 +882,111 @@ function handleDocumentClick(target) {
     if (progressCalcOpen.value && progressCalcEl.value && !progressCalcEl.value.contains(target)) {
         progressCalcOpen.value = false;
     }
+    if (ownerLookupOpen.value && ownerLookupEl.value && !ownerLookupEl.value.contains(target)) {
+        ownerLookupOpen.value = false;
+    }
 }
 
 function closeProgressCalc() {
     progressCalcOpen.value = false;
 }
 
-defineExpose({ handleDocumentClick, closeProgressCalc });
+function closeOwnerLookup() {
+    ownerLookupOpen.value = false;
+}
+
+defineExpose({ handleDocumentClick, closeProgressCalc, closeOwnerLookup });
 </script>
+
+<style scoped>
+.ppms-pc-owner-picked {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--ppms-border-subtle, rgba(0, 0, 0, 0.12));
+    border-radius: 8px;
+    background: var(--ppms-surface-muted, rgba(0, 0, 0, 0.04));
+}
+.ppms-pc-owner-picked__text {
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+}
+.ppms-pc-owner-picked__clear {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 1.25rem;
+    line-height: 1;
+    padding: 0.15rem 0.35rem;
+    border-radius: 4px;
+}
+.ppms-pc-owner-picked__clear:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+.ppms-pc-lookup-combo {
+    position: relative;
+}
+.ppms-pc-lookup-hits {
+    list-style: none;
+    margin: 0.35rem 0 0;
+    padding: 0;
+    border: 1px solid var(--ppms-border-subtle, rgba(0, 0, 0, 0.12));
+    border-radius: 8px;
+    max-height: 240px;
+    overflow: auto;
+    background: var(--ppms-surface, #fff);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.ppms-pc-lookup-hit {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+}
+.ppms-pc-lookup-hit:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+.ppms-pc-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-bottom: 0.5rem;
+}
+.ppms-pc-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.15rem 0.35rem 0.15rem 0.55rem;
+    font-size: 0.85rem;
+    border-radius: 999px;
+    background: var(--ppms-surface-muted, rgba(0, 0, 0, 0.06));
+    max-width: 100%;
+}
+.ppms-pc-chip__text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ppms-pc-chip__remove {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 0.2rem;
+    font-size: 1.1rem;
+    border-radius: 4px;
+}
+.ppms-pc-chip__remove:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+</style>
