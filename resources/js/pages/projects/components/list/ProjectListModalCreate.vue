@@ -15,27 +15,28 @@
             @click.stop
         >
             <div class="ppms-pc-modal-head">
-                <h2 id="ppms-modal-create-project-title">{{ t('projects.createModalTitle') }}</h2>
-                <p class="ppms-pc-modal-subtitle">{{ t('projects.createModalSubtitle') }}</p>
+                <h2 id="ppms-modal-create-project-title">{{ modalTitle }}</h2>
+                <p class="ppms-pc-modal-subtitle">{{ modalSubtitle }}</p>
             </div>
             <form class="ppms-pc-form" @submit.prevent="$emit('submit')">
                 <div class="ppms-pc-form-body">
                     <section class="ppms-pc-card" aria-labelledby="ppms-pc-card-project">
                         <h3 id="ppms-pc-card-project" class="ppms-pc-card__title">{{ t('projects.createCardProjectCore') }}</h3>
 
-                        <h4 class="ppms-pc-subsection-title">{{ t('projects.createSectionBasic') }}</h4>
+                        <h4 class="ppms-pc-subsection-title">{{ t('projects.createSectionInfoStatus') }}</h4>
+                        <p class="ppms-pc-section-lead">{{ t('projects.createSectionInfoStatusLead') }}</p>
                         <div class="ppms-pc-row">
                             <label class="ppms-field ppms-pc-col ppms-pc-col--4">
                                 <div class="ppms-pc-label-row">
                                     <span>{{ t('projects.createFieldCode') }}</span>
                                 </div>
                                 <input
+                                    v-model="form.project_code"
                                     type="text"
                                     disabled
                                     name="code"
                                     autocomplete="off"
                                     :placeholder="t('projects.createFieldCodePh')"
-                                    value=""
                                 />
                                 <p class="ppms-pc-field-hint">{{ t('projects.createFieldCodeHint') }}</p>
                             </label>
@@ -51,6 +52,71 @@
                                     autocomplete="off"
                                     :placeholder="t('projects.createFieldNamePh')"
                                 />
+                            </label>
+                        </div>
+
+                        <div class="ppms-pc-row ppms-pc-row--info-grid">
+                            <label class="ppms-field ppms-pc-col ppms-pc-col--4">
+                                <div class="ppms-pc-label-row">
+                                    <span>{{ t('projects.fieldType') }}</span>
+                                    <span class="ppms-req" aria-hidden="true">*</span>
+                                </div>
+                                <select v-model="form.type" class="ppms-pc-select" name="type" required>
+                                    <option value="maintenance">{{ t('projects.type.maintenance') }}</option>
+                                    <option value="delivery">{{ t('projects.type.delivery') }}</option>
+                                    <option value="rnd">{{ t('projects.type.rnd') }}</option>
+                                </select>
+                                <p class="ppms-pc-field-hint">{{ t('projects.createFieldTypeHint') }}</p>
+                            </label>
+                            <label class="ppms-field ppms-pc-col ppms-pc-col--4">
+                                <div class="ppms-pc-label-row">
+                                    <span>{{ t('projects.colPhase') }}</span>
+                                </div>
+                                <select v-model="form.phase" class="ppms-pc-select" name="phase">
+                                    <option value="planning">{{ t('projects.phase.planning') }}</option>
+                                    <option value="development">{{ t('projects.phase.development') }}</option>
+                                    <option value="uat">{{ t('projects.phase.uat') }}</option>
+                                    <option value="done">{{ t('projects.phase.done') }}</option>
+                                    <option value="maintenance">{{ t('projects.phase.maintenance') }}</option>
+                                    <option value="rnd">{{ t('projects.phase.rnd') }}</option>
+                                </select>
+                                <p class="ppms-pc-field-hint">{{ t('projects.createFieldPhaseHint') }}</p>
+                            </label>
+                            <label class="ppms-field ppms-pc-col ppms-pc-col--4">
+                                <div class="ppms-pc-label-row">
+                                    <span>{{ t('projects.colStatus') }}</span>
+                                </div>
+                                <select v-model="form.status" class="ppms-pc-select" name="status">
+                                    <option value="on_track">{{ t('projects.status.on_track') }}</option>
+                                    <option value="at_risk">{{ t('projects.status.at_risk') }}</option>
+                                    <option value="delayed">{{ t('projects.status.delayed') }}</option>
+                                    <option value="blocked">{{ t('projects.status.blocked') }}</option>
+                                </select>
+                                <p class="ppms-pc-field-hint">{{ t('projects.createFieldStatusHint') }}</p>
+                            </label>
+                        </div>
+
+                        <div v-if="form.editingId" class="ppms-pc-row">
+                            <div class="ppms-field ppms-pc-col ppms-pc-col--4">
+                                <div class="ppms-pc-label-row">
+                                    <span>{{ t('projects.colProgress') }}</span>
+                                </div>
+                                <input :value="progressPctDisplay" type="text" readonly tabindex="-1" name="progress_readonly" />
+                                <p class="ppms-pc-field-hint">{{ t('projects.createFieldProgressReadonlyHint') }}</p>
+                            </div>
+                            <label class="ppms-field ppms-pc-col ppms-pc-col--4">
+                                <div class="ppms-pc-label-row">
+                                    <span>{{ t('projects.createFieldEstimatedValue') }}</span>
+                                </div>
+                                <input
+                                    v-model="form.estimated_value"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    name="estimated_value"
+                                    autocomplete="off"
+                                />
+                                <p class="ppms-pc-field-hint">{{ t('projects.createFieldEstimatedValueHint') }}</p>
                             </label>
                         </div>
 
@@ -98,27 +164,25 @@
                             </div>
                         </div>
 
-                        <h4 class="ppms-pc-subsection-title">{{ t('projects.createSectionFinance') }}</h4>
-                        <div class="ppms-pc-row">
-                            <label class="ppms-field ppms-pc-col ppms-pc-col--6">
-                                <div class="ppms-pc-label-row">
-                                    <span>{{ t('projects.fieldType') }}</span>
-                                    <span class="ppms-req" aria-hidden="true">*</span>
-                                </div>
-                                <select v-model="form.type" class="ppms-pc-select" name="type" required>
-                                    <option value="maintenance">{{ t('projects.type.maintenance') }}</option>
-                                    <option value="delivery">{{ t('projects.type.delivery') }}</option>
-                                    <option value="rnd">{{ t('projects.type.rnd') }}</option>
-                                </select>
-                            </label>
-                            <label class="ppms-field ppms-pc-col ppms-pc-col--6">
-                                <div class="ppms-pc-label-row">
-                                    <span>{{ t('projects.createFieldEstimatedValue') }}</span>
-                                </div>
-                                <input type="text" disabled name="estimated_value_display" value="—" />
-                                <p class="ppms-pc-field-hint">{{ t('projects.createFieldEstimatedValueHint') }}</p>
-                            </label>
-                        </div>
+                        <template v-if="!form.editingId">
+                            <h4 class="ppms-pc-subsection-title">{{ t('projects.createSectionFinance') }}</h4>
+                            <div class="ppms-pc-row">
+                                <label class="ppms-field ppms-pc-col ppms-pc-col--6">
+                                    <div class="ppms-pc-label-row">
+                                        <span>{{ t('projects.createFieldEstimatedValue') }}</span>
+                                    </div>
+                                    <input
+                                        v-model="form.estimated_value"
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        name="estimated_value"
+                                        autocomplete="off"
+                                    />
+                                    <p class="ppms-pc-field-hint">{{ t('projects.createFieldEstimatedValueHint') }}</p>
+                                </label>
+                            </div>
+                        </template>
 
                         <h4 class="ppms-pc-subsection-title">
                             {{ t('projects.createFieldProgressCalc') }}
@@ -173,6 +237,7 @@
 
                     <section class="ppms-pc-card" aria-labelledby="ppms-pc-card-team">
                         <h3 id="ppms-pc-card-team" class="ppms-pc-card__title">{{ t('projects.createSectionTeam') }}</h3>
+                        <p class="ppms-pc-section-lead">{{ t('projects.createSectionTeamLead') }}</p>
                         <div class="ppms-pc-row">
                             <div class="ppms-field ppms-pc-col ppms-pc-col--12">
                                 <div class="ppms-pc-label-row">
@@ -235,7 +300,7 @@
                                 :aria-label="t('projects.createExecutors')"
                             >
                                 <div class="ppms-pc-ms-panel__head">
-                                    <span>{{ t('projects.createExecutors') }}</span>
+                                    <span>{{ t('projects.createGroupExecutors') }}</span>
                                     <span class="ppms-pc-ms-panel__badge" aria-hidden="true">{{ executorSelectedCount }}</span>
                                 </div>
                                 <div class="ppms-pc-ms-panel__body">
@@ -304,7 +369,7 @@
                                 :aria-label="t('projects.createFollowers')"
                             >
                                 <div class="ppms-pc-ms-panel__head">
-                                    <span>{{ t('projects.createFollowers') }}</span>
+                                    <span>{{ t('projects.createGroupFollowers') }}</span>
                                     <span class="ppms-pc-ms-panel__badge" aria-hidden="true">{{ followerSelectedCount }}</span>
                                 </div>
                                 <div class="ppms-pc-ms-panel__body">
@@ -508,6 +573,22 @@ const props = defineProps({
 });
 
 defineEmits(['submit']);
+
+const modalTitle = computed(() => (props.form.editingId ? t('projects.editModalTitle') : t('projects.createModalTitle')));
+
+const modalSubtitle = computed(() =>
+    props.form.editingId ? t('projects.editModalSubtitle') : t('projects.createModalSubtitle'),
+);
+
+const progressPctDisplay = computed(() => {
+    const v = props.form.progress_pct;
+    if (v === '' || v == null) {
+        return '—';
+    }
+    const n = Number(v);
+
+    return Number.isNaN(n) ? String(v) : `${n}%`;
+});
 
 const open = defineModel('open', { type: Boolean, default: false });
 

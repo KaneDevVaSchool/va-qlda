@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskAttachment;
+use App\Models\TaskParticipant;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\ProjectListQueryService;
@@ -217,6 +218,7 @@ class ProjectController extends Controller
             'follower_user_ids' => 'nullable|array|max:40',
             'follower_user_ids.*' => ['integer', Rule::exists(User::class, 'id')],
             'permission_preset' => 'nullable|in:org_default,members_only,owner_only',
+            'estimated_value' => 'nullable|numeric|min:0',
         ]);
 
         if (array_key_exists('labels', $data)) {
@@ -225,7 +227,6 @@ class ProjectController extends Controller
 
         $data['executor_user_ids'] = $this->normalizeProjectUserIdList($data['executor_user_ids'] ?? null);
         $data['follower_user_ids'] = $this->normalizeProjectUserIdList($data['follower_user_ids'] ?? null);
-        $data['estimated_value'] = null;
         if (empty($data['permission_preset'])) {
             $data['permission_preset'] = 'org_default';
         }
@@ -258,6 +259,7 @@ class ProjectController extends Controller
             'phases',
             'supplies',
             'tasks.assignee:id,name,email,role',
+            'tasks.taskParticipants',
             'tasks.projectPhase:id,name',
             'tasks.children',
             'tasks.predecessors:id,name,status',
@@ -267,6 +269,11 @@ class ProjectController extends Controller
         $inv = max(1, (int) $project->csat_invites_sent);
 
         $this->projectListQuery->hydrateParticipantUsersForProjects(collect([$project]));
+
+        foreach ($project->tasks as $task) {
+            $task->mergeParticipantArraysIntoAttributes();
+            $task->makeHidden(['task_participants']);
+        }
 
         $payload = $project->toArray();
         // Luôn trả mảng JSON thuần (id, name, email) để client không bị lệch kiểu object/map.
@@ -355,7 +362,13 @@ class ProjectController extends Controller
         ]);
 
         if ($request->filled('assignee_id')) {
-            $q->where('assignee_id', (int) $request->query('assignee_id'));
+            $aid = (int) $request->query('assignee_id');
+            $q->where(function ($w) use ($aid) {
+                $w->where('assignee_id', $aid)
+                    ->orWhereHas('taskParticipants', function ($p) use ($aid) {
+                        $p->where('user_id', $aid)->where('role', TaskParticipant::ROLE_ASSIGNEE);
+                    });
+            });
         }
 
         if ($request->filled('status')) {

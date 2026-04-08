@@ -51,6 +51,7 @@
                 <p class="ppms-empty-hint-text">{{ t('projects.tableEmpty') }}</p>
             </div>
             <div v-else-if="viewMode === 'list'" class="ppms-table-scroll ppms-table-scroll--sticky-head ppms-project-list-table-wrap ppms-mt">
+                <p v-if="projects.length" class="ppms-pl-list-hint ppms-muted">{{ t('projects.listGroupHint') }}</p>
                 <table class="ppms-table ppms-table--project-staging">
                     <caption class="ppms-sr-only">
                         {{ t('projects.listSectionTitle') }}
@@ -79,74 +80,48 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <template v-for="(row, idx) in displayTableRows" :key="row.kind === 'group' ? 'g-' + row.type + '-' + idx : 'p-' + row.project.id">
-                            <tr v-if="row.kind === 'group'" class="ppms-pl-group-row">
-                                <td :colspan="groupColspan" class="ppms-pl-group-cell">
-                                    <button
-                                        type="button"
-                                        class="ppms-pl-group-toggle"
-                                        :aria-expanded="!isGroupCollapsed(row.type)"
-                                        :aria-label="
-                                            t('projects.groupToggleLabel', {
-                                                type: t(`projects.typeShort.${row.type}`),
-                                                count: row.count,
-                                            })
-                                        "
-                                        @click="toggleGroupCollapse(row.type)"
-                                    >
-                                        <span
-                                            class="ppms-pl-group-chevron"
-                                            :class="{ 'ppms-pl-group-chevron--collapsed': isGroupCollapsed(row.type) }"
-                                            aria-hidden="true"
-                                            >▼</span
-                                        >
-                                        <span class="ppms-pl-group-title">{{ t(`projects.typeGroup.${row.type}`) }}</span>
-                                        <span class="ppms-pl-group-count">({{ row.count }})</span>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr v-else class="ppms-pl-data-row">
+                        <tr v-for="p in projects" :key="p.id" class="ppms-pl-data-row">
                                 <td v-if="canBulk" class="ppms-td-check">
-                                    <input v-model="selectedProjectIds" type="checkbox" :value="row.project.id" />
+                                    <input v-model="selectedProjectIds" type="checkbox" :value="p.id" />
                                 </td>
                                 <td v-if="colVis('admin')" class="ppms-td-admin">
                                     <button
                                         type="button"
                                         class="ppms-pl-usercell ppms-pl-usercell-trigger"
-                                        :disabled="!row.project.owner"
+                                        :disabled="!p.owner"
                                         :aria-label="t('projects.avatarInfoAdmin')"
-                                        @click="openAdminUserPopover($event, row.project)"
+                                        @click="openAdminUserPopover($event, p)"
                                     >
                                         <span
                                             class="ppms-pl-avatar"
-                                            :style="{ background: avatarColor(row.project.owner?.name || row.project.owner?.email || '?') }"
+                                            :style="{ background: avatarColor(p.owner?.name || p.owner?.email || '?') }"
                                             :aria-hidden="true"
                                         >
-                                            {{ userInitials(row.project.owner?.name) }}
+                                            {{ userInitials(p.owner?.name) }}
                                         </span>
-                                        <span class="ppms-pl-username">{{ row.project.owner?.name || '—' }}</span>
+                                        <span class="ppms-pl-username">{{ p.owner?.name || '—' }}</span>
                                     </button>
                                 </td>
-                                <td v-if="colVis('code')" class="ppms-td-code ppms-muted">{{ projectCode(row.project) }}</td>
+                                <td v-if="colVis('code')" class="ppms-td-code ppms-muted">{{ projectCode(p) }}</td>
                                 <td v-if="colVis('name')" class="ppms-td-name">
-                                    <router-link class="ppms-pl-name-link" :to="'/projects/' + row.project.id">{{
-                                        row.project.name
+                                    <router-link class="ppms-pl-name-link" :to="'/projects/' + p.id">{{
+                                        p.name
                                     }}</router-link>
                                     <div class="ppms-pl-name-labels-row">
-                                        <div v-if="projectLabelList(row.project).length" class="ppms-pl-name-labels">
+                                        <div v-if="projectLabelList(p).length" class="ppms-pl-name-labels">
                                             <span
-                                                v-for="(lb, li) in projectLabelsPreview(row.project).show"
-                                                :key="'lb-' + row.project.id + '-' + li"
+                                                v-for="(lb, li) in projectLabelsPreview(p).show"
+                                                :key="'lb-' + p.id + '-' + li"
                                                 class="ppms-pl-label-chip ppms-pl-label-chip--under-name"
                                                 >{{ lb }}</span
                                             >
-                                            <span v-if="projectLabelsPreview(row.project).more > 0" class="ppms-pl-labels-more"
-                                                >+{{ projectLabelsPreview(row.project).more }}</span
+                                            <span v-if="projectLabelsPreview(p).more > 0" class="ppms-pl-labels-more"
+                                                >+{{ projectLabelsPreview(p).more }}</span
                                             >
                                         </div>
                                         <template v-if="canBulk">
                                             <input
-                                                v-if="quickLabelProjectId === row.project.id"
+                                                v-if="quickLabelProjectId === p.id"
                                                 ref="quickLabelInputEl"
                                                 v-model="quickLabelText"
                                                 type="text"
@@ -155,8 +130,8 @@
                                                 autocomplete="off"
                                                 :placeholder="t('projects.labelAddPlaceholder')"
                                                 :aria-label="t('projects.labelAddPlaceholder')"
-                                                :disabled="quickLabelSavingId === row.project.id"
-                                                @keydown.enter.prevent="submitQuickLabel(row.project)"
+                                                :disabled="quickLabelSavingId === p.id"
+                                                @keydown.enter.prevent="submitQuickLabel(p)"
                                                 @keydown.esc.prevent="closeQuickLabel"
                                                 @click.stop
                                             />
@@ -165,7 +140,7 @@
                                                 type="button"
                                                 class="ppms-pl-label-add-btn"
                                                 :aria-label="t('projects.labelAddAria')"
-                                                @click.stop="toggleQuickLabel(row.project)"
+                                                @click.stop="toggleQuickLabel(p)"
                                             >
                                                 +
                                             </button>
@@ -175,13 +150,13 @@
                                 <td v-if="colVis('participants')" class="ppms-td-participants">
                                     <div class="ppms-pl-participants">
                                         <button
-                                            v-for="(slot, si) in participantVisibleSlots(row.project)"
-                                            :key="'pa-' + row.project.id + '-' + si"
+                                            v-for="(slot, si) in participantVisibleSlots(p)"
+                                            :key="'pa-' + p.id + '-' + si"
                                             type="button"
                                             class="ppms-pl-participants-avatar-btn"
                                             :style="{ zIndex: si + 1 }"
                                             :aria-label="participantSlotAriaLabel(slot)"
-                                            @click.stop="openSingleParticipantPopover($event, row.project, slot)"
+                                            @click.stop="openSingleParticipantPopover($event, p, slot)"
                                         >
                                             <span
                                                 class="ppms-pl-avatar ppms-pl-avatar--sm ppms-pl-participants-stack-avatar"
@@ -191,13 +166,13 @@
                                             </span>
                                         </button>
                                         <button
-                                            v-if="participantOverflowCount(row.project) > 0"
+                                            v-if="participantOverflowCount(p) > 0"
                                             type="button"
                                             class="ppms-pl-participants-more ppms-pl-participants-overflow-btn"
-                                            :aria-label="t('projects.userPopoverMoreParticipantsAria', { n: participantOverflowCount(row.project) })"
-                                            @click.stop="openParticipantsOverflowMenu($event, row.project)"
+                                            :aria-label="t('projects.userPopoverMoreParticipantsAria', { n: participantOverflowCount(p) })"
+                                            @click.stop="openParticipantsOverflowMenu($event, p)"
                                         >
-                                            +{{ participantOverflowCount(row.project) }}
+                                            +{{ participantOverflowCount(p) }}
                                         </button>
                                     </div>
                                 </td>
@@ -205,54 +180,63 @@
                                     <div
                                         class="ppms-progress-track ppms-progress-track--staging"
                                         role="progressbar"
-                                        :aria-valuenow="Math.round(clampProgress(row.project.progress))"
+                                        :aria-valuenow="Math.round(clampProgress(p.progress))"
                                         aria-valuemin="0"
                                         aria-valuemax="100"
                                         :aria-label="t('projects.colProgress')"
                                     >
                                         <div
                                             class="ppms-progress-fill"
-                                            :class="progressToneClass(row.project.progress)"
-                                            :style="{ width: `${clampProgress(row.project.progress)}%` }"
+                                            :class="progressToneClass(p.progress)"
+                                            :style="{ width: `${clampProgress(p.progress)}%` }"
                                         />
                                         <span
                                             class="ppms-progress-knob"
                                             :style="{
-                                                left: `${clampProgress(row.project.progress)}%`,
+                                                left: `${clampProgress(p.progress)}%`,
                                             }"
                                             aria-hidden="true"
                                         >
-                                            <span class="ppms-progress-knob-pct">{{ formatProgress(row.project.progress) }}%</span>
+                                            <span class="ppms-progress-knob-pct">{{ formatProgress(p.progress) }}%</span>
                                         </span>
                                     </div>
                                 </td>
-                                <td v-if="colVis('tasks')" class="ppms-td-num ppms-td-tasks">{{ row.project.tasks_count ?? '—' }}</td>
+                                <td v-if="colVis('tasks')" class="ppms-td-num ppms-td-tasks">{{ p.tasks_count ?? '—' }}</td>
                                 <td v-if="colVis('start')" class="ppms-td-date">
-                                    <span v-if="!row.project.start_date" class="ppms-muted">{{ t('projects.startNone') }}</span>
-                                    <span v-else>{{ formatDateIso(row.project.start_date) }}</span>
+                                    <span v-if="!p.start_date" class="ppms-muted">{{ t('projects.startNone') }}</span>
+                                    <span v-else>{{ formatDateIso(p.start_date) }}</span>
                                 </td>
                                 <td v-if="colVis('actualStart')" class="ppms-td-date">
-                                    <span v-if="!row.project.actual_start_date" class="ppms-muted">{{ t('projects.actualStartNone') }}</span>
-                                    <span v-else>{{ formatDateIso(row.project.actual_start_date) }}</span>
+                                    <span v-if="!p.actual_start_date" class="ppms-muted">{{ t('projects.actualStartNone') }}</span>
+                                    <span v-else>{{ formatDateIso(p.actual_start_date) }}</span>
                                 </td>
                                 <td v-if="colVis('end')" class="ppms-td-date">
-                                    <span v-if="!row.project.deadline" class="ppms-muted">{{ t('projects.deadlineNone') }}</span>
-                                    <span v-else class="ppms-deadline" :class="deadlineTone(row.project.deadline).cls">
-                                        {{ formatDeadline(row.project.deadline) }}
+                                    <span v-if="!p.deadline" class="ppms-muted">{{ t('projects.deadlineNone') }}</span>
+                                    <span v-else class="ppms-deadline" :class="deadlineTone(p.deadline).cls">
+                                        {{ formatDeadline(p.deadline) }}
                                     </span>
                                 </td>
                                 <td v-if="colVis('status')" class="ppms-td-status">
-                                    <span class="ppms-status-pill" :class="statusPillClass(row.project.status)">{{
-                                        t(`projects.status.${row.project.status}`)
+                                    <span class="ppms-status-pill" :class="statusPillClass(p.status)">{{
+                                        t(`projects.status.${p.status}`)
                                     }}</span>
                                 </td>
                                 <td v-if="colVis('actions')" class="ppms-td-actions">
-                                    <router-link :to="'/projects/' + row.project.id" class="ppms-btn-ghost ppms-btn-sm">{{
-                                        t('projects.openDetail')
-                                    }}</router-link>
+                                    <div class="ppms-pl-actions-cell">
+                                        <router-link :to="'/projects/' + p.id" class="ppms-btn-ghost ppms-btn-sm">{{
+                                            t('projects.openDetail')
+                                        }}</router-link>
+                                        <button
+                                            v-if="canEditProject"
+                                            type="button"
+                                            class="ppms-btn-ghost ppms-btn-sm"
+                                            @click.stop="openEditModal(p)"
+                                        >
+                                            {{ t('common.edit') }}
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
-                        </template>
                     </tbody>
                 </table>
             </div>
@@ -437,7 +421,7 @@
             v-model:open="showForm"
             :form="form"
             :form-error="formError"
-            @submit="createProject"
+            @submit="submitProject"
         />
 
         <ProjectListUserPopover
@@ -524,6 +508,8 @@ const filters = reactive({
 const form = reactive({
     name: '',
     type: 'delivery',
+    phase: 'planning',
+    status: 'on_track',
     owner_id: '',
     deadline: '',
     start_date: '',
@@ -536,11 +522,17 @@ const form = reactive({
     customer_email: '',
     suppliers_text: '',
     labels_text: '',
+    project_code: '',
+    progress_pct: '',
+    estimated_value: '',
+    editingId: null,
 });
 
 function resetCreateForm() {
     form.name = '';
     form.type = 'delivery';
+    form.phase = 'planning';
+    form.status = 'on_track';
     form.owner_id = '';
     form.deadline = '';
     form.start_date = '';
@@ -553,10 +545,74 @@ function resetCreateForm() {
     form.customer_email = '';
     form.suppliers_text = '';
     form.labels_text = '';
+    form.project_code = '';
+    form.progress_pct = '';
+    form.estimated_value = '';
+    form.editingId = null;
 }
 
 function openCreateModal() {
     resetCreateForm();
+    showForm.value = true;
+}
+
+function dateToInputValue(d) {
+    if (d == null || d === '') {
+        return '';
+    }
+    if (typeof d === 'string') {
+        const m = d.match(/^(\d{4}-\d{2}-\d{2})/);
+
+        return m ? m[1] : '';
+    }
+
+    return '';
+}
+
+function suppliersArrayToText(suppliers) {
+    if (!Array.isArray(suppliers) || !suppliers.length) {
+        return '';
+    }
+
+    return suppliers
+        .map((s) => {
+            const n = (s?.name || '').trim();
+            const c = (s?.contact || '').trim();
+            if (!n) {
+                return '';
+            }
+
+            return c ? `${n} — ${c}` : n;
+        })
+        .filter(Boolean)
+        .join('\n');
+}
+
+function fillProjectFormFromRow(project) {
+    form.name = project.name || '';
+    form.type = project.type || 'delivery';
+    form.phase = project.phase || 'planning';
+    form.status = project.status || 'on_track';
+    form.owner_id = project.owner_id != null ? String(project.owner_id) : '';
+    form.deadline = dateToInputValue(project.deadline);
+    form.start_date = dateToInputValue(project.start_date);
+    form.progress_calc = project.progress_calc || 'weighted_tasks';
+    form.executor_user_ids = (project.executor_user_ids || []).map(String);
+    form.follower_user_ids = (project.follower_user_ids || []).map(String);
+    form.permission_preset = project.permission_preset || 'org_default';
+    form.description = project.description || '';
+    form.customer_name = project.customer_name || '';
+    form.customer_email = project.customer_email || '';
+    form.suppliers_text = suppliersArrayToText(project.suppliers);
+    form.labels_text = Array.isArray(project.labels) ? project.labels.join(', ') : '';
+    form.project_code = project.code || '';
+    form.progress_pct = project.progress != null ? String(project.progress) : '';
+    form.estimated_value = project.estimated_value != null ? String(project.estimated_value) : '';
+    form.editingId = project.id;
+}
+
+function openEditModal(project) {
+    fillProjectFormFromRow(project);
     showForm.value = true;
 }
 
@@ -626,6 +682,13 @@ const canBulk = computed(() => {
     return r && ['admin', 'pm', 'tl'].includes(r);
 });
 
+/** Chỉnh sửa nhanh từ danh sách (cùng quyền gần với thao tác hàng loạt). */
+const canEditProject = computed(() => {
+    const r = currentUser.value?.role;
+
+    return r && ['admin', 'pm', 'tl'].includes(r);
+});
+
 const canBulkDelete = computed(() => {
     const r = currentUser.value?.role;
 
@@ -644,63 +707,6 @@ const allPageSelected = computed(() => {
     }
 
     return projects.value.every((p) => selectedProjectIds.value.includes(p.id));
-});
-
-const groupColspan = computed(() => {
-    let n = canBulk.value ? 1 : 0;
-    for (const k of PL_COL_ORDER) {
-        if (columnVisibility[k]) {
-            n++;
-        }
-    }
-
-    return n;
-});
-
-const tableRows = computed(() => {
-    const list = projects.value;
-    if (!list.length) {
-        return [];
-    }
-    const rows = [];
-    let lastType = null;
-    for (const p of list) {
-        if (p.type !== lastType) {
-            lastType = p.type;
-            const countInPage = list.filter((x) => x.type === p.type).length;
-            rows.push({ kind: 'group', type: p.type, count: countInPage });
-        }
-        rows.push({ kind: 'project', project: p });
-    }
-
-    return rows;
-});
-
-const collapsedGroupTypes = reactive({});
-
-function isGroupCollapsed(type) {
-    return Boolean(collapsedGroupTypes[type]);
-}
-
-function toggleGroupCollapse(type) {
-    collapsedGroupTypes[type] = !collapsedGroupTypes[type];
-}
-
-const displayTableRows = computed(() => {
-    const rows = tableRows.value;
-    const out = [];
-    for (const row of rows) {
-        if (row.kind === 'group') {
-            out.push(row);
-            continue;
-        }
-        if (collapsedGroupTypes[row.project.type]) {
-            continue;
-        }
-        out.push(row);
-    }
-
-    return out;
 });
 
 function kanbanPhaseOf(p) {
@@ -1770,9 +1776,10 @@ function parseSuppliersPayload() {
     return lines.map((name) => ({ name }));
 }
 
-async function createProject() {
+async function submitProject() {
     formError.value = '';
-    if (!(await ppmsConfirm(t('projects.confirmCreate')))) {
+    const isEdit = form.editingId != null;
+    if (!(await ppmsConfirm(t(isEdit ? 'projects.confirmUpdate' : 'projects.confirmCreate')))) {
         return;
     }
     if (!form.owner_id) {
@@ -1788,6 +1795,8 @@ async function createProject() {
         const payload = {
             name: form.name,
             type: form.type,
+            phase: form.phase,
+            status: form.status,
             owner_id: Number(form.owner_id),
             deadline: form.deadline || null,
             start_date: form.start_date || null,
@@ -1800,17 +1809,32 @@ async function createProject() {
             executor_user_ids: execIds,
             follower_user_ids: folIds,
         };
+        if (form.estimated_value !== '' && form.estimated_value != null) {
+            const ev = Number(form.estimated_value);
+            if (!Number.isNaN(ev)) {
+                payload.estimated_value = ev;
+            }
+        }
         if (labelTokens.length) {
             payload.labels = labelTokens;
+        } else if (isEdit) {
+            payload.labels = [];
         }
-        await axios.post('/api/projects', payload);
+        if (isEdit) {
+            await axios.put(`/api/projects/${form.editingId}`, payload);
+            ppmsToastSuccess(t('projects.projectUpdateOk'));
+        } else {
+            await axios.post('/api/projects', payload);
+            ppmsToastSuccess(t('projects.createOk'));
+        }
         showForm.value = false;
         resetCreateForm();
-        ppmsToastSuccess(t('projects.createOk'));
-        page.value = 1;
+        if (!isEdit) {
+            page.value = 1;
+        }
         await load();
     } catch (e) {
-        formError.value = formatApiUserMessage(e, t('projects.createErr'));
+        formError.value = formatApiUserMessage(e, t(isEdit ? 'projects.updateErr' : 'projects.createErr'));
     }
 }
 

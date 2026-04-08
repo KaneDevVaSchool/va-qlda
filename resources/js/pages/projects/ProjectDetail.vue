@@ -483,13 +483,45 @@ async function saveMeta() {
     }
 }
 
+const projectUserNameById = computed(() => {
+    const m = new Map();
+    const p = project.value;
+    if (!p) {
+        return m;
+    }
+    for (const u of p.executor_users || []) {
+        m.set(Number(u.id), u.name || String(u.id));
+    }
+    for (const u of p.follower_users || []) {
+        m.set(Number(u.id), u.name || String(u.id));
+    }
+    if (p.owner?.id) {
+        m.set(Number(p.owner.id), p.owner.name || String(p.owner.id));
+    }
+
+    return m;
+});
+
 const assigneeOptions = computed(() => {
     const m = new Map();
+    const nameFor = (id) => projectUserNameById.value.get(Number(id)) || `#${id}`;
+
     for (const row of project.value?.tasks || []) {
-        if (row.assignee_id && row.assignee?.name) {
-            m.set(row.assignee_id, row.assignee.name);
+        if (row.assignee_id) {
+            m.set(Number(row.assignee_id), row.assignee?.name || nameFor(row.assignee_id));
+        }
+        const ids = Array.isArray(row.assignee_ids) ? row.assignee_ids : [];
+        for (const id of ids) {
+            const n = Number(id);
+            if (!n) {
+                continue;
+            }
+            if (!m.has(n)) {
+                m.set(n, nameFor(n));
+            }
         }
     }
+
     return [...m.entries()].map(([id, name]) => ({ id, name }));
 });
 
@@ -900,9 +932,25 @@ async function submitBulkTasks() {
     }
 }
 
-async function submitRegularTask(payload) {
+async function submitRegularTask(data) {
+    const payload = data && typeof data === 'object' && 'payload' in data ? data.payload : data;
+    const files = data && typeof data === 'object' && Array.isArray(data.files) ? data.files : [];
+
     try {
-        await axios.post(`/api/projects/${props.id}/tasks`, payload);
+        const res = await axios.post(`/api/projects/${props.id}/tasks`, payload);
+        const taskId = res.data?.id;
+        const list = Array.isArray(files) ? files : [];
+
+        if (taskId && list.length) {
+            for (const file of list) {
+                const fd = new FormData();
+                fd.append('file', file);
+                await axios.post(`/api/tasks/${taskId}/attachments`, fd, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+            }
+        }
+
         ppmsToastSuccess(t('projects.taskCreateOk'));
         showRegularTaskModal.value = false;
         activeTab.value = 'tasks';

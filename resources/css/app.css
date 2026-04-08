@@ -595,11 +595,11 @@ a:hover {
 }
 
 .ppms-modal--project-create {
-    max-width: min(100%, 64rem);
+    max-width: min(100%, 88rem);
     width: 100%;
     min-width: 0;
-    max-height: min(92vh - 1rem, 56rem);
-    max-height: min(100dvh - 1rem, 56rem);
+    max-height: min(92vh - 1rem, 62rem);
+    max-height: min(100dvh - 1rem, 62rem);
     margin: auto;
     flex-shrink: 0;
     padding: 0;
@@ -725,17 +725,12 @@ a:hover {
     margin-top: 0;
 }
 
+/* Nhóm người: xếp dọc để đủ chỗ tìm kiếm & chip */
 .ppms-pc-ms-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
     align-items: stretch;
-}
-
-@media (max-width: 640px) {
-    .ppms-pc-ms-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
 .ppms-pc-ms-panel {
@@ -1117,6 +1112,32 @@ a:hover {
 }
 .ppms-pc-col--12 {
     grid-column: span 12;
+}
+
+.ppms-pc-section-lead {
+    margin: -0.15rem 0 0.75rem;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--ppms-muted);
+}
+
+@media (max-width: 900px) {
+    .ppms-pc-row--info-grid .ppms-pc-col--4 {
+        grid-column: span 12;
+    }
+}
+
+.ppms-pl-actions-cell {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.ppms-pl-list-hint {
+    margin: 0 0 0.5rem;
+    font-size: 0.8125rem;
 }
 
 .ppms-pc-full {

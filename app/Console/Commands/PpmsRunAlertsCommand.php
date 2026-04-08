@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\TaskParticipant;
 use App\Models\User;
 use App\Services\KpiEngine;
 use App\Services\PpmsNotifier;
@@ -30,7 +31,7 @@ class PpmsRunAlertsCommand extends Command
             ->where('status', 'blocked')
             ->whereNotNull('blocked_at')
             ->where('blocked_at', '<', now()->subDays(2))
-            ->with(['assignee', 'project.owner'])
+            ->with(['assignee', 'project.owner', 'taskParticipants'])
             ->get();
 
         foreach ($tasks as $task) {
@@ -38,8 +39,19 @@ class PpmsRunAlertsCommand extends Command
             $channels = ['in_app', 'email'];
             $body = "Task #{$task->id} {$task->name} blocked > 2 ngày. Lý do: ".($task->blocked_reason ?? 'N/A');
 
-            if ($task->assignee_id) {
-                $notifier->notify((int) $task->assignee_id, 'task_blocked', 'Task blocked lâu', $body, $channels, true);
+            $assigneeNotifyIds = collect([$task->assignee_id])
+                ->merge(
+                    $task->taskParticipants
+                        ->where('role', TaskParticipant::ROLE_ASSIGNEE)
+                        ->pluck('user_id')
+                )
+                ->filter()
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values();
+
+            foreach ($assigneeNotifyIds as $uid) {
+                $notifier->notify($uid, 'task_blocked', 'Task blocked lâu', $body, $channels, true);
             }
             if ($ownerId) {
                 $notifier->notify((int) $ownerId, 'task_blocked', 'Task blocked lâu', $body, $channels, true);

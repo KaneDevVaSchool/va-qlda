@@ -1,6 +1,6 @@
 <template>
     <div v-if="modelValue" class="ppms-modal-backdrop" @click.self="close">
-        <div class="ppms-modal ppms-modal--wide" role="dialog" aria-modal="true" aria-labelledby="o1-task-regular-h" @click.stop>
+        <div class="ppms-modal ppms-modal--wide ppms-modal--task-o1" role="dialog" aria-modal="true" aria-labelledby="o1-task-regular-h" @click.stop>
             <h2 id="o1-task-regular-h" class="ppms-modal-title">{{ t('projects.o1TaskRegularTitle') }}</h2>
             <p class="o1tf-modal-lead">{{ t('projects.o1ModalSubtitle') }}</p>
             <div class="o1tf-modal-body">
@@ -148,48 +148,46 @@
                                         </label>
                                     </div>
 
-                                    <div class="o1tf-field o1tf-field--outlined o1tf-span-12">
-                                        <label class="o1tf-label" for="o1-assignees">{{ t('projects.thAssigneeFull') }}</label>
-                                        <select
-                                            id="o1-assignees"
-                                            v-model="form.assignee_ids"
-                                            multiple
-                                            class="o1tf-input-el o1tf-multiselect"
-                                            :size="msSize"
-                                            :aria-label="t('projects.thAssigneeFull')"
-                                        >
-                                            <option v-for="u in userOptions" :key="'a-' + u.id" :value="u.id">{{ userLabel(u) }}</option>
-                                        </select>
-                                        <span class="o1tf-field-hint">{{ t('projects.o1PhAssignees') }} — {{ t('projects.o1MultiHint') }}</span>
-                                    </div>
-
-                                    <div class="o1tf-field o1tf-field--outlined o1tf-span-6">
-                                        <label class="o1tf-label" for="o1-owners">{{ t('projects.o1Owner') }}</label>
-                                        <select
-                                            id="o1-owners"
-                                            v-model="form.owner_ids"
-                                            multiple
-                                            class="o1tf-input-el o1tf-multiselect"
-                                            :size="msSize"
-                                            :aria-label="t('projects.o1Owner')"
-                                        >
-                                            <option v-for="u in userOptions" :key="'o-' + u.id" :value="u.id">{{ userLabel(u) }}</option>
-                                        </select>
-                                        <span class="o1tf-field-hint">{{ t('projects.o1PhOwners') }}</span>
-                                    </div>
-                                    <div class="o1tf-field o1tf-field--outlined o1tf-span-6">
-                                        <label class="o1tf-label" for="o1-follow">{{ t('projects.o1Followers') }}</label>
-                                        <select
-                                            id="o1-follow"
-                                            v-model="form.follower_ids"
-                                            multiple
-                                            class="o1tf-input-el o1tf-multiselect"
-                                            :size="msSize"
-                                            :aria-label="t('projects.o1Followers')"
-                                        >
-                                            <option v-for="u in userOptions" :key="'f-' + u.id" :value="u.id">{{ userLabel(u) }}</option>
-                                        </select>
-                                        <span class="o1tf-field-hint">{{ t('projects.o1PhFollowers') }}</span>
+                                    <div class="o1tf-user-grid">
+                                        <div class="o1tf-field o1tf-field--outlined">
+                                            <span class="o1tf-label">{{ t('projects.thAssigneeFull') }}</span>
+                                            <O1UserPicker
+                                                v-model="form.assignee_ids"
+                                                :users="userOptions"
+                                                :search-placeholder="t('projects.o1UserSearchPh')"
+                                                :search-aria="t('projects.o1UserAriaSearchAssignees')"
+                                                :list-aria="t('projects.o1UserListAssignees')"
+                                                :empty-text="t('projects.o1UserEmpty')"
+                                                :remove-chip-label="chipRemoveLabel"
+                                            />
+                                            <span class="o1tf-field-hint">{{ t('projects.o1PhAssignees') }} — {{ t('projects.o1MultiHint') }}</span>
+                                        </div>
+                                        <div class="o1tf-field o1tf-field--outlined">
+                                            <span class="o1tf-label">{{ t('projects.o1Owner') }}</span>
+                                            <O1UserPicker
+                                                v-model="form.owner_ids"
+                                                :users="userOptions"
+                                                :search-placeholder="t('projects.o1UserSearchPh')"
+                                                :search-aria="t('projects.o1UserAriaSearchOwners')"
+                                                :list-aria="t('projects.o1UserListOwners')"
+                                                :empty-text="t('projects.o1UserEmpty')"
+                                                :remove-chip-label="chipRemoveLabel"
+                                            />
+                                            <span class="o1tf-field-hint">{{ t('projects.o1PhOwners') }}</span>
+                                        </div>
+                                        <div class="o1tf-field o1tf-field--outlined">
+                                            <span class="o1tf-label">{{ t('projects.o1Followers') }}</span>
+                                            <O1UserPicker
+                                                v-model="form.follower_ids"
+                                                :users="userOptions"
+                                                :search-placeholder="t('projects.o1UserSearchPh')"
+                                                :search-aria="t('projects.o1UserAriaSearchFollowers')"
+                                                :list-aria="t('projects.o1UserListFollowers')"
+                                                :empty-text="t('projects.o1UserEmpty')"
+                                                :remove-chip-label="chipRemoveLabel"
+                                            />
+                                            <span class="o1tf-field-hint">{{ t('projects.o1PhFollowers') }}</span>
+                                        </div>
                                     </div>
 
                                     <div class="o1tf-field o1tf-field--outlined o1tf-span-12">
@@ -201,6 +199,28 @@
                                             rows="4"
                                             :placeholder="t('projects.o1PhDesc')"
                                         />
+                                    </div>
+
+                                    <div class="o1tf-field o1tf-field--outlined o1tf-span-12">
+                                        <span class="o1tf-label">{{ t('projects.o1Attachments') }}</span>
+                                        <div class="o1tf-attach-zone">
+                                            <input
+                                                class="o1tf-attach-input o1tf-input-el"
+                                                type="file"
+                                                multiple
+                                                :aria-label="t('projects.o1Attachments')"
+                                                @change="onAttachInput"
+                                            />
+                                            <span class="o1tf-field-hint">{{ t('projects.o1AttachHint') }}</span>
+                                            <ul v-if="pendingFiles.length" class="o1tf-attach-list">
+                                                <li v-for="(f, fi) in pendingFiles" :key="'pf-' + fi + '-' + f.name + f.size">
+                                                    <span>{{ f.name }} ({{ formatFileSize(f.size) }})</span>
+                                                    <button type="button" class="o1tf-attach-rm" @click="removePendingFile(fi)">
+                                                        {{ t('projects.o1AttachRemove') }}
+                                                    </button>
+                                                </li>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -242,8 +262,27 @@
                                         </select>
                                     </div>
 
+                                    <details class="o1tf-metric-block">
+                                        <summary>{{ t('projects.o1MetricHelpTitle') }}</summary>
+                                        <div class="o1tf-metric-block__body">
+                                            <p>
+                                                <strong>{{ t('projects.o1EstimateHoursLabel') }}.</strong>
+                                                {{ t('projects.o1EstimateHoursHelp') }}
+                                            </p>
+                                            <p>
+                                                <strong>{{ t('projects.o1Complexity') }}.</strong>
+                                                {{ t('projects.o1ComplexityHelp') }}
+                                            </p>
+                                            <p>
+                                                <strong>{{ t('projects.o1Impact') }}.</strong>
+                                                {{ t('projects.o1ImpactHelp') }}
+                                            </p>
+                                            <p class="o1tf-computed-weight">{{ t('projects.o1ComputedWeightHint', { value: computedWeightPreview }) }}</p>
+                                        </div>
+                                    </details>
+
                                     <div class="o1tf-field o1tf-field--outlined o1tf-span-4">
-                                        <label class="o1tf-label" for="o1-est">{{ t('projects.thWeight') }}</label>
+                                        <label class="o1tf-label" for="o1-est">{{ t('projects.o1EstimateHoursLabel') }}</label>
                                         <input
                                             id="o1-est"
                                             v-model.number="form.estimate_hours"
@@ -252,6 +291,7 @@
                                             min="0"
                                             step="0.5"
                                         />
+                                        <span class="o1tf-field-hint">{{ t('projects.o1EstimateHoursShort') }}</span>
                                     </div>
                                     <div class="o1tf-field o1tf-field--outlined o1tf-span-4">
                                         <label class="o1tf-label" for="o1-c">{{ t('projects.o1Complexity') }}</label>
@@ -263,6 +303,7 @@
                                             min="1"
                                             max="5"
                                         />
+                                        <span class="o1tf-field-hint">{{ t('projects.o1CiScaleHint') }}</span>
                                     </div>
                                     <div class="o1tf-field o1tf-field--outlined o1tf-span-4">
                                         <label class="o1tf-label" for="o1-i">{{ t('projects.o1Impact') }}</label>
@@ -274,6 +315,7 @@
                                             min="1"
                                             max="5"
                                         />
+                                        <span class="o1tf-field-hint">{{ t('projects.o1CiScaleHint') }}</span>
                                     </div>
 
                                     <div v-if="form.progress_mode === 'manual_pct'" class="o1tf-field o1tf-field--outlined o1tf-span-6">
@@ -468,6 +510,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import O1UserPicker from './O1UserPicker.vue';
 
 const { t } = useI18n();
 
@@ -481,6 +524,7 @@ const emit = defineEmits(['update:modelValue', 'submit']);
 
 const tab = ref('general');
 const err = ref('');
+const pendingFiles = ref([]);
 
 const sec = ref({
     general: true,
@@ -553,6 +597,13 @@ const progressModes = computed(() =>
     })),
 );
 
+const computedWeightPreview = computed(() => {
+    const c = Math.min(5, Math.max(1, Number(form.value.complexity) || 3));
+    const i = Math.min(5, Math.max(1, Number(form.value.impact) || 3));
+
+    return (c * 0.4 + i * 0.6).toFixed(2);
+});
+
 const userOptions = computed(() => {
     const m = new Map();
     for (const u of props.project?.executor_users || []) {
@@ -569,16 +620,35 @@ const userOptions = computed(() => {
     return [...m.values()].sort((a, b) => String(a.name).localeCompare(String(b.name)));
 });
 
-const msSize = computed(() => {
-    const n = userOptions.value.length;
+function chipRemoveLabel(u) {
+    return t('projects.o1UserChipRemove', { name: u.name || String(u.id) });
+}
 
-    return Math.min(6, Math.max(3, n || 3));
-});
+function formatFileSize(bytes) {
+    if (bytes == null || !Number.isFinite(bytes)) {
+        return '';
+    }
+    if (bytes < 1024) {
+        return `${bytes} B`;
+    }
+    if (bytes < 1024 * 1024) {
+        return `${(bytes / 1024).toFixed(1)} KB`;
+    }
 
-function userLabel(u) {
-    const mail = u.email ? ` — ${u.email}` : '';
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
-    return `${u.name || u.id}${mail}`;
+function onAttachInput(e) {
+    const files = e.target.files;
+    if (!files?.length) {
+        return;
+    }
+    pendingFiles.value = [...pendingFiles.value, ...Array.from(files)];
+    e.target.value = '';
+}
+
+function removePendingFile(idx) {
+    pendingFiles.value = pendingFiles.value.filter((_, j) => j !== idx);
 }
 
 const parentTaskOptions = computed(() => {
@@ -600,6 +670,7 @@ watch(
 
 function resetForm() {
     err.value = '';
+    pendingFiles.value = [];
     tab.value = 'general';
     sec.value = {
         general: true,
@@ -674,15 +745,6 @@ function buildMetaLines(f) {
     if (f.restrict_subtask_time) {
         lines.push(`[${t('projects.o1RestrictSubtask')}]`);
     }
-    if (f.owner_ids?.length) {
-        lines.push(`${t('projects.o1Owner')} (id): ${f.owner_ids.join(', ')}`);
-    }
-    if (f.assignee_ids?.length > 1) {
-        lines.push(`${t('projects.thAssigneeFull')} (+): ${f.assignee_ids.slice(1).join(', ')}`);
-    }
-    if (f.follower_ids?.length) {
-        lines.push(`${t('projects.o1Followers')} (id): ${f.follower_ids.join(', ')}`);
-    }
     if (f.tasklist_id && String(f.tasklist_id) !== String(f.project_phase_id || '')) {
         lines.push(`${t('projects.o1Tasklist')}: ${phaseName(f.tasklist_id)}`);
     }
@@ -731,6 +793,11 @@ function buildPayload() {
     };
 
     const assignees = Array.isArray(f.assignee_ids) ? f.assignee_ids.map(Number).filter(Boolean) : [];
+    const owners = Array.isArray(f.owner_ids) ? f.owner_ids.map(Number).filter(Boolean) : [];
+    const followers = Array.isArray(f.follower_ids) ? f.follower_ids.map(Number).filter(Boolean) : [];
+    payload.assignee_ids = assignees;
+    payload.owner_ids = owners;
+    payload.follower_ids = followers;
     if (assignees.length) {
         payload.assignee_id = assignees[0];
     }
@@ -795,6 +862,6 @@ function submit() {
         return;
     }
     err.value = '';
-    emit('submit', payload);
+    emit('submit', { payload, files: [...pendingFiles.value] });
 }
 </script>

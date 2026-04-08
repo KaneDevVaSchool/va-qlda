@@ -4,16 +4,28 @@ namespace App\Services;
 
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\TaskParticipant;
 use App\Models\User;
 
 class KpiEngine
 {
     /**
+     * Task được tính cho user nếu là assignee chính (cột) hoặc participant role assignee.
+     */
+    protected function tasksForUserAsAssignee(int $userId)
+    {
+        return Task::query()->where(function ($q) use ($userId) {
+            $q->where('assignee_id', $userId)
+                ->orWhereHas('taskParticipants', fn ($p) => $p->where('user_id', $userId)->where('role', TaskParticipant::ROLE_ASSIGNEE));
+        });
+    }
+
+    /**
      * BR-KPI-01 Performance = Σ(Completed Weight) / Σ(Planned Weight) × 100%
      */
     public function personPerformancePercent(int $userId): float
     {
-        $q = Task::query()->where('assignee_id', $userId);
+        $q = $this->tasksForUserAsAssignee($userId);
 
         $planned = (clone $q)->sum('weight');
         $completed = (clone $q)->where('status', 'done')->sum('weight');
@@ -49,8 +61,7 @@ class KpiEngine
      */
     public function maintenanceSlaRateForUser(int $userId): ?float
     {
-        $q = Task::query()
-            ->where('assignee_id', $userId)
+        $q = $this->tasksForUserAsAssignee($userId)
             ->whereHas('project', fn ($p) => $p->where('type', 'maintenance'))
             ->whereIn('status', ['done']);
 
