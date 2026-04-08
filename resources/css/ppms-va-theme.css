@@ -31,6 +31,7 @@
     --ppms-sidebar-w: 16.75rem;
     --ppms-sidebar-collapsed-w: 4.25rem;
     --ppms-header-h: 3.5rem;
+    --ppms-mobile-tabbar-h: 3.55rem;
     --ppms-footer-h: auto;
     --ppms-topbar-h: var(--ppms-header-h);
     --ppms-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
@@ -534,6 +535,81 @@
     box-shadow: 0 0 0 2px #1a1d26, 0 0 0 4px rgba(255, 255, 255, 0.65);
 }
 
+.va-site-footer-modules {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: 1rem 1.5rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.va-site-footer-module-title {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+    margin: 0 0 0.45rem;
+    line-height: 1.25;
+}
+
+.va-site-footer-module-links {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+}
+
+.va-site-footer-module-links a {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.88);
+    text-decoration: none;
+    padding: 0.15rem 0;
+    border-bottom: 1px solid transparent;
+    line-height: 1.35;
+}
+
+.va-site-footer-module-links a:hover {
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.4);
+}
+
+.va-site-footer-module-links a.router-link-active {
+    color: #fff;
+    font-weight: 700;
+}
+
+.va-site-footer-module-links a:focus-visible {
+    outline: none;
+    border-radius: 4px;
+    box-shadow: 0 0 0 2px #1a1d26, 0 0 0 4px rgba(255, 255, 255, 0.65);
+}
+
+.va-site-footer-external {
+    width: 100%;
+    margin-top: 0.35rem;
+}
+
+.va-site-footer-external a {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.55);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+}
+
+.va-site-footer-external a:hover {
+    color: rgba(255, 255, 255, 0.88);
+    border-bottom-color: rgba(255, 255, 255, 0.35);
+}
+
+.va-site-footer-external a:focus-visible {
+    outline: none;
+    border-radius: 4px;
+    box-shadow: 0 0 0 2px #1a1d26, 0 0 0 4px rgba(255, 255, 255, 0.65);
+}
+
 .va-site-footer-rule {
     height: 1px;
     margin: 1.1rem 0 0.85rem;
@@ -848,6 +924,11 @@
     color: #fff;
 }
 
+/* —— Mobile / tablet: tab bar (vùng ngón tay cái) —— */
+.ppms-mobile-tabbar {
+    display: none;
+}
+
 /* Drawer mobile / tablet: nút menu + overlay (desktop ẩn) */
 .ppms-sidebar-backdrop {
     display: none;
@@ -903,6 +984,120 @@
         z-index: 130;
     }
 
+    .ppms-mobile-tabbar {
+        display: flex;
+        align-items: stretch;
+        justify-content: space-around;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 115;
+        min-height: var(--ppms-mobile-tabbar-h);
+        padding: 0.12rem 0 max(0.12rem, env(safe-area-inset-bottom, 0px));
+        background: var(--ppms-surface);
+        border-top: 1px solid var(--ppms-border);
+        box-shadow:
+            0 -1px 0 rgba(255, 255, 255, 0.9) inset,
+            0 -8px 28px rgba(26, 29, 38, 0.09);
+    }
+
+    .ppms-app--nav-open .ppms-mobile-tabbar {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease;
+    }
+
+    .ppms-mobile-tab {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.1rem;
+        min-width: 0;
+        min-height: 3.1rem;
+        max-width: 6rem;
+        margin: 0 auto;
+        padding: 0.2rem 0.25rem;
+        text-decoration: none;
+        color: var(--ppms-muted);
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        line-height: 1.15;
+        border-radius: var(--ppms-radius-sm);
+        transition:
+            color 0.15s ease,
+            background 0.15s ease;
+    }
+
+    .ppms-mobile-tab:hover {
+        color: var(--ppms-text);
+        background: rgba(0, 0, 0, 0.04);
+    }
+
+    .ppms-mobile-tab--active {
+        color: var(--ppms-primary);
+        font-weight: 800;
+    }
+
+    .ppms-mobile-tab--active .ppms-mobile-tab-svg {
+        stroke: var(--ppms-primary);
+    }
+
+    .ppms-mobile-tab-ico {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.55rem;
+        height: 1.45rem;
+    }
+
+    .ppms-mobile-tab-svg {
+        width: 1.45rem;
+        height: 1.45rem;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .ppms-mobile-tab-label {
+        max-width: 5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    .ppms-mobile-tab--notify {
+        position: relative;
+    }
+
+    .ppms-mobile-tab-badge {
+        position: absolute;
+        top: -3px;
+        right: -5px;
+        min-width: 1rem;
+        height: 1rem;
+        padding: 0 0.2rem;
+        border-radius: 999px;
+        background: var(--ppms-primary);
+        color: #fff;
+        font-size: 0.58rem;
+        font-weight: 800;
+        line-height: 1rem;
+        text-align: center;
+    }
+
+    .ppms-mobile-tab:focus-visible {
+        outline: none;
+        box-shadow: var(--ppms-focus);
+    }
+
     .ppms-app-middle .ppms-sidebar {
         position: fixed;
         top: var(--ppms-header-h);
@@ -937,6 +1132,11 @@
 
     .ppms-main {
         padding: 1rem;
+        padding-bottom: calc(1rem + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .va-site-footer {
+        padding-bottom: calc(1.15rem + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -950,7 +1150,8 @@
 /* Tablet: padding trung gian giữa mobile và desktop */
 @media (min-width: 640px) and (max-width: 1023px) {
     .ppms-main {
-        padding: 1.15rem 1.25rem 1.65rem;
+        padding: 1.15rem 1.25rem;
+        padding-bottom: calc(1.65rem + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
     }
 
     .ppms-content-header {
@@ -986,7 +1187,8 @@
     }
 
     .ppms-main {
-        padding: 0.85rem 0.75rem 1.25rem;
+        padding: 0.85rem 0.75rem;
+        padding-bottom: calc(1.1rem + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
     }
 
     .ppms-content-header {
@@ -999,6 +1201,7 @@
 
     .va-site-footer {
         padding-top: 1rem;
+        padding-bottom: calc(1rem + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
     }
 
     .va-site-footer-top {
@@ -1009,6 +1212,10 @@
 
     .va-site-footer-nav {
         justify-content: flex-start;
+    }
+
+    .va-site-footer-modules {
+        grid-template-columns: 1fr 1fr;
     }
 
     .va-site-header-inner {
