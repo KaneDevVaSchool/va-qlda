@@ -10,11 +10,10 @@ return new class extends Migration
     public function up(): void
     {
         $cms = 'cms';
-        $mysql = 'mysql';
+        $appConn = config('database.default');
 
-        // PHPUnit: sqlite app + cms share one file — one physical `personal_access_tokens` table.
-        if (config("database.connections.{$cms}.driver") === 'sqlite'
-            && config("database.connections.{$cms}.database") === config("database.connections.{$mysql}.database")) {
+        // Tests (sqlite): app + cms share one file — keep single `personal_access_tokens` table.
+        if ($appConn === 'sqlite') {
             return;
         }
 
@@ -31,15 +30,15 @@ return new class extends Migration
             });
         }
 
-        $appDb = config("database.connections.{$mysql}.database");
+        $appDb = config("database.connections.{$appConn}.database");
         $cmsDb = config("database.connections.{$cms}.database");
 
-        if (! Schema::connection($mysql)->hasTable('personal_access_tokens')) {
+        if (! Schema::connection($appConn)->hasTable('personal_access_tokens')) {
             return;
         }
 
         $cmsEmpty = DB::connection($cms)->table('personal_access_tokens')->count() === 0;
-        $appCount = DB::connection($mysql)->table('personal_access_tokens')->count();
+        $appCount = DB::connection($appConn)->table('personal_access_tokens')->count();
 
         if ($cmsEmpty && $appCount > 0) {
             DB::statement(
@@ -47,21 +46,20 @@ return new class extends Migration
             );
         }
 
-        Schema::connection($mysql)->dropIfExists('personal_access_tokens');
+        Schema::connection($appConn)->dropIfExists('personal_access_tokens');
     }
 
     public function down(): void
     {
         $cms = 'cms';
-        $mysql = 'mysql';
+        $appConn = config('database.default');
 
-        if (config("database.connections.{$cms}.driver") === 'sqlite'
-            && config("database.connections.{$cms}.database") === config("database.connections.{$mysql}.database")) {
+        if ($appConn === 'sqlite') {
             return;
         }
 
-        if (! Schema::connection($mysql)->hasTable('personal_access_tokens')) {
-            Schema::connection($mysql)->create('personal_access_tokens', function (Blueprint $table) {
+        if (! Schema::connection($appConn)->hasTable('personal_access_tokens')) {
+            Schema::connection($appConn)->create('personal_access_tokens', function (Blueprint $table) {
                 $table->id();
                 $table->morphs('tokenable');
                 $table->string('name');
@@ -73,12 +71,12 @@ return new class extends Migration
             });
         }
 
-        $appDb = config("database.connections.{$mysql}.database");
+        $appDb = config("database.connections.{$appConn}.database");
         $cmsDb = config("database.connections.{$cms}.database");
 
         if (Schema::connection($cms)->hasTable('personal_access_tokens')) {
             $cmsCount = DB::connection($cms)->table('personal_access_tokens')->count();
-            if ($cmsCount > 0 && DB::connection($mysql)->table('personal_access_tokens')->count() === 0) {
+            if ($cmsCount > 0 && DB::connection($appConn)->table('personal_access_tokens')->count() === 0) {
                 DB::statement(
                     "INSERT INTO `{$appDb}`.`personal_access_tokens` SELECT * FROM `{$cmsDb}`.`personal_access_tokens`"
                 );
