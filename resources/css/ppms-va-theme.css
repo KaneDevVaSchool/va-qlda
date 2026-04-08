@@ -5311,7 +5311,7 @@ body.ppms-drawer-open {
 }
 
 .ppms-modal--wide {
-    max-width: 52rem;
+    max-width: min(96vw, 80rem);
     width: 100%;
 }
 

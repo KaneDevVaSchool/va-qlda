@@ -565,6 +565,11 @@ a:hover {
     overflow: auto;
 }
 
+/* Form modal rộng (task, phase…) — đè max-width 480px ở trên */
+.ppms-modal.ppms-modal--wide {
+    max-width: min(96vw, 80rem);
+}
+
 .ppms-modal-actions {
     display: flex;
     justify-content: flex-end;
