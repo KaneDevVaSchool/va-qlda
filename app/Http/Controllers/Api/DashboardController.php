@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Kaizen;
 use App\Models\KpiSnapshot;
 use App\Models\Project;
+use App\Models\Task;
 use App\Models\User;
 use App\Services\KpiEngine;
 use App\Support\MigrationCms;
@@ -75,6 +76,76 @@ class DashboardController extends Controller
             'at_risk_projects' => $atRiskProjects,
             'kpi_performance_trend' => $kpiTrend,
             'innovation_funnel' => $kpiEngine->innovationFunnelCounts(),
+            'task_analytics' => $this->taskAnalytics(),
         ]);
+    }
+
+    /**
+     * Thống kê công việc toàn hệ (dự án chưa lưu trữ) — phục vụ tab Báo cáo công việc trên dashboard.
+     *
+     * @return array<string, mixed>
+     */
+    private function taskAnalytics(): array
+    {
+        $tasksBase = Task::query()->whereHas('project', function ($q) {
+            $q->whereNull('archived_at');
+        });
+
+        $tasksByStatus = (clone $tasksBase)
+            ->selectRaw('status, count(*) as c')
+            ->groupBy('status')
+            ->pluck('c', 'status');
+
+        $tasksTotal = (clone $tasksBase)->count();
+        $tasksDone = (clone $tasksBase)->where('status', 'done')->count();
+
+        $hoursAll = (clone $tasksBase)
+            ->selectRaw('coalesce(sum(estimate_hours), 0) as est, coalesce(sum(actual_hours), 0) as act')
+            ->first();
+        $hoursDone = (clone $tasksBase)->where('status', 'done')
+            ->selectRaw('coalesce(sum(estimate_hours), 0) as est, coalesce(sum(actual_hours), 0) as act')
+            ->first();
+
+        $progressBuckets = ['0-25' => 0, '25-50' => 0, '50-75' => 0, '75-100' => 0];
+        foreach (Project::query()->whereNull('archived_at')->pluck('progress') as $p) {
+            $v = (float) $p;
+            if ($v < 25) {
+                $progressBuckets['0-25']++;
+            } elseif ($v < 50) {
+                $progressBuckets['25-50']++;
+            } elseif ($v < 75) {
+                $progressBuckets['50-75']++;
+            } else {
+                $progressBuckets['75-100']++;
+            }
+        }
+
+        $tasksByCategory = (clone $tasksBase)
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->selectRaw('category, count(*) as c')
+            ->groupBy('category')
+            ->orderByDesc('c')
+            ->limit(12)
+            ->pluck('c', 'category');
+
+        return [
+            'tasks_by_status' => $tasksByStatus,
+            'tasks_total' => $tasksTotal,
+            'tasks_done' => $tasksDone,
+            'completion_pct' => $tasksTotal > 0 ? round($tasksDone * 100 / $tasksTotal, 1) : 0.0,
+            'hours' => [
+                'all' => [
+                    'estimate' => (float) ($hoursAll->est ?? 0),
+                    'actual' => (float) ($hoursAll->act ?? 0),
+                ],
+                'done' => [
+                    'estimate' => (float) ($hoursDone->est ?? 0),
+                    'actual' => (float) ($hoursDone->act ?? 0),
+                ],
+            ],
+            'project_progress_buckets' => $progressBuckets,
+            'tasks_by_category' => $tasksByCategory,
+        ];
     }
 }
