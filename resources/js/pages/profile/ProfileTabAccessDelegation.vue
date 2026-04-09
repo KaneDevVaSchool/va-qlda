@@ -8,6 +8,66 @@
         <section class="ppms-profile-access-block" :aria-labelledby="'acc-del-' + uid">
             <h2 :id="'acc-del-' + uid" class="ppms-profile-access-h2">{{ t('profile.accessSectionDelegation') }}</h2>
             <p class="ppms-profile-access-lead">{{ t('profile.delegationIntro') }}</p>
+            <p v-if="canManageOthers" class="ppms-profile-access-lead ppms-profile-access-lead--admin">
+                {{ t('profile.delegationIntroAdmin') }}
+            </p>
+
+            <div v-if="canManageOthers" class="ppms-profile-access-card ppms-profile-access-card--delegator">
+                <div class="ppms-profile-access-row">
+                    <label class="ppms-profile-access-h3 ppms-profile-access-label--heading" for="deleg-search">{{
+                        t('profile.delegationDelegatorLabel')
+                    }}</label>
+                    <div ref="delegLookupEl" class="ppms-profile-access-lookup">
+                        <input
+                            id="deleg-search"
+                            v-model="delegSearchQ"
+                            type="search"
+                            class="ppms-profile-access-input"
+                            autocomplete="off"
+                            :placeholder="t('profile.delegationDelegatorPlaceholder')"
+                            :aria-expanded="delegPickCandidates.length > 0"
+                            aria-controls="deleg-pick-list"
+                            @input="onDelegatorSearchInput"
+                            @keydown.escape.prevent="closeDelegPick"
+                        />
+                        <ul
+                            v-if="delegPickCandidates.length"
+                            id="deleg-pick-list"
+                            class="ppms-profile-access-pick"
+                            role="listbox"
+                        >
+                            <li v-for="u in delegPickCandidates" :key="u.id" role="option">
+                                <button type="button" class="ppms-profile-access-pick-btn" @click="selectDelegatorUser(u)">
+                                    <span class="ppms-profile-access-user">{{ u.name }}</span>
+                                    <span class="ppms-profile-access-email">{{ u.email }}</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="ppms-profile-access-delegator-actions">
+                        <p v-if="delegatorContext" class="ppms-profile-access-picked ppms-profile-access-picked--inline">
+                            <strong>{{ delegatorContext.name }}</strong>
+                            <span class="ppms-profile-access-email">· {{ delegatorContext.email }}</span>
+                        </p>
+                        <button
+                            v-if="delegatorContext"
+                            type="button"
+                            class="ppms-pf-btn ppms-profile-access-btn-secondary"
+                            @click="clearDelegatorContext"
+                        >
+                            {{ t('profile.delegationDelegatorSelf') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                v-if="canManageOthers && delegatorContext"
+                class="ppms-profile-access-banner ppms-profile-access-banner--context"
+                role="status"
+            >
+                {{ t('profile.delegationContextBanner', { name: delegatorContext.name }) }}
+            </div>
 
             <div v-if="delErr" class="ppms-profile-access-banner ppms-profile-access-banner--err" role="alert">
                 {{ delErr }}
@@ -156,6 +216,8 @@ const scopeOptions = ref(['supplier_contracts', 'projects', 'all']);
 const revokingId = ref(null);
 const saving = ref(false);
 const currentUserId = ref(null);
+const canManageOthers = ref(false);
+const delegatorContext = ref(null);
 
 const searchQ = ref('');
 const pickCandidates = ref([]);
@@ -163,8 +225,17 @@ const picked = ref(null);
 const formScope = ref('supplier_contracts');
 const formExpires = ref('');
 
+const delegSearchQ = ref('');
+const delegPickCandidates = ref([]);
+
 const lookupEl = ref(null);
+const delegLookupEl = ref(null);
 let searchTimer;
+let delegSearchTimer;
+
+function effectiveDelegatorId() {
+    return delegatorContext.value?.id ?? currentUserId.value;
+}
 
 function roleLabel(role) {
     if (!role) {
@@ -201,7 +272,12 @@ async function loadDelegations() {
     listLoading.value = true;
     delErr.value = '';
     try {
-        const { data } = await axios.get('/api/me/delegations');
+        const params = {};
+        if (canManageOthers.value && delegatorContext.value) {
+            params.delegator_id = delegatorContext.value.id;
+        }
+        const { data } = await axios.get('/api/me/delegations', { params });
+        canManageOthers.value = !!data.can_manage_others;
         items.value = Array.isArray(data.items) ? data.items : [];
         if (Array.isArray(data.scopes) && data.scopes.length) {
             scopeOptions.value = data.scopes;
@@ -228,10 +304,28 @@ function onSearchInput() {
         try {
             const { data } = await axios.get('/api/users/lookup', { params: { q } });
             const raw = Array.isArray(data) ? data : [];
-            const selfId = currentUserId.value;
-            pickCandidates.value = raw.filter((u) => u.id !== selfId);
+            const ex = effectiveDelegatorId();
+            pickCandidates.value = raw.filter((u) => u.id !== ex);
         } catch {
             pickCandidates.value = [];
+        }
+    }, 280);
+}
+
+function onDelegatorSearchInput() {
+    clearTimeout(delegSearchTimer);
+    delegSearchTimer = setTimeout(async () => {
+        const q = delegSearchQ.value.trim();
+        if (q.length < 2) {
+            delegPickCandidates.value = [];
+
+            return;
+        }
+        try {
+            const { data } = await axios.get('/api/users/lookup', { params: { q } });
+            delegPickCandidates.value = Array.isArray(data) ? data : [];
+        } catch {
+            delegPickCandidates.value = [];
         }
     }, 280);
 }
@@ -240,11 +334,38 @@ function closePick() {
     pickCandidates.value = [];
 }
 
+function closeDelegPick() {
+    delegPickCandidates.value = [];
+}
+
 function onDocClick(e) {
-    const el = lookupEl.value;
-    if (el && !el.contains(e.target)) {
-        closePick();
+    const elTarget = e.target;
+    if (lookupEl.value?.contains(elTarget)) {
+        return;
     }
+    if (delegLookupEl.value?.contains(elTarget)) {
+        return;
+    }
+    closePick();
+    closeDelegPick();
+}
+
+function selectDelegatorUser(u) {
+    if (currentUserId.value != null && u.id === currentUserId.value) {
+        delegatorContext.value = null;
+    } else {
+        delegatorContext.value = u;
+    }
+    delegSearchQ.value = '';
+    delegPickCandidates.value = [];
+    loadDelegations();
+}
+
+function clearDelegatorContext() {
+    delegatorContext.value = null;
+    delegSearchQ.value = '';
+    delegPickCandidates.value = [];
+    loadDelegations();
 }
 
 function selectUser(u) {
@@ -269,6 +390,9 @@ async function submitDelegation() {
         };
         if (formExpires.value) {
             payload.expires_at = `${formExpires.value}T23:59:59`;
+        }
+        if (canManageOthers.value && delegatorContext.value) {
+            payload.delegator_id = delegatorContext.value.id;
         }
         await axios.post('/api/me/delegations', payload);
         ppmsToastSuccess(t('profile.delegationSaved'));
@@ -317,6 +441,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
     clearTimeout(searchTimer);
+    clearTimeout(delegSearchTimer);
     document.removeEventListener('click', onDocClick, true);
 });
 </script>
@@ -351,6 +476,42 @@ onUnmounted(() => {
     margin: 0 0 1rem;
     max-width: 44rem;
     line-height: 1.45;
+}
+.ppms-profile-access-lead--admin {
+    margin-top: -0.35rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 8px;
+    background: rgba(59, 130, 246, 0.06);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+.ppms-profile-access-label--heading {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+    color: var(--ppms-pf-fg, inherit);
+}
+.ppms-profile-access-card--delegator {
+    margin-bottom: 0.75rem;
+}
+.ppms-profile-access-delegator-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    margin-top: 0.5rem;
+}
+.ppms-profile-access-picked--inline {
+    margin: 0;
+}
+.ppms-profile-access-btn-secondary {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.65rem;
+}
+.ppms-profile-access-banner--context {
+    background: rgba(59, 130, 246, 0.08);
+    color: #1e40af;
+    border: 1px solid rgba(59, 130, 246, 0.25);
 }
 .ppms-profile-access-banner {
     padding: 0.65rem 0.75rem;
