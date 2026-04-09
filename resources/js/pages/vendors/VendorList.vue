@@ -2,10 +2,7 @@
     <div class="ppms-page vm-page">
         <section class="ppms-card">
             <div class="vm-toolbar">
-                <div>
-                    <h2 class="vm-toolbar__title">{{ t('vendors.pageTitle') }}</h2>
-                    <p class="ppms-muted ppms-mt-sm">{{ t('vendors.pageDescription') }}</p>
-                </div>
+             
                 <div class="vm-toolbar__actions">
                     <button type="button" class="ppms-btn-ghost" :disabled="loading" @click="load">
                         {{ t('vendors.refresh') }}

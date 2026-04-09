@@ -51,13 +51,21 @@ class ApiErrorPresenter
                 ];
             }
 
+            if (str_contains($raw, '42S22') || stripos($raw, 'Unknown column') !== false) {
+                return [
+                    'message' => 'Cấu trúc cơ sở dữ liệu chưa khớp phiên bản mã nguồn (thiếu cột hoặc bảng cũ).',
+                    'code' => 'database_schema_mismatch',
+                    'hint' => 'Trên máy chủ: php artisan migrate --force. Đảm bảo đã deploy đủ thư mục database/migrations. Kiểm tra: php artisan db:verify-schema',
+                ];
+            }
+
             if (stripos($raw, 'Base table or view not found') !== false
                 || str_contains($raw, '42S02')
                 || (stripos($raw, "doesn't exist") !== false && stripos($raw, 'Table') !== false)) {
                 return [
-                    'message' => 'Cấu trúc dữ liệu hệ thống chưa được khởi tạo đầy đủ.',
+                    'message' => 'Cấu trúc dữ liệu hệ thống chưa được khởi tạo đầy đủ (thiếu bảng).',
                     'code' => 'database_schema',
-                    'hint' => 'Trên máy chủ ứng dụng, chạy: php artisan migrate',
+                    'hint' => 'Trên máy chủ: php artisan migrate --force. Sau đó: php artisan migrate:status và php artisan db:verify-schema',
                 ];
             }
 
