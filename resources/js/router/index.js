@@ -84,6 +84,35 @@ const routes = [
                 },
             },
             {
+                path: 'contracts',
+                name: 'contracts',
+                component: () => import('../pages/contracts/ContractList.vue'),
+                meta: {
+                    titleKey: 'contracts.pageTitle',
+                    pageTitleKey: 'contracts.pageTitle',
+                    pageDescriptionKey: 'contracts.pageDescription',
+                    breadcrumb: bc([
+                        { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'contracts.breadcrumb' },
+                    ]),
+                },
+            },
+            {
+                path: 'contracts/:id',
+                name: 'contract-detail',
+                component: () => import('../pages/contracts/ContractDetail.vue'),
+                props: true,
+                meta: {
+                    titleKey: 'contracts.detailTitle',
+                    hideLayoutTitle: true,
+                    breadcrumb: bc([
+                        { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'contracts.breadcrumb', to: '/contracts' },
+                        { labelKey: 'contracts.detailTitle' },
+                    ]),
+                },
+            },
+            {
                 path: 'kaizens',
                 name: 'kaizens',
                 component: () => import('../pages/kaizen/KaizenList.vue'),

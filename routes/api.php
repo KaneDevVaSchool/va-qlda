@@ -1,6 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ContractApprovalController;
+use App\Http\Controllers\Api\ContractController;
+use App\Http\Controllers\Api\ContractFileController;
+use App\Http\Controllers\Api\ContractLookupController;
+use App\Http\Controllers\Api\ContractPaymentController;
 use App\Http\Controllers\Api\CsatController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EvaluationController;
@@ -162,4 +167,22 @@ Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
     Route::get('evaluations/{evaluation}/export-pdf', [EvaluationController::class, 'exportPdf']);
     Route::post('evaluations/{evaluation}/peers', [EvaluationPeerController::class, 'store']);
     Route::delete('evaluation-peers/{peer}', [EvaluationPeerController::class, 'destroy']);
+
+    Route::get('contract-lookups', ContractLookupController::class);
+    Route::get('contracts/upcoming-payments', [ContractPaymentController::class, 'upcoming']);
+    Route::apiResource('contracts', ContractController::class)->whereNumber('contract');
+    Route::get('contracts/{contract}/logs', [ContractController::class, 'logs'])->whereNumber('contract');
+    Route::post('contracts/{contract}/submit', [ContractController::class, 'submit'])->whereNumber('contract');
+    Route::post('contracts/{contract}/terminate', [ContractController::class, 'terminate'])->whereNumber('contract');
+    Route::post('contracts/{contract}/approve', [ContractApprovalController::class, 'approve'])->whereNumber('contract');
+    Route::post('contracts/{contract}/reject', [ContractApprovalController::class, 'reject'])->whereNumber('contract');
+    Route::get('contracts/{contract}/files', [ContractFileController::class, 'index'])->whereNumber('contract');
+    Route::post('contracts/{contract}/files', [ContractFileController::class, 'store'])->whereNumber('contract');
+    Route::get('contracts/{contract}/files/{file}/download', [ContractFileController::class, 'download'])
+        ->whereNumber('contract')
+        ->whereNumber('file');
+    Route::get('contracts/{contract}/payments', [ContractPaymentController::class, 'index'])->whereNumber('contract');
+    Route::post('contracts/{contract}/payments/{payment}/mark-paid', [ContractPaymentController::class, 'markPaid'])
+        ->whereNumber('contract')
+        ->whereNumber('payment');
 });

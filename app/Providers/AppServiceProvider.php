@@ -21,6 +21,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Services\ProjectListQueryService::class, function () {
             return new \App\Services\ProjectListQueryService;
         });
+
+        $this->app->bind(
+            \App\Contracts\Repositories\ContractRepositoryInterface::class,
+            \App\Repositories\ContractRepository::class
+        );
+        $this->app->bind(
+            \App\Contracts\Repositories\PaymentRepositoryInterface::class,
+            \App\Repositories\PaymentRepository::class
+        );
     }
 
     /**
