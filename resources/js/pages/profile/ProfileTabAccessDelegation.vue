@@ -57,13 +57,13 @@
             </div>
         </section>
 
+        <ProfileRbacAdmin v-if="canManageRbac && !rbacLoading" />
+
         <section class="ppms-profile-access-block ppms-profile-access-block--perm" :aria-labelledby="'acc-perm-' + uid">
             <h2 :id="'acc-perm-' + uid" class="ppms-profile-access-h2">{{ t('profile.accessSectionPermissions') }}</h2>
             <p class="ppms-profile-access-lead ppms-profile-access-lead--section">{{ t('profile.accessSectionPermHint') }}</p>
             <ProfileTabPermissions :key="permKey" compact />
         </section>
-
-        <ProfileRbacAdmin v-if="canManageRbac && !rbacLoading" />
 
         <section class="ppms-profile-access-block" :aria-labelledby="'acc-del-' + uid">
             <h2 :id="'acc-del-' + uid" class="ppms-profile-access-h2">{{ t('profile.accessSectionDelegation') }}</h2>
