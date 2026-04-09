@@ -204,13 +204,29 @@
                                     </button>
                                 </th>
                                 <th>{{ t('contracts.tableExpiresIn') }}</th>
+                                <th>
+                                    <button type="button" class="contract-list__th-btn" @click="toggleSort('updated_at')">
+                                        {{ t('contracts.tableUpdatedAt') }}
+                                        <span v-if="sortKey === 'updated_at'" class="contract-list__sort-ind" aria-hidden="true">{{
+                                            sortOrder === 'asc' ? '↑' : '↓'
+                                        }}</span>
+                                    </button>
+                                </th>
+                                <th>
+                                    <button type="button" class="contract-list__th-btn" @click="toggleSort('created_by')">
+                                        {{ t('contracts.tableFollower') }}
+                                        <span v-if="sortKey === 'created_by'" class="contract-list__sort-ind" aria-hidden="true">{{
+                                            sortOrder === 'asc' ? '↑' : '↓'
+                                        }}</span>
+                                    </button>
+                                </th>
                                 <th>{{ t('contracts.tableActions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             <template v-for="g in vendorGroups" :key="g.key">
                                 <tr class="contract-list__vendor-group">
-                                    <td colspan="8">
+                                    <td colspan="10">
                                         <button
                                             type="button"
                                             class="contract-list__group-toggle"
@@ -263,6 +279,8 @@
                                         <span v-if="expiresBadge(row)" class="contract-list__badge-soon">{{ expiresBadge(row) }}</span>
                                         <span v-else class="contract-list__cell-muted">—</span>
                                     </td>
+                                    <td class="contract-list__cell-muted contract-list__cell-nowrap">{{ formatUpdatedAt(row.updated_at) }}</td>
+                                    <td class="contract-list__cell-muted">{{ row.creator?.name || '—' }}</td>
                                     <td @click.stop>
                                         <router-link :to="`/contracts/${row.id}`" class="ppms-btn-ghost ppms-btn-sm">{{ t('contracts.view') }}</router-link>
                                     </td>
@@ -665,7 +683,7 @@ const hasActiveFilters = computed(() => {
     );
 });
 
-const SORT_KEYS = ['id', 'code', 'end_date', 'start_date', 'total_value', 'status'];
+const SORT_KEYS = ['id', 'code', 'end_date', 'start_date', 'total_value', 'status', 'updated_at', 'created_by'];
 
 function clampPerPage(n) {
     return Math.min(100, Math.max(10, n));
@@ -750,6 +768,16 @@ function formatMoney(value) {
     }
     const formatted = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(n);
     return `${formatted} VNĐ`;
+}
+
+function formatUpdatedAt(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    return new Intl.DateTimeFormat(locale.value === 'vi' ? 'vi-VN' : 'en-GB', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(d);
 }
 
 function parseDateOnly(str) {
@@ -1578,6 +1606,9 @@ onMounted(async () => {
 .contract-list__cell-num {
     text-align: right;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.contract-list__cell-nowrap {
     white-space: nowrap;
 }
 .contract-list__period {

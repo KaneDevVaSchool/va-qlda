@@ -66,6 +66,8 @@ class ContractReadService
                 'end_date',
                 'total_value',
                 'payment_cycle',
+                'updated_at',
+                'follower',
             ]);
             foreach ($contracts as $c) {
                 fputcsv($out, [
@@ -78,6 +80,8 @@ class ContractReadService
                     $c->end_date?->toDateString(),
                     (string) $c->total_value,
                     $c->payment_cycle?->value,
+                    $c->updated_at?->toIso8601String(),
+                    $c->creator?->name,
                 ]);
             }
             fclose($out);

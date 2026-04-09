@@ -85,7 +85,7 @@ class ContractRepository implements ContractRepositoryInterface
     {
         $sort = $filters['sort'] ?? 'id';
         $order = strtolower((string) ($filters['order'] ?? 'desc')) === 'asc' ? 'asc' : 'desc';
-        $allowed = ['id', 'code', 'end_date', 'start_date', 'total_value', 'status'];
+        $allowed = ['id', 'code', 'end_date', 'start_date', 'total_value', 'status', 'updated_at', 'created_by'];
         if (! in_array($sort, $allowed, true)) {
             $sort = 'id';
         }

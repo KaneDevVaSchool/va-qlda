@@ -160,6 +160,9 @@
 
             <section v-show="tab === 'payments'" class="cd-panel ppms-card ppms-mt">
                 <p class="cd-panel__intro">{{ t('contracts.paymentsTabIntro') }}</p>
+                <p v-if="canManage && contract && contract.status !== 'active'" class="ppms-hint cd-payments-inactive">
+                    {{ t('contracts.paymentsMarkPaidInactive') }}
+                </p>
                 <div v-if="(contract.payments || []).length" class="cd-pay-summary">
                     <div class="cd-pay-summary__grid">
                         <div class="cd-pay-summary__card">
@@ -404,14 +407,22 @@
                     </button>
                 </div>
                 <div class="contract-modal__body">
-                    <label class="cd-sr-label" for="cd-approvers">{{ t('contracts.submitHint') }}</label>
-                    <textarea
-                        id="cd-approvers"
-                        v-model="approverIdsRaw"
-                        class="ppms-input"
-                        rows="4"
-                        placeholder="2, 5, 8"
-                    />
+                    <div class="cd-submit-approvers">
+                        <span class="cd-submit-approvers__label">{{ t('contracts.approverPickerLabel') }}</span>
+                        <p class="ppms-hint cd-submit-approvers__hint">{{ t('contracts.approverPickerHint') }}</p>
+                        <O1UserPicker
+                            v-model="approverIds"
+                            :users="[]"
+                            :search-placeholder="t('contracts.approverSearchPlaceholder')"
+                            :search-aria="t('contracts.approverAriaSearch')"
+                            :list-aria="t('contracts.approverAriaList')"
+                            :empty-text="t('contracts.approverEmpty')"
+                            :remove-chip-label="approverChipRemoveLabel"
+                            remote-lookup
+                            :lookup-min-chars="1"
+                            :remote-loading-text="t('common.loading')"
+                        />
+                    </div>
                     <p v-if="submitErr" class="ppms-error">{{ submitErr }}</p>
                 </div>
                 <div class="contract-modal__footer">
@@ -601,6 +612,7 @@ import { useRoute } from 'vue-router';
 import { formatApiUserMessage } from '@/bootstrap';
 import { ppmsConfirm, ppmsToastError, ppmsToastSuccess } from '@/ppmsUi';
 import { readVndAmountVietnamese } from '@/utils/vndReadWords';
+import O1UserPicker from '@/pages/projects/components/detail/O1UserPicker.vue';
 
 const props = defineProps({
     id: { type: [String, Number], required: true },
@@ -627,7 +639,7 @@ const versionCompareA = ref(0);
 const versionCompareB = ref(0);
 
 const submitOpen = ref(false);
-const approverIdsRaw = ref('');
+const approverIds = ref([]);
 const submitErr = ref('');
 
 const editOpen = ref(false);
@@ -882,7 +894,7 @@ const canSubmit = computed(() => {
 
 const canTerminate = computed(() => canManage.value);
 
-const canMarkPaid = computed(() => canManage.value);
+const canMarkPaid = computed(() => canManage.value && contract.value?.status === 'active');
 
 const isCurrentApprover = computed(() => {
     if (!contract.value || contract.value.status !== 'pending_approval' || !me.value) {
@@ -1138,14 +1150,17 @@ async function removeDraft() {
     }
 }
 
+function approverChipRemoveLabel(u) {
+    return t('contracts.approverChipRemove', { name: u.name || String(u.id) });
+}
+
 async function submitApproval() {
     submitErr.value = '';
-    const parts = approverIdsRaw.value
-        .split(/[,\s]+/)
-        .map((x) => parseInt(x.trim(), 10))
-        .filter((n) => !Number.isNaN(n) && n > 0);
+    const parts = (approverIds.value || [])
+        .map((x) => Number(x))
+        .filter((n) => Number.isFinite(n) && n > 0);
     if (parts.length === 0) {
-        submitErr.value = t('contracts.submitHint');
+        submitErr.value = t('contracts.submitApproversRequired');
         return;
     }
     if (!(await ppmsConfirm(t('contracts.submitConfirm')))) {
@@ -1162,6 +1177,13 @@ async function submitApproval() {
         submitErr.value = formatApiUserMessage(e, t('contracts.loadError'));
     }
 }
+
+watch(submitOpen, (open) => {
+    if (open) {
+        approverIds.value = [];
+        submitErr.value = '';
+    }
+});
 
 async function doApprove() {
     try {
@@ -1999,6 +2021,27 @@ onMounted(async () => {
 }
 .cd-logs-scroll {
     max-width: 100%;
+}
+.cd-payments-inactive {
+    margin-top: 8px;
+}
+.cd-submit-approvers {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.cd-submit-approvers__label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--ppms-fg, #0f172a);
+}
+.cd-submit-approvers__hint {
+    margin: 0;
+}
+.cd-submit-approvers .o1-user-picker__search {
+    width: 100%;
+    box-sizing: border-box;
 }
 </style>
 <style src="./contract-modal.css"></style>
