@@ -365,6 +365,8 @@
         "suppliersNone": "None",
         "suppliersCount": "{n} vendors",
         "pagination": "Page {current} / {last}",
+        "paginationRange": "{from}–{to} of {total} projects",
+        "perPageLabel": "Rows per page",
         "prevPage": "Previous",
         "nextPage": "Next",
         "createModalTitle": "Create project",

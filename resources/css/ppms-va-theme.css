@@ -4441,6 +4441,44 @@ body.ppms-drawer-open {
     margin-right: auto;
 }
 
+.ppms-pl-page-cluster--list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 0.75rem;
+    padding-right: 0.65rem;
+    margin-right: 0.35rem;
+    border-right: 1px solid var(--ppms-border);
+    max-width: 100%;
+}
+
+.ppms-pl-page-cluster--list .ppms-pl-page-arrows {
+    padding-right: 0;
+    margin-right: 0;
+    border-right: none;
+}
+
+.ppms-pl-page-indicator {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.ppms-pl-page-range {
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+.ppms-pl-per-page {
+    flex-shrink: 0;
+    gap: 0.35rem;
+}
+
+.ppms-pl-per-page-select {
+    min-width: 4.25rem;
+}
+
 .ppms-pl-page-arrows {
     display: inline-flex;
     align-items: center;

@@ -67,7 +67,52 @@
                     <option v-for="tm in teamOptions" :key="'tf-' + tm.id" :value="String(tm.id)">{{ tm.name }}</option>
                 </select>
             </label>
-            <div v-if="lastPage > 1" class="ppms-pl-page-arrows">
+            <div v-if="viewMode === 'list' && total > 0" class="ppms-pl-page-cluster ppms-pl-page-cluster--list">
+                <div class="ppms-pl-page-arrows">
+                    <button
+                        type="button"
+                        class="ppms-btn-ghost ppms-pl-page-btn"
+                        :disabled="page <= 1"
+                        :aria-label="t('projects.prevPage')"
+                        @click="$emit('go-page', page - 1)"
+                    >
+                        <svg class="ppms-pl-ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                    </button>
+                    <button
+                        type="button"
+                        class="ppms-btn-ghost ppms-pl-page-btn"
+                        :disabled="page >= lastPage"
+                        :aria-label="t('projects.nextPage')"
+                        @click="$emit('go-page', page + 1)"
+                    >
+                        <svg class="ppms-pl-ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                    </button>
+                </div>
+                <span class="ppms-pl-page-indicator ppms-muted" aria-live="polite">{{
+                    t('projects.pagination', { current: page, last: lastPage })
+                }}</span>
+                <span
+                    v-if="rangeFrom != null && rangeTo != null"
+                    class="ppms-pl-page-range ppms-muted"
+                    aria-live="polite"
+                    >{{ t('projects.paginationRange', { from: rangeFrom, to: rangeTo, total }) }}</span
+                >
+                <label class="ppms-field ppms-field--inline ppms-pl-per-page">
+                    <span>{{ t('projects.perPageLabel') }}</span>
+                    <select
+                        class="ppms-select ppms-pl-per-page-select"
+                        :value="perPage"
+                        @change="onPerPageChange"
+                    >
+                        <option v-for="n in perPageSelectOptions" :key="'pp-' + n" :value="n">{{ n }}</option>
+                    </select>
+                </label>
+            </div>
+            <div v-else-if="viewMode === 'kanban' && lastPage > 1" class="ppms-pl-page-arrows">
                 <button
                     type="button"
                     class="ppms-btn-ghost ppms-pl-page-btn"
@@ -235,16 +280,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 
-defineProps({
+const props = defineProps({
     viewMode: { type: String, required: true },
     loading: { type: Boolean, required: true },
     page: { type: Number, required: true },
     lastPage: { type: Number, required: true },
+    total: { type: Number, default: 0 },
+    rangeFrom: { type: Number, default: null },
+    rangeTo: { type: Number, default: null },
+    perPage: { type: Number, default: 50 },
     canImport: { type: Boolean, default: false },
     canExport: { type: Boolean, default: false },
     filters: { type: Object, required: true },
@@ -254,14 +303,25 @@ defineProps({
     selectedCount: { type: Number, required: true },
 });
 
+const perPageSelectOptions = computed(() => {
+    const base = [10, 25, 50, 100];
+    const p = props.perPage;
+    if (typeof p === 'number' && !base.includes(p)) {
+        return [...base, p].sort((a, b) => a - b);
+    }
+
+    return base;
+});
+
 const menuOpen = defineModel('menuOpen', { type: Boolean, default: false });
 
 const menuElRef = ref(null);
 
-defineEmits([
+const emit = defineEmits([
     'set-view-mode',
     'open-create',
     'go-page',
+    'set-per-page',
     'toolbar-labels',
     'open-import',
     'export-csv-filtered',
@@ -275,6 +335,14 @@ defineEmits([
     'filter-change',
     'column-toggle',
 ]);
+
+function onPerPageChange(e) {
+    const raw = e?.target && 'value' in e.target ? e.target.value : '';
+    const n = Number(raw);
+    if (!Number.isNaN(n)) {
+        emit('set-per-page', n);
+    }
+}
 
 defineExpose({
     getMenuEl: () => menuElRef.value,

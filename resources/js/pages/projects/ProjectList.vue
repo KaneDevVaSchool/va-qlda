@@ -14,6 +14,10 @@
             :loading="loading"
             :page="page"
             :last-page="lastPage"
+            :total="total"
+            :range-from="rangeFrom"
+            :range-to="rangeTo"
+            :per-page="perPage"
             :can-import="canImport"
             :can-export="canExport"
             :filters="filters"
@@ -24,6 +28,7 @@
             @set-view-mode="setViewMode"
             @open-create="openCreateModal"
             @go-page="goPage"
+            @set-per-page="onSetPerPage"
             @toolbar-labels="onToolbarLabels"
             @open-import="openImportModal"
             @export-csv-filtered="onToolbarExportCsv"
@@ -540,8 +545,8 @@ const formError = ref('');
 const page = ref(1);
 const lastPage = ref(1);
 const total = ref(0);
-const rangeFrom = ref(0);
-const rangeTo = ref(0);
+const rangeFrom = ref(null);
+const rangeTo = ref(null);
 const perPage = ref(50);
 
 const currentUser = ref(null);
@@ -1562,8 +1567,8 @@ async function load() {
             if (!isKanban) {
                 perPage.value = data.per_page ?? perPage.value;
             }
-            rangeFrom.value = data.from;
-            rangeTo.value = data.to;
+            rangeFrom.value = data.from ?? null;
+            rangeTo.value = data.to ?? null;
         } else {
             projects.value = data;
             lastPage.value = 1;
@@ -1590,6 +1595,17 @@ function onFilterChange() {
 
 function goPage(p) {
     page.value = p;
+    load();
+    scheduleUrlReplace();
+}
+
+function onSetPerPage(n) {
+    const v = Math.min(100, Math.max(10, Math.floor(Number(n))));
+    if (perPage.value === v) {
+        return;
+    }
+    perPage.value = v;
+    page.value = 1;
     load();
     scheduleUrlReplace();
 }

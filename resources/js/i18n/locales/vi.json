@@ -365,6 +365,8 @@
         "suppliersNone": "Không",
         "suppliersCount": "{n} NCC",
         "pagination": "Trang {current} / {last}",
+        "paginationRange": "{from}–{to} / {total} dự án",
+        "perPageLabel": "Dòng/trang",
         "prevPage": "Trước",
         "nextPage": "Sau",
         "createModalTitle": "Tạo mới dự án",
