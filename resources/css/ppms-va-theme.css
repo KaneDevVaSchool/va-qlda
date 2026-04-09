@@ -3454,6 +3454,36 @@ body.ppms-drawer-open {
     white-space: nowrap;
 }
 
+.ppms-project-list-table-wrap .ppms-table tfoot .ppms-pl-table-foot-row td {
+    padding: 0.55rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--ppms-muted, #64748b);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.05), rgba(15, 23, 42, 0.02));
+    border-top: 2px solid var(--ppms-border);
+    vertical-align: middle;
+    white-space: normal;
+}
+
+.ppms-pl-table-foot-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem 1rem;
+}
+
+.ppms-pl-table-foot-stat {
+    color: var(--ppms-text);
+    font-variant-numeric: tabular-nums;
+}
+
+.ppms-pl-table-foot-page {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--ppms-muted, #64748b);
+}
+
 .ppms-pl-customer-group-row td {
     padding: 0 !important;
     vertical-align: middle;

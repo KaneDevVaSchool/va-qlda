@@ -37,7 +37,7 @@
             </div>
         </section>
 
-        <section class="ppms-card ppms-mt">
+        <section class="ppms-card ppms-mt" :class="{ 'ppms-teams-list-section--tree': viewMode === 'tree' }">
             <h3 class="ppms-h3">{{ t('teams.listSection') }}</h3>
             <div v-if="loading" class="ppms-loading-line ppms-mt-sm" role="status">{{ t('common.loading') }}</div>
             <p v-else-if="!teams.length" class="ppms-muted ppms-mt-sm">{{ t('teams.empty') }}</p>
@@ -58,7 +58,10 @@
                         </div>
                     </button>
                     <div v-if="row.can_manage" class="ppms-team-card__actions">
-                        <button type="button" class="ppms-btn-ghost" @click.stop="confirmDelete(row)">
+                        <button type="button" class="ppms-team-card__btn-edit" @click.stop="openTeamThenEdit(row.id)">
+                            {{ t('teams.editTeamBtn') }}
+                        </button>
+                        <button type="button" class="ppms-team-card__btn-delete" @click.stop="confirmDelete(row)">
                             {{ t('common.delete') }}
                         </button>
                     </div>
@@ -87,7 +90,22 @@
                                 <p v-if="team.description" class="ppms-team-tree-block__snippet">{{ team.description }}</p>
                             </div>
                         </div>
-                        <span class="ppms-team-tree-block__pill">{{ team.members_count ?? 0 }} {{ t('teams.membersShort') }}</span>
+                        <div class="ppms-team-tree-block__head-right">
+                            <span class="ppms-team-tree-block__pill">{{ team.members_count ?? 0 }} {{ t('teams.membersShort') }}</span>
+                            <button
+                                v-if="team.can_manage"
+                                type="button"
+                                class="ppms-team-tree-block__edit"
+                                :title="t('teams.editTeamBtn')"
+                                :aria-label="t('teams.editTeamBtn')"
+                                @click.stop="openTeamThenEdit(team.id)"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     <div v-if="!team.members?.length" class="ppms-team-tree-empty">
@@ -103,7 +121,11 @@
                                     :key="'l-' + node.id"
                                     class="ppms-team-tree-node ppms-team-tree-node--leader"
                                 >
-                                    <div class="ppms-team-tree-node__avatar ppms-team-tree-node__avatar--leader" :title="node.name">
+                                    <div
+                                        class="ppms-team-tree-node__avatar ppms-team-tree-node__avatar--leader"
+                                        :style="{ background: avatarColor(node.name || node.email) }"
+                                        :title="node.name"
+                                    >
                                         {{ initials(node.name) }}
                                     </div>
                                     <div class="ppms-team-tree-node__body">
@@ -124,7 +146,11 @@
                                 <ul class="ppms-team-tree__members" role="list">
                                     <li v-for="node in treeMembers(team)" :key="'m-' + node.id" class="ppms-team-tree__li" role="listitem">
                                         <div class="ppms-team-tree-node ppms-team-tree-node--member">
-                                            <div class="ppms-team-tree-node__avatar" :title="node.name">
+                                            <div
+                                                class="ppms-team-tree-node__avatar"
+                                                :style="{ background: avatarColor(node.name || node.email) }"
+                                                :title="node.name"
+                                            >
                                                 {{ initials(node.name) }}
                                             </div>
                                             <div class="ppms-team-tree-node__body">
@@ -144,18 +170,26 @@
             </div>
         </section>
 
-        <section v-if="detail" class="ppms-card ppms-mt">
+        <section v-if="detail" class="ppms-card ppms-mt ppms-teams-detail-card">
             <div class="ppms-teams-detail-head">
-                <h3 class="ppms-h3">{{ detail.name }}</h3>
-                <p v-if="detail.description" class="ppms-muted ppms-mt-sm">{{ detail.description }}</p>
+                <div class="ppms-teams-detail-head-text">
+                    <h3 class="ppms-h3">{{ detail.name }}</h3>
+                    <p v-if="detail.description" class="ppms-muted ppms-mt-sm">{{ detail.description }}</p>
+                </div>
+                <div v-if="detail.can_manage" class="ppms-teams-detail-head-actions">
+                    <button type="button" class="ppms-btn-primary ppms-teams-detail-edit" @click="openEditTeamModal">
+                        {{ t('teams.editTeamBtn') }}
+                    </button>
+                </div>
             </div>
 
             <h4 class="ppms-h4 ppms-mt">{{ t('teams.membersTitle') }}</h4>
             <p v-if="detail.can_manage" class="ppms-muted ppms-mt-sm ppms-team-hint">{{ t('teams.manageHint') }}</p>
-            <div class="ppms-table-scroll ppms-mt-sm">
+            <div class="ppms-table-scroll ppms-teams-members-table ppms-mt-sm">
                 <table class="ppms-table">
                     <thead>
                         <tr>
+                            <th class="ppms-th-teams-avatar">{{ t('teams.colAvatar') }}</th>
                             <th>{{ t('teams.colName') }}</th>
                             <th>{{ t('teams.colEmail') }}</th>
                             <th>{{ t('teams.colPosition') }}</th>
@@ -166,6 +200,16 @@
                     </thead>
                     <tbody>
                         <tr v-for="m in detail.members || []" :key="m.id">
+                            <td class="ppms-td-teams-avatar">
+                                <span
+                                    class="ppms-teams-user-avatar"
+                                    :style="{ background: avatarColor(m.name || m.email) }"
+                                    :title="m.name"
+                                    aria-hidden="true"
+                                >
+                                    {{ initials(m.name) }}
+                                </span>
+                            </td>
                             <td>{{ m.name }}</td>
                             <td>{{ m.email }}</td>
                             <td>{{ m.pivot?.position || '—' }}</td>
@@ -302,6 +346,91 @@
             </div>
         </div>
 
+        <!-- Modal: sửa nhóm -->
+        <div
+            v-if="showEditModal && detail"
+            class="ppms-modal-backdrop"
+            role="presentation"
+            @click.self="closeEditModal"
+        >
+            <div
+                class="ppms-modal ppms-modal--wide ppms-team-edit-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="teams-edit-title"
+                aria-describedby="teams-edit-desc"
+                @click.stop
+            >
+                <button type="button" class="ppms-team-create-close" :aria-label="t('common.close')" @click="closeEditModal">
+                    <span aria-hidden="true">×</span>
+                </button>
+                <div class="ppms-team-create-hero ppms-team-edit-hero">
+                    <div class="ppms-team-create-icon ppms-team-edit-icon" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 id="teams-edit-title" class="ppms-modal-title ppms-team-create-title">{{ t('teams.editTeamSection') }}</h2>
+                        <p id="teams-edit-desc" class="ppms-team-create-sub">{{ t('teams.editTeamSubtitle') }}</p>
+                    </div>
+                </div>
+
+                <form class="ppms-team-create-form" @submit.prevent="saveTeamEdit">
+                    <div class="ppms-team-create-fields">
+                        <label class="ppms-field ppms-team-create-field">
+                            <span class="ppms-team-create-label">{{ t('teams.name') }} <abbr class="ppms-team-create-req" :title="t('teams.fieldRequired')">*</abbr></span>
+                            <input
+                                v-model="editForm.name"
+                                type="text"
+                                required
+                                maxlength="255"
+                                autocomplete="organization"
+                                :placeholder="t('teams.namePlaceholder')"
+                                :disabled="editing"
+                                :aria-invalid="!!editErrDetail"
+                                aria-describedby="teams-edit-err"
+                            />
+                        </label>
+                        <label class="ppms-field ppms-team-create-field">
+                            <span class="ppms-team-create-label">{{ t('teams.description') }}</span>
+                            <textarea
+                                v-model="editForm.description"
+                                rows="4"
+                                maxlength="5000"
+                                :placeholder="t('teams.descriptionPlaceholder')"
+                                :disabled="editing"
+                            />
+                        </label>
+                    </div>
+
+                    <div
+                        v-if="editErrDetail"
+                        id="teams-edit-err"
+                        class="ppms-team-create-alert ppms-team-create-alert--err"
+                        role="alert"
+                        aria-live="assertive"
+                    >
+                        <span class="ppms-team-create-alert-icon" aria-hidden="true">!</span>
+                        <div class="ppms-team-create-alert-body">
+                            <p class="ppms-team-create-alert-msg">{{ editErrDetail }}</p>
+                        </div>
+                    </div>
+
+                    <div class="ppms-modal-actions ppms-team-create-actions">
+                        <button type="button" class="ppms-btn-ghost ppms-modal-btn" :disabled="editing" @click="closeEditModal">
+                            {{ t('common.cancel') }}
+                        </button>
+                        <button type="submit" class="ppms-btn-primary ppms-modal-btn" :disabled="editing || !editForm.name.trim()">
+                            <span v-if="editing" class="ppms-team-create-spinner" aria-hidden="true" />
+                            {{ editing ? t('teams.savingTeam') : t('common.save') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Modal: chỉnh thành viên -->
         <div
             v-if="showMemberModal && memberEdit"
@@ -366,6 +495,10 @@ const createErrSummary = ref('');
 const createErrDetail = ref('');
 const createForm = reactive({ name: '', description: '' });
 const showCreateModal = ref(false);
+const editForm = reactive({ name: '', description: '' });
+const showEditModal = ref(false);
+const editing = ref(false);
+const editErrDetail = ref('');
 const showMemberModal = ref(false);
 const memberEdit = ref(null);
 const memberEditErr = ref('');
@@ -383,6 +516,22 @@ function treeLeaders(team) {
 
 function treeMembers(team) {
     return (team.members || []).filter((m) => m.pivot?.role !== 'leader');
+}
+
+function hashHue(seed) {
+    let h = 2166136261;
+    const s = String(seed || '');
+    for (let i = 0; i < s.length; i++) {
+        h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    }
+
+    return h % 360;
+}
+
+function avatarColor(seed) {
+    const hue = hashHue(seed);
+
+    return `hsl(${hue} 52% 42%)`;
 }
 
 function initials(name) {
@@ -456,6 +605,57 @@ function openCreateModal() {
 function closeCreateModal() {
     showCreateModal.value = false;
     clearCreateErrors();
+}
+
+function closeEditModal() {
+    showEditModal.value = false;
+    editErrDetail.value = '';
+}
+
+function openEditTeamModal() {
+    if (!detail.value) {
+        return;
+    }
+    editErrDetail.value = '';
+    editForm.name = detail.value.name || '';
+    editForm.description = detail.value.description || '';
+    showEditModal.value = true;
+}
+
+async function openTeamThenEdit(id) {
+    await openTeam(id);
+    if (detail.value?.can_manage) {
+        openEditTeamModal();
+    }
+}
+
+async function saveTeamEdit() {
+    if (!detail.value) {
+        return;
+    }
+    editErrDetail.value = '';
+    const nameTrim = editForm.name.trim();
+    if (!nameTrim) {
+        editErrDetail.value = t('teams.nameRequired');
+
+        return;
+    }
+    editing.value = true;
+    try {
+        const { data } = await axios.patch(`/api/teams/${detail.value.id}`, {
+            name: nameTrim,
+            description: editForm.description?.trim() || null,
+        });
+        detail.value = data;
+        ppmsToastSuccess(t('teams.teamUpdated'));
+        closeEditModal();
+        await load();
+    } catch (e) {
+        const parsed = parseCreateTeamError(e);
+        editErrDetail.value = parsed.detail || t('teams.teamUpdateError');
+    } finally {
+        editing.value = false;
+    }
 }
 
 function openMemberModal(m) {
@@ -626,14 +826,14 @@ async function removeMember(userId) {
 }
 
 function syncModalBodyClass() {
-    if (showCreateModal.value || showMemberModal.value) {
+    if (showCreateModal.value || showEditModal.value || showMemberModal.value) {
         document.body.classList.add('ppms-modal-open');
     } else {
         document.body.classList.remove('ppms-modal-open');
     }
 }
 
-watch([showCreateModal, showMemberModal], syncModalBodyClass);
+watch([showCreateModal, showEditModal, showMemberModal], syncModalBodyClass);
 
 onMounted(() => {
     load();
@@ -749,100 +949,131 @@ onUnmounted(() => {
     font-size: 0.8rem;
     color: var(--ppms-muted, #666);
 }
-.ppms-team-card__actions {
-    padding: 0 1rem 1rem;
-}
 .ppms-page--teams-tree {
     width: 100%;
-    max-width: min(100%, 1920px);
+    max-width: min(100%, 2200px);
     margin-left: auto;
     margin-right: auto;
+    padding-inline: clamp(0.65rem, 2.5vw, 2rem);
+    box-sizing: border-box;
 }
+
+.ppms-page--teams-tree .ppms-teams-list-section--tree {
+    /* Cho phép khối danh sách cây dùng hết chiều ngang vùng page */
+    max-width: none;
+}
+
 .ppms-team-forest {
+    --ppms-team-forest-gap: clamp(1rem, 1.75vw, 1.85rem);
+    --ppms-team-forest-col-min: minmax(0, 1fr);
     display: grid;
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: var(--ppms-team-forest-gap);
     align-content: start;
     width: 100%;
     grid-auto-rows: min-content;
 }
-@media (min-width: 900px) {
+
+@media (min-width: 880px) {
     .ppms-team-forest {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 1rem 1.25rem;
-        min-height: min(62vh, 820px);
+        grid-template-columns: repeat(2, var(--ppms-team-forest-col-min));
     }
 }
-@media (min-width: 1440px) {
+
+@media (min-width: 1280px) {
     .ppms-team-forest {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(3, var(--ppms-team-forest-col-min));
     }
 }
+
+@media (min-width: 1680px) {
+    .ppms-team-forest {
+        grid-template-columns: repeat(4, var(--ppms-team-forest-col-min));
+    }
+}
+
+@media (min-width: 2100px) {
+    .ppms-team-forest {
+        --ppms-team-forest-gap: clamp(1.15rem, 1.5vw, 2rem);
+        grid-template-columns: repeat(5, var(--ppms-team-forest-col-min));
+    }
+}
+
 .ppms-team-tree-legend {
     grid-column: 1 / -1;
-    margin: 0 0 0.15rem;
-    font-size: 0.82rem;
-    line-height: 1.4;
-    color: var(--ppms-muted, #64748b);
-    padding: 0.45rem 0.65rem;
-    border-radius: 8px;
-    background: rgba(37, 99, 235, 0.06);
-    border: 1px solid rgba(37, 99, 235, 0.12);
+    margin: 0 0 0.25rem;
+    font-size: clamp(0.8rem, 0.85vw, 0.9rem);
+    line-height: 1.45;
+    color: var(--ppms-muted, #475569);
+    padding: clamp(0.55rem, 1.2vw, 0.75rem) clamp(0.75rem, 1.5vw, 1rem);
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.09) 0%, rgba(37, 99, 235, 0.03) 100%);
+    border: 1px solid rgba(37, 99, 235, 0.16);
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.06);
 }
+
 .ppms-team-tree-block {
     --ppms-tree-line: rgba(37, 99, 235, 0.28);
     --ppms-tree-line-soft: rgba(37, 99, 235, 0.12);
+    --ppms-team-tree-radius: clamp(14px, 1.2vw, 20px);
     border: 1px solid var(--ppms-border, #e2e8f0);
-    border-radius: 16px;
+    border-radius: var(--ppms-team-tree-radius);
     padding: 0;
     background: var(--ppms-surface, #fff);
     box-shadow:
-        0 1px 2px rgba(15, 23, 42, 0.04),
-        0 4px 16px -4px rgba(15, 23, 42, 0.08);
+        0 1px 3px rgba(15, 23, 42, 0.05),
+        0 8px 28px -12px rgba(15, 23, 42, 0.1);
     overflow: hidden;
+    min-width: 0;
     transition:
-        box-shadow 0.2s ease,
-        border-color 0.2s ease;
+        box-shadow 0.22s ease,
+        border-color 0.22s ease,
+        transform 0.18s ease;
 }
 .ppms-team-tree-block:hover {
-    border-color: rgba(37, 99, 235, 0.22);
+    border-color: rgba(37, 99, 235, 0.28);
     box-shadow:
-        0 2px 4px rgba(15, 23, 42, 0.06),
-        0 8px 24px -6px rgba(37, 99, 235, 0.12);
+        0 4px 12px rgba(15, 23, 42, 0.07),
+        0 16px 40px -14px rgba(37, 99, 235, 0.14);
 }
+
 .ppms-team-tree-block--active {
     border-color: var(--ppms-accent, #2563eb);
     box-shadow:
-        0 0 0 2px rgba(37, 99, 235, 0.2),
-        0 8px 28px -8px rgba(37, 99, 235, 0.25);
+        0 0 0 2px rgba(37, 99, 235, 0.22),
+        0 12px 36px -10px rgba(37, 99, 235, 0.22);
 }
+
 .ppms-team-tree-block__head {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 0.75rem 1rem;
-    padding: 0.85rem 1rem;
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.07) 0%, rgba(255, 255, 255, 0) 55%);
+    gap: clamp(0.65rem, 1.5vw, 1rem) clamp(0.75rem, 2vw, 1.35rem);
+    padding: clamp(0.9rem, 1.8vw, 1.25rem) clamp(1rem, 2vw, 1.35rem);
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.09) 0%, rgba(255, 255, 255, 0) 58%);
     border-bottom: 1px solid var(--ppms-border, #f1f5f9);
 }
+
 .ppms-team-tree-block__title-row {
     display: flex;
     align-items: flex-start;
-    gap: 0.65rem;
+    gap: clamp(0.55rem, 1.2vw, 0.85rem);
     min-width: 0;
     flex: 1;
 }
+
 .ppms-team-tree-block__folder {
     flex-shrink: 0;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 12px;
+    width: clamp(2.5rem, 3.5vw, 3rem);
+    height: clamp(2.5rem, 3.5vw, 3rem);
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--ppms-accent, #2563eb);
-    background: rgba(37, 99, 235, 0.12);
+    background: linear-gradient(145deg, rgba(37, 99, 235, 0.16), rgba(37, 99, 235, 0.08));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 .ppms-team-tree-block__title-wrap {
     min-width: 0;
@@ -854,8 +1085,8 @@ onUnmounted(() => {
     margin: 0;
     font: inherit;
     font-weight: 700;
-    font-size: 1.08rem;
-    line-height: 1.3;
+    font-size: clamp(1.02rem, 1.05vw, 1.2rem);
+    line-height: 1.28;
     cursor: pointer;
     color: var(--ppms-text, #0f172a);
     text-align: left;
@@ -875,9 +1106,9 @@ onUnmounted(() => {
     outline-offset: 3px;
 }
 .ppms-team-tree-block__snippet {
-    margin: 0.35rem 0 0;
-    font-size: 0.82rem;
-    line-height: 1.4;
+    margin: 0.4rem 0 0;
+    font-size: clamp(0.8rem, 0.82vw, 0.88rem);
+    line-height: 1.45;
     color: var(--ppms-muted, #64748b);
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -911,25 +1142,40 @@ onUnmounted(() => {
     margin: 0;
 }
 .ppms-team-tree {
-    padding: 0 0.75rem 0.85rem 0.85rem;
+    padding: 0 clamp(0.65rem, 1.8vw, 1.15rem) clamp(0.85rem, 1.5vw, 1.15rem) clamp(0.75rem, 1.8vw, 1.2rem);
 }
+
 .ppms-team-tree__structure {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 0.65rem;
+    gap: clamp(0.65rem, 1.2vw, 0.95rem);
     align-items: start;
-    padding-top: 0.2rem;
+    padding-top: 0.15rem;
 }
+
 @media (min-width: 640px) {
     .ppms-team-tree__structure {
-        grid-template-columns: minmax(200px, 300px) minmax(0, 1fr);
-        gap: 0.75rem 1rem;
+        grid-template-columns: minmax(13.5rem, min(32vw, 22rem)) minmax(0, 1fr);
+        gap: clamp(0.75rem, 1.5vw, 1.1rem) clamp(0.85rem, 1.8vw, 1.35rem);
     }
 }
+
+@media (min-width: 1100px) {
+    .ppms-team-tree__structure {
+        grid-template-columns: minmax(16rem, min(36vw, 28rem)) minmax(0, 1fr);
+    }
+}
+
+@media (min-width: 1600px) {
+    .ppms-team-tree__structure {
+        grid-template-columns: minmax(17rem, min(34vw, 30rem)) minmax(0, 1fr);
+    }
+}
+
 .ppms-team-tree__leaders {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: clamp(0.45rem, 1vw, 0.65rem);
 }
 .ppms-team-tree-node {
     display: flex;
@@ -938,15 +1184,16 @@ onUnmounted(() => {
     min-width: 0;
 }
 .ppms-team-tree-node--leader {
-    padding: 0.75rem 0.85rem;
-    border-radius: 12px;
-    background: linear-gradient(180deg, rgba(37, 99, 235, 0.08) 0%, rgba(37, 99, 235, 0.02) 100%);
+    padding: clamp(0.65rem, 1.3vw, 0.95rem) clamp(0.75rem, 1.5vw, 1.05rem);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(37, 99, 235, 0.1) 0%, rgba(37, 99, 235, 0.02) 100%);
     border: 1px solid var(--ppms-tree-line-soft);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
+
 .ppms-team-tree-node--member {
-    padding: 0.55rem 0.65rem;
-    border-radius: 10px;
+    padding: clamp(0.5rem, 1vw, 0.65rem) clamp(0.55rem, 1.1vw, 0.75rem);
+    border-radius: 12px;
     background: rgba(248, 250, 252, 0.9);
     border: 1px solid var(--ppms-border, #e2e8f0);
     flex: 1;
@@ -955,24 +1202,22 @@ onUnmounted(() => {
 }
 .ppms-team-tree-node__avatar {
     flex-shrink: 0;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 10px;
+    width: clamp(2.35rem, 2.8vw, 2.9rem);
+    height: clamp(2.35rem, 2.8vw, 2.9rem);
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.72rem;
+    font-size: clamp(0.68rem, 0.78vw, 0.8rem);
     font-weight: 800;
     letter-spacing: 0.02em;
-    color: #475569;
-    background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
-    border: 1px solid rgba(148, 163, 184, 0.35);
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
 }
 .ppms-team-tree-node__avatar--leader {
-    color: #fff;
-    background: linear-gradient(145deg, #3b82f6, #2563eb);
-    border-color: rgba(37, 99, 235, 0.5);
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.18);
 }
 .ppms-team-tree-node__body {
     min-width: 0;
@@ -1001,7 +1246,7 @@ onUnmounted(() => {
 }
 .ppms-team-tree-node__name {
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: clamp(0.88rem, 0.92vw, 1rem);
     color: var(--ppms-text, #0f172a);
     word-break: break-word;
 }
@@ -1019,29 +1264,43 @@ onUnmounted(() => {
 .ppms-team-tree__branch-label {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-    font-size: 0.68rem;
+    gap: 0.55rem;
+    margin-bottom: clamp(0.45rem, 1vw, 0.65rem);
+    font-size: clamp(0.64rem, 0.72vw, 0.74rem);
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: #94a3b8;
 }
+
 .ppms-team-tree__branch-line {
     flex: 1;
-    max-width: 2rem;
+    max-width: min(5rem, 18vw);
     height: 2px;
     border-radius: 2px;
     background: linear-gradient(90deg, var(--ppms-tree-line), transparent);
 }
+
 .ppms-team-tree__members {
     list-style: none;
     margin: 0.35rem 0 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.55rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+    gap: clamp(0.55rem, 1.2vw, 0.95rem);
     border-left: none;
+}
+
+@media (min-width: 1400px) {
+    .ppms-team-tree__members {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+    }
+}
+
+@media (min-width: 2000px) {
+    .ppms-team-tree__members {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    }
 }
 .ppms-team-tree__li {
     position: relative;
@@ -1133,8 +1392,128 @@ onUnmounted(() => {
 .ppms-lookup-list .ppms-link-btn:hover {
     background: rgba(0, 0, 0, 0.04);
 }
+.ppms-teams-detail-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.ppms-teams-detail-head-text {
+    min-width: 0;
+    flex: 1;
+}
+.ppms-teams-detail-head-actions {
+    flex-shrink: 0;
+}
+.ppms-teams-detail-edit {
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
+}
+.ppms-teams-detail-card {
+    border-color: rgba(37, 99, 235, 0.18);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
 .ppms-teams-detail-head .ppms-h3 {
     margin-bottom: 0;
+}
+
+.ppms-team-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.65rem 1rem 1rem;
+    border-top: 1px solid rgba(37, 99, 235, 0.12);
+    background: linear-gradient(180deg, rgba(37, 99, 235, 0.04), transparent);
+}
+.ppms-team-card__btn-edit {
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1px solid rgba(37, 99, 235, 0.45);
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--ppms-accent, #1d4ed8);
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
+}
+.ppms-team-card__btn-edit:hover {
+    background: rgba(37, 99, 235, 0.16);
+    border-color: rgba(37, 99, 235, 0.65);
+}
+.ppms-team-card__btn-delete {
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1px solid var(--ppms-border, #e2e8f0);
+    background: var(--ppms-surface, #fff);
+    color: var(--ppms-text);
+    cursor: pointer;
+}
+.ppms-team-card__btn-delete:hover {
+    border-color: rgba(220, 38, 38, 0.45);
+    color: #b91c1c;
+    background: rgba(220, 38, 38, 0.06);
+}
+
+.ppms-teams-members-table .ppms-th-teams-avatar {
+    width: 3.25rem;
+    text-align: center;
+}
+.ppms-td-teams-avatar {
+    width: 3.25rem;
+    text-align: center;
+    vertical-align: middle;
+}
+.ppms-teams-user-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+}
+
+.ppms-team-tree-block__head-right {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    flex-shrink: 0;
+}
+.ppms-team-tree-block__edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: 1px solid rgba(37, 99, 235, 0.35);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--ppms-accent, #2563eb);
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        transform 0.12s ease;
+}
+.ppms-team-tree-block__edit:hover {
+    background: rgba(37, 99, 235, 0.1);
+    border-color: rgba(37, 99, 235, 0.55);
+}
+.ppms-team-tree-block__edit:active {
+    transform: scale(0.96);
 }
 
 /* Modal tạo nhóm */
@@ -1150,6 +1529,24 @@ onUnmounted(() => {
     background: linear-gradient(180deg, rgba(37, 99, 235, 0.06) 0%, transparent 42%), var(--ppms-surface, #fff);
     border: 1px solid var(--ppms-border, #e5e7eb);
 }
+
+.ppms-team-edit-modal {
+    position: relative;
+    max-width: 480px;
+    width: 100%;
+    border-radius: 14px;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.08),
+        0 12px 28px -8px rgba(0, 0, 0, 0.18);
+    padding: 1.5rem 1.5rem 1.25rem;
+    background: linear-gradient(180deg, rgba(124, 58, 237, 0.08) 0%, transparent 44%), var(--ppms-surface, #fff);
+    border: 1px solid rgba(124, 58, 237, 0.2);
+}
+.ppms-team-edit-icon {
+    color: #6d28d9;
+    background: rgba(124, 58, 237, 0.14);
+}
+
 .ppms-team-create-close {
     position: absolute;
     top: 0.65rem;

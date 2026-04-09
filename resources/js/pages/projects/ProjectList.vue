@@ -321,6 +321,21 @@
                             </template>
                         </template>
                     </tbody>
+                    <tfoot>
+                        <tr class="ppms-pl-table-foot-row">
+                            <td :colspan="listTableColspan" class="ppms-pl-table-foot-cell">
+                                <span class="ppms-pl-table-foot-inner">
+                                    <span v-if="rangeFrom != null && rangeTo != null" class="ppms-pl-table-foot-stat">{{
+                                        t('projects.listTableFootRange', { from: rangeFrom, to: rangeTo, total })
+                                    }}</span>
+                                    <span v-else class="ppms-pl-table-foot-stat">{{ t('projects.listTableFootTotal', { total }) }}</span>
+                                    <span v-if="lastPage > 1" class="ppms-pl-table-foot-page">{{
+                                        t('projects.pagination', { current: page, last: lastPage })
+                                    }}</span>
+                                </span>
+                            </td>
+                        </tr>
+                    </tfoot>
                 </table>
                 </div>
             </div>
