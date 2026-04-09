@@ -541,7 +541,10 @@
             :form="form"
             :form-error="formError"
             :team-options="teamOptions"
+            :team-locked="createTeamLocked"
+            :stakeholder-lookups="contractLookups"
             @submit="submitProject"
+            @refresh-stakeholder-lookups="loadContractLookups"
         />
 
         <ProjectListUserPopover
@@ -613,6 +616,7 @@ const currentUser = ref(null);
 const selectedProjectIds = ref([]);
 
 const teamOptions = ref([]);
+const contractLookups = ref({ departments: [], blocks: [], vendors: [] });
 
 const filters = reactive({
     search: '',
@@ -644,6 +648,8 @@ const form = reactive({
     description: '',
     customer_name: '',
     customer_email: '',
+    department_id: '',
+    block_id: '',
     suppliers_text: '',
     labels_text: '',
     project_code: '',
@@ -668,6 +674,8 @@ function resetCreateForm() {
     form.description = '';
     form.customer_name = '';
     form.customer_email = '';
+    form.department_id = '';
+    form.block_id = '';
     form.suppliers_text = '';
     form.labels_text = '';
     form.project_code = '';
@@ -677,8 +685,35 @@ function resetCreateForm() {
     form.editingId = null;
 }
 
+/** Gán team mặc định theo team user đang thuộc (1 team → cố định; nhiều team → ưu tiên bộ lọc trang rồi team đầu). */
+function applyDefaultTeamForCreate() {
+    const memberTeams = currentUser.value?.teams;
+    if (!Array.isArray(memberTeams) || memberTeams.length === 0) {
+        return;
+    }
+    if (memberTeams.length === 1) {
+        form.team_id = String(memberTeams[0].id);
+
+        return;
+    }
+    const filterTid = filters.team_id;
+    if (filterTid !== '' && memberTeams.some((t) => String(t.id) === String(filterTid))) {
+        form.team_id = String(filterTid);
+
+        return;
+    }
+    form.team_id = String(memberTeams[0].id);
+}
+
+const createTeamLocked = computed(() => {
+    const teams = currentUser.value?.teams;
+
+    return Array.isArray(teams) && teams.length === 1;
+});
+
 function openCreateModal() {
     resetCreateForm();
+    applyDefaultTeamForCreate();
     showForm.value = true;
 }
 
@@ -730,6 +765,8 @@ function fillProjectFormFromRow(project) {
     form.description = project.description || '';
     form.customer_name = project.customer_name || '';
     form.customer_email = project.customer_email || '';
+    form.department_id = project.department_id != null ? String(project.department_id) : '';
+    form.block_id = project.block_id != null ? String(project.block_id) : '';
     form.suppliers_text = suppliersArrayToText(project.suppliers);
     form.labels_text = Array.isArray(project.labels) ? project.labels.join(', ') : '';
     form.project_code = project.code || '';
@@ -2109,6 +2146,19 @@ async function loadTeams() {
     }
 }
 
+async function loadContractLookups() {
+    try {
+        const { data } = await axios.get('/api/contract-lookups');
+        contractLookups.value = {
+            departments: Array.isArray(data.departments) ? data.departments : [],
+            blocks: Array.isArray(data.blocks) ? data.blocks : [],
+            vendors: Array.isArray(data.vendors) ? data.vendors : [],
+        };
+    } catch {
+        contractLookups.value = { departments: [], blocks: [], vendors: [] };
+    }
+}
+
 function parseSuppliersPayload() {
     const lines = form.suppliers_text
         .split('\n')
@@ -2149,6 +2199,9 @@ async function submitProject() {
             description: form.description || null,
             customer_name: form.customer_name?.trim() || null,
             customer_email: form.customer_email?.trim() || null,
+            department_id:
+                form.department_id !== '' && form.department_id != null ? Number(form.department_id) : null,
+            block_id: form.block_id !== '' && form.block_id != null ? Number(form.block_id) : null,
             suppliers,
             progress_calc: form.progress_calc || null,
             permission_preset: form.permission_preset || 'org_default',
@@ -2172,6 +2225,7 @@ async function submitProject() {
         } else {
             await axios.post('/api/projects', payload);
             ppmsToastSuccess(t('projects.createOk'));
+            createModalRef.value?.clearCreateDraft?.();
         }
         showForm.value = false;
         resetCreateForm();
@@ -2214,7 +2268,7 @@ onMounted(async () => {
         viewMode.value = readStoredViewMode();
     }
     loadSavedViews();
-    await Promise.all([loadCurrentUser(), fetchLabelSuggestions(), loadTeams()]);
+    await Promise.all([loadCurrentUser(), fetchLabelSuggestions(), loadTeams(), loadContractLookups()]);
     await load();
 });
 

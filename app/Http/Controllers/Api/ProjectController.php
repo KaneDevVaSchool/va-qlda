@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\Block;
+use App\Models\Department;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskAttachment;
@@ -204,6 +206,8 @@ class ProjectController extends Controller
             'progress_calc' => 'nullable|in:weighted_tasks,average_task_pct,time_proportion',
             'customer_name' => 'nullable|string|max:255',
             'customer_email' => 'nullable|email|max:255',
+            'department_id' => ['nullable', 'integer', Rule::exists(Department::class, 'id')],
+            'block_id' => ['nullable', 'integer', Rule::exists(Block::class, 'id')],
             'suppliers' => 'nullable|array',
             'suppliers.*.name' => 'required|string|max:255',
             'suppliers.*.contact' => 'nullable|string|max:255',
@@ -246,7 +250,7 @@ class ProjectController extends Controller
 
         AuditLogger::log('project.created', $project, null, $project->only(array_keys($data)));
 
-        $project->load(['owner:id,name,email', 'team:id,name']);
+        $project->load(['owner:id,name,email', 'team:id,name', 'department:id,name,code', 'block:id,name,code']);
         $this->projectListQuery->hydrateParticipantUsersForProjects(collect([$project]));
 
         return response()->json($project, 201);
@@ -259,6 +263,8 @@ class ProjectController extends Controller
         $project->load([
             'owner:id,name,email',
             'team:id,name',
+            'department:id,name,code',
+            'block:id,name,code',
             'phases',
             'supplies',
             'tasks.assignee:id,name,email,role',
@@ -463,6 +469,8 @@ class ProjectController extends Controller
             'progress_calc' => 'nullable|in:weighted_tasks,average_task_pct,time_proportion',
             'customer_name' => 'nullable|string|max:255',
             'customer_email' => 'nullable|email|max:255',
+            'department_id' => ['nullable', 'integer', Rule::exists(Department::class, 'id')],
+            'block_id' => ['nullable', 'integer', Rule::exists(Block::class, 'id')],
             'suppliers' => 'nullable|array',
             'suppliers.*.name' => 'required|string|max:255',
             'suppliers.*.contact' => 'nullable|string|max:255',
@@ -499,7 +507,7 @@ class ProjectController extends Controller
 
         AuditLogger::log('project.updated', $project, $before, $project->getAttributes());
 
-        $fresh = $project->fresh()->load(['owner:id,name,email', 'team:id,name']);
+        $fresh = $project->fresh()->load(['owner:id,name,email', 'team:id,name', 'department:id,name,code', 'block:id,name,code']);
         $this->projectListQuery->hydrateParticipantUsersForProjects(collect([$fresh]));
 
         return $fresh;

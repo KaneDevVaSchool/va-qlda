@@ -12,7 +12,7 @@ class Project extends Model
     protected $fillable = [
         'name', 'code', 'type', 'phase', 'status', 'owner_id', 'team_id', 'deadline', 'start_date', 'actual_start_date',
         'description', 'estimated_value', 'progress', 'progress_calc', 'archived_at',
-        'customer_name', 'customer_email', 'suppliers', 'process_timeline',
+        'customer_name', 'customer_email', 'department_id', 'block_id', 'suppliers', 'process_timeline',
         'stakeholder_emails', 'csat_invites_sent', 'csat_survey_sent_at',
         'labels',
         'executor_user_ids', 'follower_user_ids', 'permission_preset',
@@ -77,6 +77,16 @@ class Project extends Model
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class, 'team_id');
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
+    public function block(): BelongsTo
+    {
+        return $this->belongsTo(Block::class, 'block_id');
     }
 
     public function tasks(): HasMany

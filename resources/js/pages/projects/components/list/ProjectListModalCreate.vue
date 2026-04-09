@@ -4,7 +4,7 @@
         v-if="open"
         class="ppms-modal-backdrop ppms-modal-backdrop--project-create"
         role="presentation"
-        @click.self="open = false"
+        @click.self="tryClose"
     >
         <div
             id="main-content"
@@ -14,11 +14,32 @@
             aria-labelledby="ppms-modal-create-project-title"
             @click.stop
         >
+            <div
+                v-if="!form.editingId && draftBannerVisible && storedDraftMeta"
+                class="ppms-pc-draft-banner"
+                role="status"
+            >
+                <div class="ppms-pc-draft-banner__text">
+                    <strong>{{ t('projects.draftBannerTitle') }}</strong>
+                    <span class="ppms-pc-draft-banner__meta">{{ draftSavedAtLabel }}</span>
+                </div>
+                <div class="ppms-pc-draft-banner__actions">
+                    <button type="button" class="ppms-btn-ghost ppms-btn-sm" @click="dismissDraftBanner">
+                        {{ t('projects.draftBannerDismiss') }}
+                    </button>
+                    <button type="button" class="ppms-btn-ghost ppms-btn-sm" @click="deleteStoredDraft">
+                        {{ t('projects.draftBannerDelete') }}
+                    </button>
+                    <button type="button" class="ppms-btn-primary ppms-btn-sm" @click="restoreStoredDraft">
+                        {{ t('projects.draftBannerRestore') }}
+                    </button>
+                </div>
+            </div>
             <div class="ppms-pc-modal-head">
                 <h2 id="ppms-modal-create-project-title">{{ modalTitle }}</h2>
                 <p class="ppms-pc-modal-subtitle">{{ modalSubtitle }}</p>
             </div>
-            <form class="ppms-pc-form" @submit.prevent="$emit('submit')">
+            <form class="ppms-pc-form" @submit.prevent="emit('submit')">
                 <div class="ppms-pc-form-body">
                     <section class="ppms-pc-card" aria-labelledby="ppms-pc-card-project">
                         <h3 id="ppms-pc-card-project" class="ppms-pc-card__title">{{ t('projects.createCardProjectCore') }}</h3>
@@ -243,11 +264,16 @@
                                 <div class="ppms-pc-label-row">
                                     <span>{{ t('projects.fieldTeam') }}</span>
                                 </div>
-                                <select v-model="form.team_id" class="ppms-pc-select" name="team_id">
+                                <select
+                                    v-model="form.team_id"
+                                    class="ppms-pc-select"
+                                    name="team_id"
+                                    :disabled="teamLocked"
+                                >
                                     <option value="">{{ t('projects.fieldTeamNone') }}</option>
                                     <option v-for="tm in teamOptions" :key="'tm-' + tm.id" :value="String(tm.id)">{{ tm.name }}</option>
                                 </select>
-                                <p class="ppms-pc-field-hint">{{ t('projects.fieldTeamHint') }}</p>
+                                <p class="ppms-pc-field-hint">{{ teamLocked ? t('projects.fieldTeamLockedHint') : t('projects.fieldTeamHint') }}</p>
                             </label>
                         </div>
                         <div class="ppms-pc-row">
@@ -482,6 +508,44 @@
 
                     <section class="ppms-pc-card" aria-labelledby="ppms-pc-card-stake">
                         <h3 id="ppms-pc-card-stake" class="ppms-pc-card__title">{{ t('projects.createSectionStakeholders') }}</h3>
+                        <p class="ppms-pc-section-lead">{{ t('projects.createSectionStakeholdersLead') }}</p>
+
+                        <div class="ppms-pc-row ppms-pc-row--stake-grid">
+                            <div class="ppms-field ppms-pc-col ppms-pc-col--6">
+                                <div class="ppms-pc-label-row ppms-pc-label-row--tools">
+                                    <span>{{ t('projects.createFieldDepartment') }}</span>
+                                    <button type="button" class="ppms-btn-ghost ppms-btn-sm" @click="deptQuickOpen = true">
+                                        {{ t('projects.createQuickDepartment') }}
+                                    </button>
+                                </div>
+                                <select
+                                    v-model="form.department_id"
+                                    class="ppms-pc-select"
+                                    name="department_id"
+                                    @change="onDepartmentChange"
+                                >
+                                    <option value="">{{ t('projects.createSelectPlaceholder') }}</option>
+                                    <option v-for="d in departmentsList" :key="'dept-' + d.id" :value="String(d.id)">
+                                        {{ d.code ? `${d.name} (${d.code})` : d.name }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="ppms-field ppms-pc-col ppms-pc-col--6">
+                                <div class="ppms-pc-label-row ppms-pc-label-row--tools">
+                                    <span>{{ t('projects.createFieldBlock') }}</span>
+                                    <button type="button" class="ppms-btn-ghost ppms-btn-sm" @click="blockQuickOpen = true">
+                                        {{ t('projects.createQuickBlock') }}
+                                    </button>
+                                </div>
+                                <select v-model="form.block_id" class="ppms-pc-select" name="block_id">
+                                    <option value="">{{ t('projects.createSelectPlaceholder') }}</option>
+                                    <option v-for="b in blocksList" :key="'blk-' + b.id" :value="String(b.id)">
+                                        {{ b.code ? `${b.name} (${b.code})` : b.name }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="ppms-pc-row">
                             <label class="ppms-field ppms-pc-col ppms-pc-col--6">
                                 <div class="ppms-pc-label-row">
@@ -506,17 +570,26 @@
                                 />
                             </label>
                         </div>
-                        <label class="ppms-field ppms-pc-full">
-                            <div class="ppms-pc-label-row">
+
+                        <div class="ppms-field ppms-pc-full">
+                            <div class="ppms-pc-label-row ppms-pc-label-row--tools">
                                 <span>{{ t('projects.fieldSuppliersHint') }}</span>
+                                <span class="ppms-pc-inline-actions">
+                                    <button type="button" class="ppms-btn-ghost ppms-btn-sm" @click="vendorPickOpen = true">
+                                        {{ t('projects.createPickVendor') }}
+                                    </button>
+                                    <button type="button" class="ppms-btn-ghost ppms-btn-sm" @click="vendorQuickOpen = true">
+                                        {{ t('projects.createQuickVendor') }}
+                                    </button>
+                                </span>
                             </div>
                             <textarea
                                 v-model="form.suppliers_text"
                                 name="suppliers"
-                                rows="2"
+                                rows="3"
                                 :placeholder="t('projects.createFieldSuppliersPh')"
                             />
-                        </label>
+                        </div>
                     </section>
 
                     <section class="ppms-pc-card" aria-labelledby="ppms-pc-card-extra">
@@ -560,7 +633,7 @@
 
                 <p v-if="formError" class="ppms-error">{{ formError }}</p>
                 <div class="ppms-modal-actions ppms-pc-footer">
-                    <button type="button" class="ppms-btn-ghost" @click="open = false">
+                    <button type="button" class="ppms-btn-ghost" @click="tryClose">
                         {{ t('common.cancel') }}
                     </button>
                     <button type="submit" class="ppms-btn-primary">{{ t('common.save') }}</button>
@@ -568,14 +641,157 @@
             </form>
         </div>
     </div>
+
+    <div
+        v-if="open && leaveConfirmOpen"
+        class="ppms-modal-backdrop ppms-pc-leave-backdrop"
+        role="presentation"
+        @click.self="leaveConfirmOpen = false"
+    >
+        <div
+            class="ppms-modal ppms-pc-leave-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ppms-pc-leave-title"
+            @click.stop
+        >
+            <h3 id="ppms-pc-leave-title" class="ppms-modal-title">{{ t('projects.leaveCreateTitle') }}</h3>
+            <p class="ppms-modal-msg">{{ t('projects.leaveCreateMessage') }}</p>
+            <div class="ppms-modal-actions ppms-pc-leave-actions">
+                <button type="button" class="ppms-btn-primary" @click="leaveConfirmOpen = false">
+                    {{ t('projects.leaveCreateStay') }}
+                </button>
+                <button type="button" class="ppms-btn-ghost" @click="discardAndClose">
+                    {{ t('projects.leaveCreateDiscard') }}
+                </button>
+                <button type="button" class="ppms-btn-ghost" @click="saveDraftAndClose">
+                    {{ t('projects.leaveCreateSaveDraft') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div
+        v-if="open && vendorPickOpen"
+        class="ppms-modal-backdrop ppms-pc-submodal-backdrop"
+        role="presentation"
+        @click.self="vendorPickOpen = false"
+    >
+        <div class="ppms-modal ppms-pc-submodal" role="dialog" aria-modal="true" @click.stop>
+            <h3 class="ppms-modal-title">{{ t('projects.createPickVendorTitle') }}</h3>
+            <input
+                v-model="vendorPickFilter"
+                type="search"
+                class="ppms-pc-input ppms-pc-submodal-search"
+                :placeholder="t('projects.createVendorSearchPh')"
+                autocomplete="off"
+            />
+            <ul class="ppms-pc-vendor-pick-list" role="listbox">
+                <li v-for="v in vendorPickFiltered" :key="'vp-' + v.id">
+                    <button type="button" class="ppms-pc-vendor-pick-btn" @click="appendVendorLine(v)">
+                        <span class="ppms-pc-vendor-pick-name">{{ v.name }}</span>
+                        <span v-if="v.tax_code" class="ppms-pc-vendor-pick-meta">{{ v.tax_code }}</span>
+                    </button>
+                </li>
+            </ul>
+            <p v-if="vendorPickFiltered.length === 0" class="ppms-muted ppms-pc-submodal-empty">{{ t('projects.createVendorPickEmpty') }}</p>
+            <div class="ppms-modal-actions">
+                <button type="button" class="ppms-btn-ghost" @click="vendorPickOpen = false">{{ t('common.cancel') }}</button>
+            </div>
+        </div>
+    </div>
+
+    <div
+        v-if="open && vendorQuickOpen"
+        class="ppms-modal-backdrop ppms-pc-submodal-backdrop"
+        role="presentation"
+        @click.self="vendorQuickOpen = false"
+    >
+        <div class="ppms-modal ppms-pc-submodal" role="dialog" aria-modal="true" @click.stop>
+            <h3 class="ppms-modal-title">{{ t('projects.createQuickVendorTitle') }}</h3>
+            <p class="ppms-modal-msg">{{ t('projects.createQuickVendorHint') }}</p>
+            <label class="ppms-field ppms-pc-full">
+                <span>{{ t('vendors.fieldName') }} *</span>
+                <input v-model="quickVendorForm.name" type="text" class="ppms-pc-input" maxlength="255" autocomplete="off" />
+            </label>
+            <p v-if="quickVendorErr" class="ppms-error">{{ quickVendorErr }}</p>
+            <div class="ppms-modal-actions">
+                <button type="button" class="ppms-btn-ghost" @click="vendorQuickOpen = false">{{ t('common.cancel') }}</button>
+                <button type="button" class="ppms-btn-primary" :disabled="vendorQuickSaving" @click="submitQuickVendor">
+                    {{ t('vendors.modalCreateSave') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div
+        v-if="open && deptQuickOpen"
+        class="ppms-modal-backdrop ppms-pc-submodal-backdrop"
+        role="presentation"
+        @click.self="deptQuickOpen = false"
+    >
+        <div class="ppms-modal ppms-pc-submodal" role="dialog" aria-modal="true" @click.stop>
+            <h3 class="ppms-modal-title">{{ t('projects.createQuickDepartmentTitle') }}</h3>
+            <label class="ppms-field ppms-pc-full">
+                <span>{{ t('projects.createDeptNameLabel') }}</span>
+                <input v-model="newDeptName" type="text" class="ppms-pc-input" maxlength="255" autocomplete="off" />
+            </label>
+            <label class="ppms-field ppms-pc-full">
+                <span>{{ t('projects.createDeptCodeLabel') }}</span>
+                <input v-model="newDeptCode" type="text" class="ppms-pc-input" maxlength="64" autocomplete="off" />
+            </label>
+            <p v-if="deptQuickErr" class="ppms-error">{{ deptQuickErr }}</p>
+            <div class="ppms-modal-actions">
+                <button type="button" class="ppms-btn-ghost" @click="deptQuickOpen = false">{{ t('common.cancel') }}</button>
+                <button type="button" class="ppms-btn-primary" :disabled="deptQuickSaving" @click="submitQuickDepartment">
+                    {{ t('projects.createQuickDepartmentSave') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div
+        v-if="open && blockQuickOpen"
+        class="ppms-modal-backdrop ppms-pc-submodal-backdrop"
+        role="presentation"
+        @click.self="blockQuickOpen = false"
+    >
+        <div class="ppms-modal ppms-pc-submodal" role="dialog" aria-modal="true" @click.stop>
+            <h3 class="ppms-modal-title">{{ t('projects.createQuickBlockTitle') }}</h3>
+            <label class="ppms-field ppms-pc-full">
+                <span>{{ t('projects.createBlockNameLabel') }}</span>
+                <input v-model="newBlockName" type="text" class="ppms-pc-input" maxlength="255" autocomplete="off" />
+            </label>
+            <label class="ppms-field ppms-pc-full">
+                <span>{{ t('projects.createBlockCodeLabel') }}</span>
+                <input v-model="newBlockCode" type="text" class="ppms-pc-input" maxlength="64" autocomplete="off" />
+            </label>
+            <p v-if="blockQuickErr" class="ppms-error">{{ blockQuickErr }}</p>
+            <div class="ppms-modal-actions">
+                <button type="button" class="ppms-btn-ghost" @click="blockQuickOpen = false">{{ t('common.cancel') }}</button>
+                <button type="button" class="ppms-btn-primary" :disabled="blockQuickSaving" @click="submitQuickBlock">
+                    {{ t('projects.createQuickBlockSave') }}
+                </button>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script setup>
 import axios from 'axios';
-import { computed, reactive, ref, useId, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, useId, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import enLocale from '@/i18n/locales/en.json';
 import viLocale from '@/i18n/locales/vi.json';
+import { formatApiUserMessage } from '@/bootstrap';
+import { ppmsToastSuccess } from '@/ppmsUi';
+import {
+    applyProjectCreateForm,
+    clearProjectCreateDraft,
+    loadProjectCreateDraft,
+    saveProjectCreateDraft,
+    serializeProjectCreateForm,
+} from '../../utils/projectCreateDraft';
 
 const { t, locale } = useI18n();
 
@@ -583,9 +799,200 @@ const props = defineProps({
     form: { type: Object, required: true },
     formError: { type: String, default: '' },
     teamOptions: { type: Array, default: () => [] },
+    /** User chỉ thuộc một team — khóa chọn team (dự án thuộc team đó). */
+    teamLocked: { type: Boolean, default: false },
+    stakeholderLookups: {
+        type: Object,
+        default: () => ({ departments: [], blocks: [], vendors: [] }),
+    },
 });
 
-defineEmits(['submit']);
+const emit = defineEmits(['submit', 'refresh-stakeholder-lookups']);
+
+const departmentsList = computed(() => props.stakeholderLookups?.departments ?? []);
+const blocksList = computed(() => props.stakeholderLookups?.blocks ?? []);
+const vendorsList = computed(() => props.stakeholderLookups?.vendors ?? []);
+
+const vendorPickOpen = ref(false);
+const vendorPickFilter = ref('');
+const vendorQuickOpen = ref(false);
+const vendorQuickSaving = ref(false);
+const quickVendorErr = ref('');
+const quickVendorForm = reactive({
+    name: '',
+});
+
+const deptQuickOpen = ref(false);
+const deptQuickSaving = ref(false);
+const deptQuickErr = ref('');
+const newDeptName = ref('');
+const newDeptCode = ref('');
+
+const blockQuickOpen = ref(false);
+const blockQuickSaving = ref(false);
+const blockQuickErr = ref('');
+const newBlockName = ref('');
+const newBlockCode = ref('');
+
+const vendorPickFiltered = computed(() => {
+    const q = vendorPickFilter.value.trim().toLowerCase();
+    const list = vendorsList.value;
+    if (!q) {
+        return list;
+    }
+    return list.filter((v) => {
+        const name = (v?.name || '').toLowerCase();
+        const tax = String(v?.tax_code || '').toLowerCase();
+
+        return name.includes(q) || tax.includes(q);
+    });
+});
+
+function appendSupplierTextLine(line) {
+    const tLine = (line || '').trim();
+    if (!tLine) {
+        return;
+    }
+    const cur = (props.form.suppliers_text || '').trim();
+    // eslint-disable-next-line vue/no-mutating-props -- shared form
+    props.form.suppliers_text = cur ? `${cur}\n${tLine}` : tLine;
+}
+
+function appendVendorLine(v) {
+    if (!v?.name) {
+        return;
+    }
+    const line = v.tax_code ? `${v.name} — ${v.tax_code}` : v.name;
+    appendSupplierTextLine(line);
+    vendorPickOpen.value = false;
+    vendorPickFilter.value = '';
+}
+
+function onDepartmentChange() {
+    const id = props.form.department_id;
+    if (!id) {
+        return;
+    }
+    const d = departmentsList.value.find((x) => String(x.id) === String(id));
+    if (d?.name && !(props.form.customer_name || '').trim()) {
+        // eslint-disable-next-line vue/no-mutating-props
+        props.form.customer_name = d.name;
+    }
+}
+
+watch(vendorPickOpen, (v) => {
+    if (v) {
+        vendorPickFilter.value = '';
+    }
+});
+
+watch(deptQuickOpen, (v) => {
+    if (v) {
+        newDeptName.value = '';
+        newDeptCode.value = '';
+        deptQuickErr.value = '';
+    }
+});
+
+watch(blockQuickOpen, (v) => {
+    if (v) {
+        newBlockName.value = '';
+        newBlockCode.value = '';
+        blockQuickErr.value = '';
+    }
+});
+
+watch(vendorQuickOpen, (v) => {
+    if (v) {
+        quickVendorForm.name = '';
+        quickVendorErr.value = '';
+    }
+});
+
+async function submitQuickVendor() {
+    const name = quickVendorForm.name.trim();
+    if (!name) {
+        quickVendorErr.value = t('projects.createQuickVendorNameRequired');
+
+        return;
+    }
+    vendorQuickSaving.value = true;
+    quickVendorErr.value = '';
+    try {
+        const { data } = await axios.post('/api/vendors', {
+            name,
+            kind: 'active',
+            status: 'active',
+        });
+        appendSupplierTextLine(data?.name || name);
+        vendorQuickOpen.value = false;
+        emit('refresh-stakeholder-lookups');
+        ppmsToastSuccess(t('projects.createQuickVendorOk'));
+    } catch (e) {
+        quickVendorErr.value = formatApiUserMessage(e, t('projects.createQuickVendorErr'));
+    } finally {
+        vendorQuickSaving.value = false;
+    }
+}
+
+async function submitQuickDepartment() {
+    const name = newDeptName.value.trim();
+    if (!name) {
+        deptQuickErr.value = t('projects.createDeptNameRequired');
+
+        return;
+    }
+    deptQuickSaving.value = true;
+    deptQuickErr.value = '';
+    try {
+        const { data } = await axios.post('/api/departments', {
+            name,
+            code: newDeptCode.value.trim() || null,
+        });
+        emit('refresh-stakeholder-lookups');
+        await nextTick();
+        if (data?.id != null) {
+            // eslint-disable-next-line vue/no-mutating-props
+            props.form.department_id = String(data.id);
+            onDepartmentChange();
+        }
+        deptQuickOpen.value = false;
+        ppmsToastSuccess(t('projects.createQuickDepartmentOk'));
+    } catch (e) {
+        deptQuickErr.value = formatApiUserMessage(e, t('projects.createQuickDepartmentErr'));
+    } finally {
+        deptQuickSaving.value = false;
+    }
+}
+
+async function submitQuickBlock() {
+    const name = newBlockName.value.trim();
+    if (!name) {
+        blockQuickErr.value = t('projects.createBlockNameRequired');
+
+        return;
+    }
+    blockQuickSaving.value = true;
+    blockQuickErr.value = '';
+    try {
+        const { data } = await axios.post('/api/blocks', {
+            name,
+            code: newBlockCode.value.trim() || null,
+        });
+        emit('refresh-stakeholder-lookups');
+        await nextTick();
+        if (data?.id != null) {
+            // eslint-disable-next-line vue/no-mutating-props
+            props.form.block_id = String(data.id);
+        }
+        blockQuickOpen.value = false;
+        ppmsToastSuccess(t('projects.createQuickBlockOk'));
+    } catch (e) {
+        blockQuickErr.value = formatApiUserMessage(e, t('projects.createQuickBlockErr'));
+    } finally {
+        blockQuickSaving.value = false;
+    }
+}
 
 const modalTitle = computed(() => (props.form.editingId ? t('projects.editModalTitle') : t('projects.createModalTitle')));
 
@@ -604,6 +1011,106 @@ const progressPctDisplay = computed(() => {
 });
 
 const open = defineModel('open', { type: Boolean, default: false });
+
+const leaveConfirmOpen = ref(false);
+const baselineJson = ref('');
+const draftBannerVisible = ref(false);
+const storedDraftMeta = ref(null);
+
+const hasDirtyCreate = computed(() => {
+    if (!open.value || props.form.editingId) {
+        return false;
+    }
+    return JSON.stringify(serializeProjectCreateForm(props.form)) !== baselineJson.value;
+});
+
+const draftSavedAtLabel = computed(() => {
+    const ts = storedDraftMeta.value?.savedAt;
+    if (!ts) {
+        return '';
+    }
+    try {
+        const d = new Date(ts);
+
+        return d.toLocaleString(locale.value === 'vi' ? 'vi-VN' : undefined, {
+            dateStyle: 'short',
+            timeStyle: 'short',
+        });
+    } catch {
+        return '';
+    }
+});
+
+async function tryClose() {
+    if (!hasDirtyCreate.value) {
+        open.value = false;
+
+        return;
+    }
+    leaveConfirmOpen.value = true;
+}
+
+function discardAndClose() {
+    leaveConfirmOpen.value = false;
+    open.value = false;
+}
+
+function saveDraftAndClose() {
+    saveProjectCreateDraft(props.form);
+    leaveConfirmOpen.value = false;
+    open.value = false;
+    ppmsToastSuccess(t('projects.draftSavedToast'));
+}
+
+async function restoreStoredDraft() {
+    const d = loadProjectCreateDraft();
+    if (!d?.form) {
+        draftBannerVisible.value = false;
+
+        return;
+    }
+    applyProjectCreateForm(props.form, d.form);
+    draftBannerVisible.value = false;
+    await nextTick();
+    baselineJson.value = JSON.stringify(serializeProjectCreateForm(props.form));
+    await hydrateUserCachesFromForm();
+    ppmsToastSuccess(t('projects.draftRestoredToast'));
+}
+
+function dismissDraftBanner() {
+    draftBannerVisible.value = false;
+}
+
+function deleteStoredDraft() {
+    clearProjectCreateDraft();
+    storedDraftMeta.value = null;
+    draftBannerVisible.value = false;
+}
+
+function onDocumentKeydown(e) {
+    if (e.key !== 'Escape') {
+        return;
+    }
+    if (!open.value) {
+        return;
+    }
+    if (leaveConfirmOpen.value) {
+        leaveConfirmOpen.value = false;
+        e.preventDefault();
+
+        return;
+    }
+    e.preventDefault();
+    tryClose();
+}
+
+onMounted(() => {
+    document.addEventListener('keydown', onDocumentKeydown);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('keydown', onDocumentKeydown);
+});
 
 const dateFieldUid = useId();
 const startDateInputId = `${dateFieldUid}-start`;
@@ -963,10 +1470,21 @@ watch(open, async (isOpen) => {
         ownerLookupPending.value = false;
         executorLookupPending.value = false;
         followerLookupPending.value = false;
+        leaveConfirmOpen.value = false;
 
         return;
     }
     await hydrateUserCachesFromForm();
+    if (!props.form.editingId) {
+        await nextTick();
+        baselineJson.value = JSON.stringify(serializeProjectCreateForm(props.form));
+        const d = loadProjectCreateDraft();
+        storedDraftMeta.value = d;
+        draftBannerVisible.value = !!d;
+    } else {
+        draftBannerVisible.value = false;
+        storedDraftMeta.value = null;
+    }
 });
 
 function handleDocumentClick(target) {
@@ -989,7 +1507,13 @@ function closeOwnerLookup() {
     ownerLookupOpen.value = false;
 }
 
-defineExpose({ handleDocumentClick, closeProgressCalc, closeOwnerLookup });
+function clearCreateDraft() {
+    clearProjectCreateDraft();
+    storedDraftMeta.value = null;
+    draftBannerVisible.value = false;
+}
+
+defineExpose({ handleDocumentClick, closeProgressCalc, closeOwnerLookup, clearCreateDraft });
 </script>
 
 <style scoped>
@@ -1082,5 +1606,152 @@ defineExpose({ handleDocumentClick, closeProgressCalc, closeOwnerLookup });
 }
 .ppms-pc-chip__remove:hover {
     background: rgba(0, 0, 0, 0.08);
+}
+
+.ppms-pc-draft-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.65rem;
+    margin: 0 0 0.85rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--ppms-border-subtle, rgba(0, 0, 0, 0.12));
+    background: rgba(59, 130, 246, 0.07);
+}
+
+.ppms-pc-draft-banner__text {
+    flex: 1 1 12rem;
+    min-width: 0;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    color: var(--ppms-text);
+}
+
+.ppms-pc-draft-banner__meta {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--ppms-muted);
+    margin-top: 0.25rem;
+}
+
+.ppms-pc-draft-banner__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.ppms-pc-leave-backdrop {
+    z-index: 10001;
+}
+
+.ppms-pc-leave-dialog {
+    max-width: 420px;
+}
+
+.ppms-pc-leave-actions {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+@media (min-width: 520px) {
+    .ppms-pc-leave-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        align-items: center;
+    }
+}
+
+.ppms-pc-label-row--tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+}
+
+.ppms-pc-inline-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.ppms-pc-row--stake-grid {
+    margin-bottom: 0.75rem;
+}
+
+.ppms-pc-input {
+    width: 100%;
+    padding: 0.45rem 0.55rem;
+    border-radius: 6px;
+    border: 1px solid var(--ppms-border-subtle, rgba(0, 0, 0, 0.12));
+    font: inherit;
+    background: var(--ppms-surface, #fff);
+}
+
+.ppms-pc-submodal-backdrop {
+    z-index: 10002;
+}
+
+.ppms-pc-submodal {
+    max-width: 420px;
+    max-height: min(90vh, 640px);
+    display: flex;
+    flex-direction: column;
+}
+
+.ppms-pc-submodal-search {
+    margin-bottom: 0.75rem;
+}
+
+.ppms-pc-vendor-pick-list {
+    list-style: none;
+    margin: 0 0 0.75rem;
+    padding: 0;
+    max-height: 240px;
+    overflow: auto;
+    border: 1px solid var(--ppms-border-subtle, rgba(0, 0, 0, 0.12));
+    border-radius: 8px;
+}
+
+.ppms-pc-vendor-pick-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    text-align: left;
+    padding: 0.5rem 0.65rem;
+    border: none;
+    border-bottom: 1px solid var(--ppms-border-subtle, rgba(0, 0, 0, 0.08));
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+}
+
+.ppms-pc-vendor-pick-list li:last-child .ppms-pc-vendor-pick-btn {
+    border-bottom: none;
+}
+
+.ppms-pc-vendor-pick-btn:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.ppms-pc-vendor-pick-name {
+    font-weight: 600;
+}
+
+.ppms-pc-vendor-pick-meta {
+    font-size: 0.82rem;
+    color: var(--ppms-muted);
+}
+
+.ppms-pc-submodal-empty {
+    margin: 0 0 0.75rem;
+    font-size: 0.88rem;
 }
 </style>

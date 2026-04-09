@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ContractLookupController;
 use App\Http\Controllers\Api\ContractPaymentController;
 use App\Http\Controllers\Api\CsatController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\BlockController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\EvaluationController;
 use App\Http\Controllers\Api\EvaluationPeerController;
@@ -54,7 +55,12 @@ Route::post('/auth/google/exchange', [GoogleOAuthController::class, 'exchange'])
 
 Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
     Route::get('/user', function (Request $request) {
-        return $request->user();
+        $user = $request->user();
+        if ($user) {
+            $user->load('teams');
+        }
+
+        return $user;
     });
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -204,6 +210,7 @@ Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
     Route::post('vendors/{vendor}/reviews', [VendorReviewController::class, 'store']);
     Route::delete('vendor-reviews/{review}', [VendorReviewController::class, 'destroy'])->whereNumber('review');
     Route::post('departments', [DepartmentController::class, 'store']);
+    Route::post('blocks', [BlockController::class, 'store']);
     Route::get('contracts/upcoming-payments', [ContractPaymentController::class, 'upcoming']);
     Route::get('contracts/export.csv', [ContractController::class, 'exportCsv']);
     Route::get('contracts/trash', [ContractController::class, 'trashIndex']);
