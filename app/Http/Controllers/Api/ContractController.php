@@ -29,6 +29,13 @@ class ContractController extends Controller
         return ContractResource::collection($this->contractRead->paginateIndex($request));
     }
 
+    public function exportCsv(Request $request)
+    {
+        $this->authorize('viewAny', Contract::class);
+
+        return $this->contractRead->exportCsvResponse($request);
+    }
+
     public function store(StoreContractRequest $request)
     {
         $this->authorize('create', Contract::class);

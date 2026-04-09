@@ -170,6 +170,7 @@ Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
 
     Route::get('contract-lookups', ContractLookupController::class);
     Route::get('contracts/upcoming-payments', [ContractPaymentController::class, 'upcoming']);
+    Route::get('contracts/export.csv', [ContractController::class, 'exportCsv']);
     Route::apiResource('contracts', ContractController::class)->whereNumber('contract');
     Route::get('contracts/{contract}/logs', [ContractController::class, 'logs'])->whereNumber('contract');
     Route::post('contracts/{contract}/submit', [ContractController::class, 'submit'])->whereNumber('contract');
