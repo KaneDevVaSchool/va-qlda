@@ -12,6 +12,14 @@ class ActivityKindResolver
         $old = $old ?? [];
         $new = $new ?? [];
 
+        if ($action === 'contract.force_deleted') {
+            return 'deleted';
+        }
+
+        if ($action === 'contract.restored') {
+            return 'updated';
+        }
+
         if (str_ends_with($action, '.deleted')) {
             return 'deleted';
         }

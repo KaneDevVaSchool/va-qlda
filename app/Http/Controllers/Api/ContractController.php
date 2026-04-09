@@ -30,6 +30,51 @@ class ContractController extends Controller
         return ContractResource::collection($this->contractRead->paginateIndex($request));
     }
 
+    /**
+     * Soft-deleted contracts (admin trash).
+     */
+    public function trashIndex(Request $request)
+    {
+        $this->authorize('viewTrash', Contract::class);
+
+        $perPage = min(100, max(10, (int) $request->query('per_page', 25)));
+
+        $paginator = Contract::query()
+            ->onlyTrashed()
+            ->with([
+                'vendor',
+                'product',
+                'department',
+                'creator:id,name,email',
+                'approver:id,name,email',
+                'followedBy:id,name,email',
+            ])
+            ->orderByDesc('deleted_at')
+            ->paginate($perPage);
+
+        return ContractResource::collection($paginator);
+    }
+
+    public function restore(Request $request, int $id)
+    {
+        $contract = Contract::query()->onlyTrashed()->findOrFail($id);
+        $this->authorize('restore', $contract);
+
+        $contract = $this->contractService->restoreFromTrash($contract, $request->user());
+
+        return new ContractResource($this->contractRead->detailById($contract->id));
+    }
+
+    public function forceDestroy(Request $request, int $id)
+    {
+        $contract = Contract::query()->onlyTrashed()->findOrFail($id);
+        $this->authorize('forceDelete', $contract);
+
+        $this->contractService->forceDeletePermanent($contract, $request->user());
+
+        return response()->json(null, 204);
+    }
+
     public function exportCsv(Request $request)
     {
         $this->authorize('viewAny', Contract::class);

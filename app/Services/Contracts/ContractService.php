@@ -169,11 +169,45 @@ class ContractService
         $this->payments->replaceSchedule($contract, $rows);
     }
 
+    public function restoreFromTrash(Contract $contract, User $user): Contract
+    {
+        if (! $contract->trashed()) {
+            abort(422, 'Contract is not in trash.');
+        }
+
+        return DB::transaction(function () use ($contract, $user) {
+            $contract->restore();
+
+            $this->audit->log(
+                $contract,
+                'contract.restored',
+                null,
+                $contract->fresh()->toArray(),
+                $user->id
+            );
+
+            return $contract->fresh(['vendor', 'product', 'department', 'payments', 'followedBy']);
+        });
+    }
+
+    public function forceDeletePermanent(Contract $contract, User $user): void
+    {
+        if (! $contract->trashed()) {
+            abort(422, 'Contract must be in trash before permanent deletion.');
+        }
+
+        DB::transaction(function () use ($contract, $user) {
+            $snapshot = $contract->toArray();
+            $this->audit->log($contract, 'contract.force_deleted', $snapshot, null, $user->id);
+            $contract->forceDelete();
+        });
+    }
+
     private function generateUniqueCode(): string
     {
         for ($i = 0; $i < 15; $i++) {
             $code = 'CNT-'.now()->format('Y').'-'.strtoupper(Str::random(6));
-            if (! Contract::query()->where('code', $code)->exists()) {
+            if (! Contract::query()->withTrashed()->where('code', $code)->exists()) {
                 return $code;
             }
         }

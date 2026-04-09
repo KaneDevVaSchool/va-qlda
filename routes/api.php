@@ -179,6 +179,9 @@ Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
     Route::post('departments', [DepartmentController::class, 'store']);
     Route::get('contracts/upcoming-payments', [ContractPaymentController::class, 'upcoming']);
     Route::get('contracts/export.csv', [ContractController::class, 'exportCsv']);
+    Route::get('contracts/trash', [ContractController::class, 'trashIndex']);
+    Route::post('contracts/{id}/restore', [ContractController::class, 'restore'])->whereNumber('id');
+    Route::delete('contracts/{id}/force', [ContractController::class, 'forceDestroy'])->whereNumber('id');
     Route::get('contracts/{contract}/summary.pdf', [ContractController::class, 'summaryPdf'])->whereNumber('contract');
     Route::get('contracts/{contract}/logs/actions', [ContractController::class, 'logActions'])->whereNumber('contract');
     Route::apiResource('contracts', ContractController::class)->whereNumber('contract');

@@ -1411,7 +1411,7 @@ async function removeDraft() {
     }
     try {
         await axios.delete(`/api/contracts/${props.id}`);
-        ppmsToastSuccess(t('contracts.deleted'));
+        ppmsToastSuccess(t('contracts.deletedToTrash'));
         window.location.href = '/contracts';
     } catch (e) {
         ppmsToastError(formatApiUserMessage(e, t('contracts.loadError')));

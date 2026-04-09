@@ -29,6 +29,7 @@ class ContractResource extends JsonResource
             'followed_by_id' => $this->followed_by_id,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            'deleted_at' => $this->deleted_at?->toIso8601String(),
             'vendor' => VendorResource::make($this->whenLoaded('vendor')),
             'product' => ProductResource::make($this->whenLoaded('product')),
             'department' => DepartmentResource::make($this->whenLoaded('department')),

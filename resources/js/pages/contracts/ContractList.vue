@@ -5,12 +5,28 @@
             <div class="contract-list__toolbar" role="region" :aria-label="t('contracts.filterBarTitle')">
                 <div class="contract-list__toolbar-head">
                     <div class="contract-list__toolbar-intro">
-                        <h2 class="contract-list__filter-heading">{{ t('contracts.filterBarTitle') }}</h2>
-                        <p class="contract-list__filter-sub">{{ t('contracts.filterBarSubtitle') }}</p>
+                        <template v-if="trashMode">
+                            <h2 class="contract-list__filter-heading">{{ t('contracts.trashTitle') }}</h2>
+                            <p class="contract-list__filter-sub">{{ t('contracts.trashSubtitle') }}</p>
+                        </template>
+                        <template v-else>
+                            <h2 class="contract-list__filter-heading">{{ t('contracts.filterBarTitle') }}</h2>
+                            <p class="contract-list__filter-sub">{{ t('contracts.filterBarSubtitle') }}</p>
+                        </template>
                     </div>
                     <div class="contract-list__toolbar-actions" role="group" :aria-label="t('contracts.toolbarActionsLabel')">
                         <div class="contract-list__toolbar-actions-secondary">
                             <button
+                                v-if="isAdmin"
+                                type="button"
+                                class="ppms-btn-ghost contract-list__action-btn"
+                                :disabled="loading"
+                                @click="toggleTrashMode"
+                            >
+                                {{ trashMode ? t('contracts.trashBackToList') : t('contracts.trashToggle') }}
+                            </button>
+                            <button
+                                v-if="!trashMode"
                                 type="button"
                                 class="ppms-btn-ghost contract-list__action-btn"
                                 :disabled="loading"
@@ -27,6 +43,7 @@
                                 {{ t('contracts.refresh') }}
                             </button>
                             <button
+                                v-if="!trashMode"
                                 type="button"
                                 class="ppms-btn-ghost contract-list__action-btn"
                                 :disabled="loading"
@@ -36,13 +53,18 @@
                                 {{ t('contracts.exportCsv') }}
                             </button>
                         </div>
-                        <button type="button" class="ppms-btn-primary contract-list__action-primary" @click="openCreate">
+                        <button
+                            v-if="!trashMode"
+                            type="button"
+                            class="ppms-btn-primary contract-list__action-primary"
+                            @click="openCreate"
+                        >
                             {{ t('contracts.create') }}
                         </button>
                     </div>
                 </div>
 
-                <div class="contract-list__filter-groups" role="search">
+                <div v-show="!trashMode" class="contract-list__filter-groups" role="search">
                     <div
                         class="contract-list__filter-card"
                         role="group"
@@ -159,13 +181,21 @@
             <template v-else>
                 <div v-if="items.length === 0" class="contract-list__empty" role="status">
                     <div class="contract-list__empty-visual" aria-hidden="true" />
-                    <p class="contract-list__empty-title">{{ hasActiveFilters ? t('contracts.emptyFiltered') : t('contracts.empty') }}</p>
+                    <p class="contract-list__empty-title">
+                        {{
+                            trashMode
+                                ? t('contracts.trashEmpty')
+                                : hasActiveFilters
+                                  ? t('contracts.emptyFiltered')
+                                  : t('contracts.empty')
+                        }}
+                    </p>
                     <p class="contract-list__empty-desc">{{ t('contracts.emptyHint') }}</p>
                     <div class="contract-list__empty-actions">
-                        <button v-if="hasActiveFilters" type="button" class="ppms-btn-ghost" @click="resetFilters">
+                        <button v-if="!trashMode && hasActiveFilters" type="button" class="ppms-btn-ghost" @click="resetFilters">
                             {{ t('contracts.resetFilters') }}
                         </button>
-                        <button type="button" class="ppms-btn-primary" @click="openCreate">{{ t('contracts.create') }}</button>
+                        <button v-if="!trashMode" type="button" class="ppms-btn-primary" @click="openCreate">{{ t('contracts.create') }}</button>
                     </div>
                 </div>
 
@@ -204,7 +234,7 @@
                                     </button>
                                 </th>
                                 <th>{{ t('contracts.tableExpiresIn') }}</th>
-                                <th>
+                                <th v-if="!trashMode">
                                     <button type="button" class="contract-list__th-btn" @click="toggleSort('updated_at')">
                                         {{ t('contracts.tableUpdatedAt') }}
                                         <span v-if="sortKey === 'updated_at'" class="contract-list__sort-ind" aria-hidden="true">{{
@@ -212,6 +242,7 @@
                                         }}</span>
                                     </button>
                                 </th>
+                                <th v-else>{{ t('contracts.trashDeletedAt') }}</th>
                                 <th>
                                     <button type="button" class="contract-list__th-btn" @click="toggleSort('followed_by_id')">
                                         {{ t('contracts.tableFollower') }}
@@ -248,12 +279,19 @@
                                     v-show="!isVendorGroupCollapsed(g.key)"
                                     :key="row.id"
                                     class="contract-list__row"
-                                    tabindex="0"
-                                    @click="goDetail(row.id)"
-                                    @keydown.enter.prevent="goDetail(row.id)"
+                                    :tabindex="trashMode ? -1 : 0"
+                                    @click="!trashMode && goDetail(row.id)"
+                                    @keydown.enter.prevent="!trashMode && goDetail(row.id)"
                                 >
                                     <td>
-                                        <router-link :to="`/contracts/${row.id}`" class="contract-list__link" @click.stop>{{ row.code }}</router-link>
+                                        <router-link
+                                            v-if="!trashMode"
+                                            :to="`/contracts/${row.id}`"
+                                            class="contract-list__link"
+                                            @click.stop
+                                            >{{ row.code }}</router-link
+                                        >
+                                        <span v-else class="contract-list__code-muted">{{ row.code }}</span>
                                     </td>
                                     <td class="contract-list__cell-muted">{{ row.product?.name || '—' }}</td>
                                     <td>{{ row.department?.name || '—' }}</td>
@@ -279,10 +317,33 @@
                                         <span v-if="expiresBadge(row)" class="contract-list__badge-soon">{{ expiresBadge(row) }}</span>
                                         <span v-else class="contract-list__cell-muted">—</span>
                                     </td>
-                                    <td class="contract-list__cell-muted contract-list__cell-nowrap">{{ formatUpdatedAt(row.updated_at) }}</td>
+                                    <td v-if="!trashMode" class="contract-list__cell-muted contract-list__cell-nowrap">
+                                        {{ formatUpdatedAt(row.updated_at) }}
+                                    </td>
+                                    <td v-else class="contract-list__cell-muted contract-list__cell-nowrap">
+                                        {{ formatUpdatedAt(row.deleted_at) }}
+                                    </td>
                                     <td class="contract-list__cell-muted">{{ row.followed_by?.name || '—' }}</td>
                                     <td @click.stop>
-                                        <router-link :to="`/contracts/${row.id}`" class="ppms-btn-ghost ppms-btn-sm">{{ t('contracts.view') }}</router-link>
+                                        <template v-if="trashMode">
+                                            <button
+                                                type="button"
+                                                class="ppms-btn-ghost ppms-btn-sm"
+                                                @click="restoreRow(row)"
+                                            >
+                                                {{ t('contracts.trashRestore') }}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="ppms-btn-ghost ppms-btn-sm contract-list__btn-danger"
+                                                @click="forceDeleteRow(row)"
+                                            >
+                                                {{ t('contracts.trashForceDelete') }}
+                                            </button>
+                                        </template>
+                                        <router-link v-else :to="`/contracts/${row.id}`" class="ppms-btn-ghost ppms-btn-sm">{{
+                                            t('contracts.view')
+                                        }}</router-link>
                                     </td>
                                 </tr>
                             </template>
@@ -570,7 +631,7 @@ import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import { formatApiUserMessage } from '@/bootstrap';
-import { ppmsToastError, ppmsToastSuccess } from '@/ppmsUi';
+import { ppmsConfirm, ppmsToastError, ppmsToastSuccess } from '@/ppmsUi';
 import { readVndAmountVietnamese } from '@/utils/vndReadWords';
 import O1UserLookupSelect from '@/pages/projects/components/detail/O1UserLookupSelect.vue';
 
@@ -580,6 +641,8 @@ const router = useRouter();
 
 const loading = ref(true);
 const saving = ref(false);
+const currentUser = ref(null);
+const trashMode = ref(false);
 const items = ref([]);
 const meta = ref(null);
 const page = ref(1);
@@ -689,7 +752,12 @@ const lookupWarning = computed(() => lookups.departments.length === 0);
 
 const vendorsEmpty = computed(() => lookups.vendors.length === 0);
 
+const isAdmin = computed(() => currentUser.value?.role === 'admin');
+
 const hasActiveFilters = computed(() => {
+    if (trashMode.value) {
+        return false;
+    }
     return !!(
         filters.status ||
         filters.vendor_id ||
@@ -706,6 +774,12 @@ function clampPerPage(n) {
 }
 
 function buildApiParams() {
+    if (trashMode.value) {
+        return {
+            page: page.value,
+            per_page: perPage.value,
+        };
+    }
     return {
         page: page.value,
         per_page: perPage.value,
@@ -722,6 +796,12 @@ function buildApiParams() {
 function buildRouteQuery() {
     const p = buildApiParams();
     const q = {};
+    if (trashMode.value) {
+        if (p.page > 1) q.page = String(p.page);
+        if (p.per_page !== 25) q.per_page = String(p.per_page);
+        q.trash = '1';
+        return q;
+    }
     if (p.page > 1) q.page = String(p.page);
     if (p.per_page !== 25) q.per_page = String(p.per_page);
     if (p.status) q.status = p.status;
@@ -735,6 +815,7 @@ function buildRouteQuery() {
 }
 
 function readQueryFromRoute(q = route.query) {
+    trashMode.value = q.trash === '1' || q.trash === 1;
     page.value = q.page ? Math.max(1, parseInt(String(q.page), 10)) : 1;
     perPage.value = q.per_page ? clampPerPage(parseInt(String(q.per_page), 10)) : 25;
     filters.status = q.status ? String(q.status) : '';
@@ -840,6 +921,9 @@ function expiresBadge(row) {
 }
 
 async function toggleSort(key) {
+    if (trashMode.value) {
+        return;
+    }
     if (sortKey.value === key) {
         sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
     } else {
@@ -894,10 +978,55 @@ async function goNextPage() {
     await replaceRouteQuery();
 }
 
+async function loadUser() {
+    try {
+        const { data } = await axios.get('/api/user');
+        currentUser.value = data;
+    } catch {
+        currentUser.value = null;
+    }
+}
+
+async function toggleTrashMode() {
+    if (!isAdmin.value) {
+        return;
+    }
+    trashMode.value = !trashMode.value;
+    page.value = 1;
+    await replaceRouteQuery();
+}
+
+async function restoreRow(row) {
+    if (!(await ppmsConfirm(t('contracts.trashRestoreConfirm')))) {
+        return;
+    }
+    try {
+        await axios.post(`/api/contracts/${row.id}/restore`);
+        ppmsToastSuccess(t('contracts.trashRestored'));
+        await load();
+    } catch (e) {
+        ppmsToastError(formatApiUserMessage(e, t('contracts.loadError')));
+    }
+}
+
+async function forceDeleteRow(row) {
+    if (!(await ppmsConfirm(t('contracts.trashForceDeleteConfirm')))) {
+        return;
+    }
+    try {
+        await axios.delete(`/api/contracts/${row.id}/force`);
+        ppmsToastSuccess(t('contracts.trashForceDeleted'));
+        await load();
+    } catch (e) {
+        ppmsToastError(formatApiUserMessage(e, t('contracts.loadError')));
+    }
+}
+
 async function load() {
     loading.value = true;
     try {
-        const { data } = await axios.get('/api/contracts', { params: buildApiParams() });
+        const url = trashMode.value ? '/api/contracts/trash' : '/api/contracts';
+        const { data } = await axios.get(url, { params: buildApiParams() });
         items.value = data.data || [];
         meta.value = data.meta || null;
     } catch (e) {
@@ -1184,8 +1313,13 @@ watch(
 );
 
 onMounted(async () => {
-    await loadLookups();
+    await loadUser();
     readQueryFromRoute();
+    if (trashMode.value && !isAdmin.value) {
+        trashMode.value = false;
+        await router.replace({ path: route.path, query: {} });
+    }
+    await loadLookups();
     await load();
 });
 </script>
@@ -1619,6 +1753,14 @@ onMounted(async () => {
 }
 .contract-list__link:hover {
     text-decoration: underline;
+}
+.contract-list__code-muted {
+    font-weight: 600;
+    color: var(--ppms-muted, #64748b);
+}
+.contract-list__btn-danger {
+    color: #b91c1c !important;
+    margin-left: 4px;
 }
 .contract-list__cell-muted {
     color: var(--ppms-muted, #64748b);

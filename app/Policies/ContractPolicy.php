@@ -48,6 +48,22 @@ class ContractPolicy
         return $this->canManage($user) || $contract->created_by === $user->id;
     }
 
+    /** Admin: view soft-deleted contracts (trash). */
+    public function viewTrash(User $user): bool
+    {
+        return $user->role === 'admin';
+    }
+
+    public function restore(User $user, Contract $contract): bool
+    {
+        return $user->role === 'admin';
+    }
+
+    public function forceDelete(User $user, Contract $contract): bool
+    {
+        return $user->role === 'admin';
+    }
+
     public function submit(User $user, Contract $contract): bool
     {
         return $contract->created_by === $user->id || $this->canManage($user);
