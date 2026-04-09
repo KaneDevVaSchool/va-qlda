@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Pivots\TeamUserPivot;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -88,7 +89,10 @@ class User extends Authenticatable
 
     public function teams(): BelongsToMany
     {
-        return $this->belongsToMany(Team::class, 'team_user')->withPivot('role')->withTimestamps();
+        return $this->belongsToMany(Team::class, 'team_user')
+            ->using(TeamUserPivot::class)
+            ->withPivot(['role', 'position', 'permissions'])
+            ->withTimestamps();
     }
 
     public function ownedProjects(): HasMany

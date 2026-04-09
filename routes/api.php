@@ -75,6 +75,7 @@ Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
     Route::patch('/teams/{team}', [TeamController::class, 'update']);
     Route::delete('/teams/{team}', [TeamController::class, 'destroy']);
     Route::post('/teams/{team}/members', [TeamController::class, 'addMembers']);
+    Route::patch('/teams/{team}/members/{userId}', [TeamController::class, 'updateMember'])->whereNumber('userId');
     Route::delete('/teams/{team}/members/{userId}', [TeamController::class, 'removeMember'])->whereNumber('userId');
 
     Route::get('/kpi/current', [KpiController::class, 'current']);

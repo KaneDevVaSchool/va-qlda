@@ -6,10 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class TeamController extends Controller
 {
+    /** @return list<string> */
+    private static function memberPermissionKeys(): array
+    {
+        return ['manage_members', 'edit_team_meta', 'view_team_kpi', 'assign_projects'];
+    }
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -17,6 +24,14 @@ class TeamController extends Controller
             ->with(['creator:id,name,email'])
             ->withCount('members')
             ->orderBy('name');
+
+        if ($request->query('include') === 'members') {
+            $q->with([
+                'members' => fn ($mq) => $mq
+                    ->select('users.id', 'users.name', 'users.email', 'users.role')
+                    ->orderBy('name'),
+            ]);
+        }
 
         if (! in_array($user->role, ['admin', 'pm'], true)) {
             $q->where(function ($w) use ($user) {
@@ -106,12 +121,29 @@ class TeamController extends Controller
             'user_ids' => ['required', 'array', 'min:1'],
             'user_ids.*' => ['integer', 'distinct', Rule::exists(User::class, 'id')],
             'role' => ['nullable', 'string', Rule::in(['member', 'leader'])],
+            'position' => ['nullable', 'string', 'max:255'],
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['string', Rule::in(self::memberPermissionKeys())],
         ]);
 
         $role = $data['role'] ?? 'member';
+
+        if ($role === 'leader') {
+            if (count($data['user_ids']) !== 1) {
+                abort(422, 'Chỉ thêm một trưởng nhóm mỗi lần.');
+            }
+            DB::connection($team->getConnectionName())->table('team_user')
+                ->where('team_id', $team->id)
+                ->update(['role' => 'member']);
+        }
+
         $sync = [];
         foreach ($data['user_ids'] as $uid) {
-            $sync[(int) $uid] = ['role' => $role];
+            $sync[(int) $uid] = [
+                'role' => $role,
+                'position' => $data['position'] ?? null,
+                'permissions' => isset($data['permissions']) ? $data['permissions'] : null,
+            ];
         }
 
         $team->members()->syncWithoutDetaching($sync);
@@ -130,6 +162,63 @@ class TeamController extends Controller
         $team->members()->detach($userId);
 
         return response()->json(['ok' => true]);
+    }
+
+    public function updateMember(Request $request, Team $team, int $userId)
+    {
+        $this->assertUserCanManageTeam($request->user(), $team);
+
+        $data = $request->validate([
+            'role' => ['sometimes', Rule::in(['leader', 'member'])],
+            'position' => ['nullable', 'string', 'max:255'],
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['string', Rule::in(self::memberPermissionKeys())],
+        ]);
+
+        $member = $team->members()->where('users.id', $userId)->first();
+        if (! $member) {
+            abort(404, 'Thành viên không thuộc nhóm này.');
+        }
+
+        $currentRole = $member->pivot->role;
+
+        if (isset($data['role']) && $data['role'] === 'member' && $currentRole === 'leader') {
+            $leaderCount = $team->members()->wherePivot('role', 'leader')->count();
+            if ($leaderCount <= 1) {
+                abort(422, 'Nhóm phải có ít nhất một trưởng nhóm.');
+            }
+        }
+
+        if (isset($data['role']) && $data['role'] === 'leader') {
+            DB::connection($team->getConnectionName())->table('team_user')
+                ->where('team_id', $team->id)
+                ->where('user_id', '!=', $userId)
+                ->update(['role' => 'member']);
+        }
+
+        $updates = [];
+        if (isset($data['role'])) {
+            $updates['role'] = $data['role'];
+        }
+        if (array_key_exists('position', $data)) {
+            $updates['position'] = $data['position'];
+        }
+        if (array_key_exists('permissions', $data)) {
+            $updates['permissions'] = $data['permissions'];
+        }
+
+        if ($updates !== []) {
+            $team->members()->updateExistingPivot($userId, $updates);
+        }
+
+        $team->load([
+            'creator:id,name,email',
+            'members' => fn ($q) => $q->select('users.id', 'users.name', 'users.email', 'users.role')->orderBy('name'),
+        ]);
+        $team->loadCount('members');
+        $team->setAttribute('can_manage', $this->userCanManageTeam($request->user(), $team));
+
+        return $team;
     }
 
     protected function assertCanCreateTeam(User $user): void

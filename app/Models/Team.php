@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Pivots\TeamUserPivot;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -35,6 +36,9 @@ class Team extends Model
 
     public function members(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'team_user')->withPivot('role')->withTimestamps();
+        return $this->belongsToMany(User::class, 'team_user')
+            ->using(TeamUserPivot::class)
+            ->withPivot(['role', 'position', 'permissions'])
+            ->withTimestamps();
     }
 }
