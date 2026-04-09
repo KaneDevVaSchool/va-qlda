@@ -1316,7 +1316,7 @@
         "tableValue": "Total value",
         "tableExpiresIn": "Time left",
         "tableUpdatedAt": "Updated",
-        "tableFollower": "Owner",
+        "tableFollower": "Created by",
         "expiresInDays": "{n} days",
         "expiresSoon": "Ending soon",
         "tableActions": "Actions",
