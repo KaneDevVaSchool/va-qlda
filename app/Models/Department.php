@@ -20,6 +20,6 @@ class Department extends Model
 
     public function vendors(): BelongsToMany
     {
-        return $this->belongsToMany(Vendor::class, 'vendor_department')->withTimestamps();
+        return $this->belongsToMany(Vendor::class, 'vendor_department');
     }
 }

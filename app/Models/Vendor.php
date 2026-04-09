@@ -80,7 +80,7 @@ class Vendor extends Model
 
     public function departments(): BelongsToMany
     {
-        return $this->belongsToMany(Department::class, 'vendor_department')->withTimestamps();
+        return $this->belongsToMany(Department::class, 'vendor_department');
     }
 
     public function scopeKind(Builder $query, VendorKind|string $kind): Builder
