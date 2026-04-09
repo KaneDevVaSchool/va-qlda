@@ -11,7 +11,7 @@ return new class extends Migration
     {
         $cmsUsers = MigrationCms::usersTable();
 
-        Schema::create('user_audit_log_reads', function (Blueprint $table) {
+        Schema::create('user_audit_log_reads', function (Blueprint $table) use ($cmsUsers) {
             $table->foreignId('user_id')->constrained($cmsUsers)->cascadeOnDelete();
             $table->foreignId('audit_log_id')->constrained('audit_logs')->cascadeOnDelete();
             $table->timestamp('read_at')->useCurrent();
