@@ -454,3 +454,16 @@
     display: block;
     border-radius: 8px;
 }
+
+.contract-modal__sub-label {
+    display: block;
+    margin-top: 0.75rem;
+    margin-bottom: 0.15rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ppms-fg, #0f172a);
+}
+
+.contract-modal--vendor-quick {
+    width: min(480px, calc(100vw - 32px));
+}

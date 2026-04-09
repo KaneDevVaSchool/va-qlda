@@ -3,6 +3,7 @@
 namespace App\Services\ActivityFeed;
 
 use App\Models\AuditLog;
+use App\Models\Block;
 use App\Models\Contract;
 use App\Models\Department;
 use App\Models\Product;
@@ -287,13 +288,14 @@ class ActivityFeedService
     /**
      * Resolve foreign keys on contract audit payloads to human-readable labels (vendor, product, department, users).
      *
-     * @return array{vendors: array<int, string>, products: array<int, string>, departments: array<int, string>, users: array<int, string>}
+     * @return array{vendors: array<int, string>, products: array<int, string>, departments: array<int, string>, blocks: array<int, string>, users: array<int, string>}
      */
     private function resolveContractRelationMaps(array $old, array $new): array
     {
         $vendorIds = $this->collectNumericIdsForKeys($old, $new, ['vendor_id']);
         $productIds = $this->collectNumericIdsForKeys($old, $new, ['product_id']);
         $departmentIds = $this->collectNumericIdsForKeys($old, $new, ['department_id']);
+        $blockIds = $this->collectNumericIdsForKeys($old, $new, ['block_id']);
         $userIds = $this->collectNumericIdsForKeys($old, $new, ['followed_by_id', 'approved_by', 'approver_id']);
 
         $vendors = $vendorIds !== []
@@ -305,6 +307,9 @@ class ActivityFeedService
         $departments = $departmentIds !== []
             ? Department::query()->whereIn('id', $departmentIds)->pluck('name', 'id')->all()
             : [];
+        $blocks = $blockIds !== []
+            ? Block::query()->whereIn('id', $blockIds)->pluck('name', 'id')->all()
+            : [];
         $users = $userIds !== []
             ? User::query()->whereIn('id', $userIds)->pluck('name', 'id')->all()
             : [];
@@ -313,6 +318,7 @@ class ActivityFeedService
             'vendors' => $vendors,
             'products' => $products,
             'departments' => $departments,
+            'blocks' => $blocks,
             'users' => $users,
         ];
     }
@@ -339,7 +345,7 @@ class ActivityFeedService
     }
 
     /**
-     * @param  array{vendors: array<int, string>, products: array<int, string>, departments: array<int, string>, users: array<int, string>}  $maps
+     * @param  array{vendors: array<int, string>, products: array<int, string>, departments: array<int, string>, blocks: array<int, string>, users: array<int, string>}  $maps
      */
     private function mapContractRelationDisplay(string $field, mixed $value, array $maps): mixed
     {
@@ -351,6 +357,7 @@ class ActivityFeedService
             'vendor_id' => 'vendors',
             'product_id' => 'products',
             'department_id' => 'departments',
+            'block_id' => 'blocks',
             'followed_by_id', 'approved_by', 'approver_id' => 'users',
             default => null,
         };

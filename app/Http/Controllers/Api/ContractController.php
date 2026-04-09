@@ -45,6 +45,7 @@ class ContractController extends Controller
                 'vendor',
                 'product',
                 'department',
+                'block',
                 'creator:id,name,email',
                 'approver:id,name,email',
                 'followedBy:id,name,email',

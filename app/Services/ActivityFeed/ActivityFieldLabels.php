@@ -40,6 +40,7 @@ class ActivityFieldLabels
                 'vendor_id' => 'contract.vendor_id',
                 'product_id' => 'contract.product_id',
                 'department_id' => 'contract.department_id',
+                'block_id' => 'contract.block_id',
                 'scope' => 'contract.scope',
                 'status' => 'contract.status',
                 'start_date' => 'contract.start_date',

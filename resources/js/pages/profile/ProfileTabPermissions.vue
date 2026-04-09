@@ -9,7 +9,12 @@
         </template>
         <template v-else>
             <p v-if="!compact" class="ppms-profile-perm-lead">{{ t('profile.permissionsMatrix') }}</p>
-            <p v-if="!canManage" class="ppms-profile-perm-hint">{{ t('profile.canManageHint') }}</p>
+            <div v-if="!canManage" class="ppms-profile-perm-readonly" role="note">
+                <p class="ppms-profile-perm-hint">{{ t('profile.canManageHint') }}</p>
+                <p v-if="permissionAdminRoles.length" class="ppms-profile-perm-hint ppms-profile-perm-hint--detail">
+                    {{ t('profile.permissionAdminExplain', { role: roleLabelSlug(role), roles: permissionAdminRolesListed }) }}
+                </p>
+            </div>
 
             <div class="ppms-profile-perm-search">
                 <input
@@ -89,6 +94,20 @@ const matrix = ref({});
 const effective = ref({});
 const desired = ref({});
 const canManage = ref(false);
+const permissionAdminRoles = ref([]);
+
+const permissionAdminRolesListed = computed(() =>
+    permissionAdminRoles.value.map((slug) => roleLabelSlug(slug)).join(', '),
+);
+
+function roleLabelSlug(slug) {
+    if (!slug) {
+        return '';
+    }
+    const key = `layout.role.${slug}`;
+    const tr = t(key);
+    return tr === key ? slug : tr;
+}
 
 function actionLabel(action) {
     const key = `profile.permissionActions.${action}`;
@@ -159,6 +178,8 @@ onMounted(async () => {
         effective.value = data.effective || {};
         desired.value = { ...data.effective };
         canManage.value = !!data.can_manage;
+        const raw = Array.isArray(data.permission_admin_roles) ? data.permission_admin_roles : ['admin'];
+        permissionAdminRoles.value = raw.length ? raw : ['admin'];
     } catch (e) {
         err.value = formatApiUserMessage(e, t('common.loading'));
     } finally {
@@ -192,10 +213,24 @@ async function save() {
     color: var(--ppms-pf-muted);
     margin: 0 0 0.5rem;
 }
+.ppms-profile-perm-readonly {
+    padding: 0.65rem 0.75rem;
+    margin: 0 0 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    background: rgba(241, 245, 249, 0.55);
+}
 .ppms-profile-perm-hint {
     font-size: 0.85rem;
     color: var(--ppms-pf-muted);
     margin: 0 0 0.75rem;
+}
+.ppms-profile-perm-hint:last-child {
+    margin-bottom: 0;
+}
+.ppms-profile-perm-hint--detail {
+    margin-top: 0.35rem;
+    line-height: 1.45;
 }
 .ppms-profile-perm-search {
     margin: 0.75rem 0;
@@ -208,6 +243,10 @@ async function save() {
     border: 1px solid rgba(148, 163, 184, 0.5);
     background: var(--ppms-pf-input-bg, #fff);
     color: inherit;
+}
+.ppms-profile-perm-input:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
 }
 .ppms-profile-perm-table-wrap {
     overflow-x: auto;

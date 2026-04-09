@@ -53,6 +53,7 @@ class ContractService
                 'vendor_id' => $vendor->id,
                 'product_id' => $product->id,
                 'department_id' => $data['department_id'],
+                'block_id' => $data['block_id'] ?? null,
                 'scope' => $data['scope'] ?? null,
                 'status' => ContractStatus::Draft,
                 'start_date' => $data['start_date'],
@@ -74,7 +75,7 @@ class ContractService
                 $creator->id
             );
 
-            return $contract->fresh(['vendor', 'product', 'department', 'payments', 'followedBy']);
+            return $contract->fresh(['vendor', 'product', 'department', 'block', 'payments', 'followedBy']);
         });
     }
 
@@ -103,6 +104,7 @@ class ContractService
                 'vendor_id' => $vendorId,
                 'product_id' => $productId,
                 'department_id' => $data['department_id'] ?? $contract->department_id,
+                'block_id' => array_key_exists('block_id', $data) ? $data['block_id'] : $contract->block_id,
                 'scope' => array_key_exists('scope', $data) ? $data['scope'] : $contract->scope,
                 'start_date' => $data['start_date'] ?? $contract->start_date,
                 'end_date' => $data['end_date'] ?? $contract->end_date,
@@ -123,7 +125,7 @@ class ContractService
                 $user->id
             );
 
-            return $contract->fresh(['vendor', 'product', 'department', 'payments', 'followedBy']);
+            return $contract->fresh(['vendor', 'product', 'department', 'block', 'payments', 'followedBy']);
         });
     }
 
@@ -200,7 +202,7 @@ class ContractService
                 $user->id
             );
 
-            return $contract->fresh(['vendor', 'product', 'department', 'payments', 'followedBy']);
+            return $contract->fresh(['vendor', 'product', 'department', 'block', 'payments', 'followedBy']);
         });
     }
 

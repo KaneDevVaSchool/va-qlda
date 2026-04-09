@@ -30,6 +30,11 @@
                             ><span class="cd-header__summary-key">{{ t('contracts.fieldDepartment') }}</span>
                             {{ contract.department?.name || '—' }}</span
                         >
+                        <span class="cd-header__sep" aria-hidden="true">·</span>
+                        <span class="cd-header__summary-item"
+                            ><span class="cd-header__summary-key">{{ t('contracts.fieldBlock') }}</span>
+                            {{ contract.block?.name || '—' }}</span
+                        >
                     </p>
                     <p class="cd-header__dates">
                         <span class="cd-header__dates-label">{{ t('contracts.detailDurationLabel') }}</span>
@@ -144,6 +149,10 @@
                             <div>
                                 <dt>{{ t('contracts.fieldDepartment') }}</dt>
                                 <dd>{{ contract.department?.name || '—' }}</dd>
+                            </div>
+                            <div>
+                                <dt>{{ t('contracts.fieldBlock') }}</dt>
+                                <dd>{{ contract.block?.name || '—' }}</dd>
                             </div>
                             <div>
                                 <dt>{{ t('contracts.fieldCreator') }}</dt>
@@ -663,6 +672,12 @@
                                         <option disabled :value="0">{{ t('contracts.fieldDepartment') }}</option>
                                         <option v-for="d in lookups.departments" :key="d.id" :value="d.id">{{ d.name }}</option>
                                     </select>
+                                    <label for="em-block" class="contract-modal__sub-label">{{ t('contracts.fieldBlock') }}</label>
+                                    <p class="ppms-hint contract-modal__field-hint">{{ t('contracts.fieldBlockHint') }}</p>
+                                    <select id="em-block" v-model.number="editForm.block_id" class="ppms-input">
+                                        <option :value="0">{{ t('contracts.allBlocks') }}</option>
+                                        <option v-for="b in lookups.blocks" :key="b.id" :value="b.id">{{ b.name }}</option>
+                                    </select>
                                     <div v-if="deptCreateOpenEdit" class="contract-modal__dept-inline">
                                         <input
                                             v-model.trim="newDeptNameEdit"
@@ -834,6 +849,7 @@ const editForm = reactive({
     vendor_name: '',
     product_name: '',
     department_id: 0,
+    block_id: 0,
     scope: '',
     start_date: '',
     end_date: '',
@@ -846,6 +862,7 @@ const lookups = reactive({
     vendors: [],
     products: [],
     departments: [],
+    blocks: [],
 });
 
 const deptCreateOpenEdit = ref(false);
@@ -1200,10 +1217,12 @@ async function loadLookups() {
         lookups.vendors = data.vendors || [];
         lookups.products = data.products || [];
         lookups.departments = data.departments || [];
+        lookups.blocks = data.blocks || [];
     } catch {
         lookups.vendors = [];
         lookups.products = [];
         lookups.departments = [];
+        lookups.blocks = [];
     }
 }
 
@@ -1383,6 +1402,7 @@ function openEdit() {
     editForm.vendor_name = contract.value.vendor?.name || '';
     editForm.product_name = contract.value.product?.name || '';
     editForm.department_id = contract.value.department_id ?? contract.value.department?.id ?? 0;
+    editForm.block_id = contract.value.block_id ?? contract.value.block?.id ?? 0;
     editForm.scope = contract.value.scope || '';
     editForm.start_date = contract.value.start_date || '';
     editForm.end_date = contract.value.end_date || '';
@@ -1406,6 +1426,7 @@ async function saveEdit() {
             vendor_name: editForm.vendor_name,
             product_name: editForm.product_name,
             department_id: editForm.department_id,
+            block_id: editForm.block_id || null,
             scope: editForm.scope || null,
             start_date: editForm.start_date,
             end_date: editForm.end_date,

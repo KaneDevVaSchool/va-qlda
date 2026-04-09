@@ -64,6 +64,9 @@ class ContractRepository implements ContractRepositoryInterface
         if (! empty($filters['department_id'])) {
             $query->where('department_id', $filters['department_id']);
         }
+        if (! empty($filters['block_id'])) {
+            $query->where('block_id', $filters['block_id']);
+        }
         if (! empty($filters['code'])) {
             $query->where('code', 'like', '%'.$filters['code'].'%');
         }
@@ -102,7 +105,7 @@ class ContractRepository implements ContractRepositoryInterface
      */
     private function indexEagerLoads(): array
     {
-        return ['vendor', 'product', 'department', 'creator:id,name,email', 'approver:id,name,email'];
+        return ['vendor', 'product', 'department', 'block', 'creator:id,name,email', 'approver:id,name,email'];
     }
 
     /**
@@ -114,6 +117,7 @@ class ContractRepository implements ContractRepositoryInterface
             'vendor',
             'product',
             'department',
+            'block',
             'creator:id,name,email',
             'approver:id,name,email',
             'followedBy:id,name,email',

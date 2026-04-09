@@ -71,7 +71,7 @@
                         :aria-labelledby="'cl-filter-legend-entities'"
                     >
                         <div id="cl-filter-legend-entities" class="contract-list__filter-card-title">{{ t('contracts.filterGroupEntities') }}</div>
-                        <div class="contract-list__filter-card-grid contract-list__filter-card-grid--3">
+                        <div class="contract-list__filter-card-grid contract-list__filter-card-grid--4">
                             <div class="contract-list__field">
                                 <label class="contract-list__label" for="cl-filter-status">{{ t('contracts.filterStatus') }}</label>
                                 <select
@@ -98,7 +98,7 @@
                                     @change="onFilterCommit"
                                 >
                                     <option :value="0">{{ t('contracts.allVendors') }}</option>
-                                    <option v-for="v in lookups.vendors" :key="v.id" :value="v.id">{{ v.name }}</option>
+                                    <option v-for="v in lookups.vendors" :key="v.id" :value="v.id">{{ vendorOptionLabel(v) }}</option>
                                 </select>
                                 <p v-if="vendorsEmpty" id="cl-vendor-filter-hint" class="contract-list__field-hint">
                                     {{ t('contracts.vendorFilterHint') }}
@@ -114,6 +114,18 @@
                                 >
                                     <option :value="0">{{ t('contracts.allDepartments') }}</option>
                                     <option v-for="d in lookups.departments" :key="d.id" :value="d.id">{{ d.name }}</option>
+                                </select>
+                            </div>
+                            <div class="contract-list__field">
+                                <label class="contract-list__label" for="cl-filter-block">{{ t('contracts.filterBlock') }}</label>
+                                <select
+                                    id="cl-filter-block"
+                                    v-model.number="filters.block_id"
+                                    class="ppms-input contract-list__input"
+                                    @change="onFilterCommit"
+                                >
+                                    <option :value="0">{{ t('contracts.allBlocks') }}</option>
+                                    <option v-for="b in lookups.blocks" :key="b.id" :value="b.id">{{ b.name }}</option>
                                 </select>
                             </div>
                         </div>
@@ -213,6 +225,7 @@
                                 </th>
                                 <th>{{ t('contracts.tableProduct') }}</th>
                                 <th>{{ t('contracts.tableDepartment') }}</th>
+                                <th>{{ t('contracts.tableBlock') }}</th>
                                 <th>{{ t('contracts.tableStatus') }}</th>
                                 <th>
                                     <div class="contract-list__th-stack">
@@ -257,7 +270,7 @@
                         <tbody>
                             <template v-for="g in vendorGroups" :key="g.key">
                                 <tr class="contract-list__vendor-group">
-                                    <td colspan="10">
+                                    <td colspan="11">
                                         <div class="contract-list__vendor-group-inner">
                                             <button
                                                 type="button"
@@ -306,6 +319,7 @@
                                     </td>
                                     <td class="contract-list__cell-muted">{{ row.product?.name || '—' }}</td>
                                     <td>{{ row.department?.name || '—' }}</td>
+                                    <td class="contract-list__cell-muted">{{ row.block?.name || '—' }}</td>
                                     <td>
                                         <span class="contract-list__pill" :class="statusPillClass(row.status)">{{ statusLabel(row.status) }}</span>
                                     </td>
@@ -421,7 +435,16 @@
                             <h3 class="contract-modal__section-title">{{ t('contracts.sectionParties') }}</h3>
                             <div class="contract-modal__grid contract-modal__grid--2">
                                 <div class="contract-modal__field">
-                                    <label for="cm-vendor">{{ t('contracts.fieldVendor') }}</label>
+                                    <div class="contract-modal__dept-toolbar">
+                                        <label for="cm-vendor">{{ t('contracts.fieldVendor') }}</label>
+                                        <button
+                                            type="button"
+                                            class="ppms-btn-ghost ppms-btn-sm contract-modal__dept-add"
+                                            @click="vendorQuickOpen = true"
+                                        >
+                                            {{ t('contracts.quickVendorButton') }}
+                                        </button>
+                                    </div>
                                     <input
                                         id="cm-vendor"
                                         v-model.trim="form.vendor_name"
@@ -461,6 +484,12 @@
                                     <select id="cm-dept" v-model.number="form.department_id" class="ppms-input" required>
                                         <option disabled :value="0">{{ t('contracts.fieldDepartment') }}</option>
                                         <option v-for="d in lookups.departments" :key="d.id" :value="d.id">{{ d.name }}</option>
+                                    </select>
+                                    <label class="contract-modal__sub-label" for="cm-block">{{ t('contracts.fieldBlock') }}</label>
+                                    <p class="ppms-hint contract-modal__field-hint">{{ t('contracts.fieldBlockHint') }}</p>
+                                    <select id="cm-block" v-model.number="form.block_id" class="ppms-input">
+                                        <option :value="0">{{ t('contracts.allBlocks') }}</option>
+                                        <option v-for="b in lookups.blocks" :key="b.id" :value="b.id">{{ b.name }}</option>
                                     </select>
                                     <div v-if="deptCreateOpen" class="contract-modal__dept-inline">
                                         <input
@@ -641,6 +670,73 @@
                 </form>
             </div>
         </div>
+
+        <div
+            v-if="vendorQuickOpen"
+            class="contract-modal__backdrop"
+            role="presentation"
+            @click.self="!vendorQuickSaving && (vendorQuickOpen = false)"
+        >
+            <div class="contract-modal ppms-card contract-modal--vendor-quick" role="dialog" aria-modal="true" aria-labelledby="vendor-quick-title">
+                <div class="contract-modal__head">
+                    <div class="contract-modal__head-text">
+                        <h2 id="vendor-quick-title" class="contract-modal__title">{{ t('contracts.quickVendorTitle') }}</h2>
+                        <p class="contract-modal__subtitle">{{ t('contracts.quickVendorHint') }}</p>
+                    </div>
+                    <button
+                        type="button"
+                        class="contract-modal__close"
+                        :disabled="vendorQuickSaving"
+                        :aria-label="t('common.close')"
+                        @click="vendorQuickOpen = false"
+                    >
+                        ×
+                    </button>
+                </div>
+                <form class="contract-modal__form" @submit.prevent="submitQuickVendor">
+                    <div class="contract-modal__body">
+                        <div class="contract-modal__field">
+                            <label for="vq-name">{{ t('vendors.fieldName') }} *</label>
+                            <input
+                                id="vq-name"
+                                v-model.trim="vendorQuickForm.name"
+                                type="text"
+                                class="ppms-input"
+                                required
+                                maxlength="255"
+                                autocomplete="organization"
+                            />
+                        </div>
+                        <div class="contract-modal__grid contract-modal__grid--2">
+                            <div class="contract-modal__field">
+                                <label for="vq-kind">{{ t('vendors.colKind') }}</label>
+                                <select id="vq-kind" v-model="vendorQuickForm.kind" class="ppms-input" required>
+                                    <option value="active">{{ t('vendors.kindActive') }}</option>
+                                    <option value="research">{{ t('vendors.kindResearch') }}</option>
+                                </select>
+                            </div>
+                            <div class="contract-modal__field">
+                                <label for="vq-status">{{ t('vendors.filterStatus') }}</label>
+                                <select id="vq-status" v-model="vendorQuickForm.status" class="ppms-input" required>
+                                    <option v-for="s in vendorQuickStatusOptions" :key="s" :value="s">{{ vendorQuickStatusLabel(s) }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p v-if="vendorQuickErr" class="ppms-error">{{ vendorQuickErr }}</p>
+                    </div>
+                    <div class="contract-modal__footer">
+                        <div class="contract-modal__actions">
+                            <button type="button" class="ppms-btn-ghost" :disabled="vendorQuickSaving" @click="vendorQuickOpen = false">
+                                {{ t('common.cancel') }}
+                            </button>
+                            <button type="submit" class="ppms-btn-primary" :disabled="vendorQuickSaving">
+                                {{ t('contracts.quickVendorSave') }}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -673,6 +769,7 @@ const filters = reactive({
     status: '',
     vendor_id: 0,
     department_id: 0,
+    block_id: 0,
     end_from: '',
     end_to: '',
 });
@@ -697,18 +794,29 @@ const deptCreateOpen = ref(false);
 const newDeptName = ref('');
 const newDeptCode = ref('');
 
-const createBusy = computed(() => saving.value || uploadingAttachments.value || departmentSaving.value);
+const vendorQuickOpen = ref(false);
+const vendorQuickSaving = ref(false);
+const vendorQuickErr = ref('');
+const vendorQuickForm = reactive({
+    name: '',
+    kind: 'active',
+    status: 'active',
+});
+
+const createBusy = computed(() => saving.value || uploadingAttachments.value || departmentSaving.value || vendorQuickSaving.value);
 
 const lookups = reactive({
     vendors: [],
     products: [],
     departments: [],
+    blocks: [],
 });
 
 const form = reactive({
     vendor_name: '',
     product_name: '',
     department_id: 0,
+    block_id: 0,
     scope: '',
     start_date: '',
     end_date: '',
@@ -782,10 +890,73 @@ const hasActiveFilters = computed(() => {
         filters.status ||
         filters.vendor_id ||
         filters.department_id ||
+        filters.block_id ||
         filters.end_from ||
         filters.end_to
     );
 });
+
+const vendorQuickStatusOptions = computed(() => {
+    if (vendorQuickForm.kind === 'research') {
+        return ['researching', 'shortlist', 'rejected'];
+    }
+    return ['active', 'inactive', 'blacklist'];
+});
+
+watch(
+    () => vendorQuickForm.kind,
+    (k) => {
+        if (k === 'research') {
+            if (!['researching', 'shortlist', 'rejected'].includes(vendorQuickForm.status)) {
+                vendorQuickForm.status = 'researching';
+            }
+        } else if (!['active', 'inactive', 'blacklist'].includes(vendorQuickForm.status)) {
+            vendorQuickForm.status = 'active';
+        }
+    },
+);
+
+function vendorQuickStatusLabel(s) {
+    const map = {
+        active: 'vendors.statusActive',
+        inactive: 'vendors.statusInactive',
+        blacklist: 'vendors.statusBlacklist',
+        researching: 'vendors.statusResearching',
+        shortlist: 'vendors.statusShortlist',
+        rejected: 'vendors.statusRejected',
+    };
+    const key = map[s];
+    return key ? t(key) : s;
+}
+
+function vendorOptionLabel(v) {
+    if (!v?.name) return '';
+    const k = v.kind === 'research' ? t('contracts.vendorKindResearch') : t('contracts.vendorKindActive');
+    return `${v.name} (${k})`;
+}
+
+async function submitQuickVendor() {
+    vendorQuickErr.value = '';
+    vendorQuickSaving.value = true;
+    try {
+        await axios.post('/api/vendors', {
+            name: vendorQuickForm.name,
+            kind: vendorQuickForm.kind,
+            status: vendorQuickForm.status,
+        });
+        form.vendor_name = vendorQuickForm.name;
+        vendorQuickOpen.value = false;
+        vendorQuickForm.name = '';
+        vendorQuickForm.kind = 'active';
+        vendorQuickForm.status = 'active';
+        await loadLookups();
+        ppmsToastSuccess(t('contracts.quickVendorCreated'));
+    } catch (e) {
+        vendorQuickErr.value = formatApiUserMessage(e, t('contracts.loadError'));
+    } finally {
+        vendorQuickSaving.value = false;
+    }
+}
 
 const SORT_KEYS = ['id', 'code', 'end_date', 'start_date', 'total_value', 'status', 'updated_at', 'followed_by_id'];
 
@@ -806,6 +977,7 @@ function buildApiParams() {
         status: filters.status || undefined,
         vendor_id: filters.vendor_id || undefined,
         department_id: filters.department_id || undefined,
+        block_id: filters.block_id || undefined,
         end_from: filters.end_from || undefined,
         end_to: filters.end_to || undefined,
         sort: sortKey.value,
@@ -827,6 +999,7 @@ function buildRouteQuery() {
     if (p.status) q.status = p.status;
     if (p.vendor_id) q.vendor_id = String(p.vendor_id);
     if (p.department_id) q.department_id = String(p.department_id);
+    if (p.block_id) q.block_id = String(p.block_id);
     if (p.end_from) q.end_from = p.end_from;
     if (p.end_to) q.end_to = p.end_to;
     if (p.sort && p.sort !== 'id') q.sort = p.sort;
@@ -841,6 +1014,7 @@ function readQueryFromRoute(q = route.query) {
     filters.status = q.status ? String(q.status) : '';
     filters.vendor_id = q.vendor_id ? Number(q.vendor_id) : 0;
     filters.department_id = q.department_id ? Number(q.department_id) : 0;
+    filters.block_id = q.block_id ? Number(q.block_id) : 0;
     filters.end_from = q.end_from ? String(q.end_from) : '';
     filters.end_to = q.end_to ? String(q.end_to) : '';
     const s = q.sort ? String(q.sort) : 'id';
@@ -969,6 +1143,7 @@ async function resetFilters() {
     filters.status = '';
     filters.vendor_id = 0;
     filters.department_id = 0;
+    filters.block_id = 0;
     filters.end_from = '';
     filters.end_to = '';
     page.value = 1;
@@ -1079,10 +1254,12 @@ async function loadLookups() {
         lookups.vendors = data.vendors || [];
         lookups.products = data.products || [];
         lookups.departments = data.departments || [];
+        lookups.blocks = data.blocks || [];
     } catch {
         lookups.vendors = [];
         lookups.products = [];
         lookups.departments = [];
+        lookups.blocks = [];
     }
 }
 
@@ -1231,6 +1408,7 @@ function openCreate() {
     form.vendor_name = '';
     form.product_name = '';
     form.department_id = lookups.departments[0]?.id || 0;
+    form.block_id = 0;
     form.scope = '';
     form.start_date = '';
     form.end_date = '';
@@ -1251,6 +1429,7 @@ async function submitCreate() {
             vendor_name: form.vendor_name,
             product_name: form.product_name,
             department_id: form.department_id,
+            block_id: form.block_id || null,
             scope: form.scope || null,
             start_date: form.start_date,
             end_date: form.end_date,
@@ -1313,6 +1492,7 @@ async function downloadCsv() {
                 status: filters.status || undefined,
                 vendor_id: filters.vendor_id || undefined,
                 department_id: filters.department_id || undefined,
+                block_id: filters.block_id || undefined,
                 end_from: filters.end_from || undefined,
                 end_to: filters.end_to || undefined,
                 sort: sortKey.value,
@@ -1526,8 +1706,21 @@ onMounted(async () => {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.contract-list__filter-card-grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 1100px) {
+    .contract-list__filter-card-grid--4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
 @media (max-width: 600px) {
     .contract-list__filter-card-grid--3 {
+        grid-template-columns: 1fr;
+    }
+    .contract-list__filter-card-grid--4 {
         grid-template-columns: 1fr;
     }
 }

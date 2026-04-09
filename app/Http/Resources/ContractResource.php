@@ -18,6 +18,7 @@ class ContractResource extends JsonResource
             'vendor_id' => $this->vendor_id,
             'product_id' => $this->product_id,
             'department_id' => $this->department_id,
+            'block_id' => $this->block_id,
             'scope' => $this->scope,
             'status' => $this->status?->value,
             'start_date' => $this->start_date?->toDateString(),
@@ -33,6 +34,7 @@ class ContractResource extends JsonResource
             'vendor' => VendorResource::make($this->whenLoaded('vendor')),
             'product' => ProductResource::make($this->whenLoaded('product')),
             'department' => DepartmentResource::make($this->whenLoaded('department')),
+            'block' => BlockResource::make($this->whenLoaded('block')),
             'creator' => $this->whenLoaded('creator', fn () => [
                 'id' => $this->creator->id,
                 'name' => $this->creator->name,

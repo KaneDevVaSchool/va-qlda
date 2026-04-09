@@ -19,6 +19,7 @@ class StoreContractRequest extends FormRequest
             'vendor_name' => ['required', 'string', 'max:255'],
             'product_name' => ['required', 'string', 'max:255'],
             'department_id' => ['required', 'integer', 'exists:departments,id'],
+            'block_id' => ['nullable', 'integer', 'exists:blocks,id'],
             'scope' => ['nullable', 'string', 'max:65535'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],

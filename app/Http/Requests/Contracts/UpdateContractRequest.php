@@ -19,6 +19,7 @@ class UpdateContractRequest extends FormRequest
             'vendor_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'product_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'department_id' => ['sometimes', 'integer', 'exists:departments,id'],
+            'block_id' => ['sometimes', 'nullable', 'integer', 'exists:blocks,id'],
             'scope' => ['nullable', 'string', 'max:65535'],
             'start_date' => ['sometimes', 'date'],
             'end_date' => ['sometimes', 'date'],

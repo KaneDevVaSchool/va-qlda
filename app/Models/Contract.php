@@ -19,6 +19,7 @@ class Contract extends Model
         'vendor_id',
         'product_id',
         'department_id',
+        'block_id',
         'scope',
         'status',
         'start_date',
@@ -51,6 +52,11 @@ class Contract extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function block(): BelongsTo
+    {
+        return $this->belongsTo(Block::class);
     }
 
     public function creator(): BelongsTo

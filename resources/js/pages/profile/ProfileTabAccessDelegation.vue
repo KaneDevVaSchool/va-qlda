@@ -3,12 +3,27 @@
         <header class="ppms-profile-access-hero">
             <h2 class="ppms-profile-access-page-title">{{ t('profile.accessTabTitle') }}</h2>
             <p class="ppms-profile-access-lead ppms-profile-access-lead--hero">{{ t('profile.accessTabLead') }}</p>
-            <ol class="ppms-profile-access-steps">
-                <li>{{ t('profile.accessStep1') }}</li>
-                <li>{{ t('profile.accessStep2') }}</li>
-                <li>{{ t('profile.accessStep3') }}</li>
+            <ol class="ppms-profile-access-steps ppms-profile-access-steps--cards">
+                <li v-for="(stepKey, idx) in accessStepKeys" :key="stepKey" class="ppms-profile-access-step-card">
+                    <span class="ppms-profile-access-step-num" aria-hidden="true">{{ idx + 1 }}</span>
+                    <span class="ppms-profile-access-step-text">{{ t(`profile.${stepKey}`) }}</span>
+                </li>
             </ol>
         </header>
+
+        <div
+            v-if="!rbacLoading && !canManageRbac"
+            class="ppms-profile-access-banner ppms-profile-access-banner--readonly"
+            role="region"
+            :aria-labelledby="'acc-ro-' + uid"
+        >
+            <h3 :id="'acc-ro-' + uid" class="ppms-profile-access-banner-title">{{ t('profile.accessReadOnlyBannerTitle') }}</h3>
+            <p class="ppms-profile-access-banner-summary">{{ t('profile.accessReadOnlyBannerSummary') }}</p>
+            <details class="ppms-profile-access-details">
+                <summary class="ppms-profile-access-details-summary">{{ t('profile.accessReadOnlyDetailsToggle') }}</summary>
+                <p class="ppms-profile-access-banner-body">{{ t('profile.permissionAdminExplain', { role: roleLabel(myRbacRole), roles: permissionAdminRolesListed }) }}</p>
+            </details>
+        </div>
 
         <section class="ppms-profile-access-block" :aria-labelledby="'acc-role-' + uid">
             <h2 :id="'acc-role-' + uid" class="ppms-profile-access-h2">{{ t('profile.accessRoleTitle') }}</h2>
@@ -37,7 +52,8 @@
                         <option v-for="r in roleOptions" :key="r" :value="r">{{ roleLabel(r) }}</option>
                     </select>
                 </div>
-                <p v-else class="ppms-profile-access-note">{{ t('profile.accessRoleUserHint') }}</p>
+                <p v-else-if="!canManageRbac" class="ppms-profile-access-note">{{ t('profile.accessRoleUserHint') }}</p>
+                <p v-else class="ppms-profile-access-note">{{ t('profile.accessRoleNoRoleOptions') }}</p>
 
                 <template v-if="canManageOthers && delegatorContext && delegatorRoleReady">
                     <hr class="ppms-profile-access-hr" />
@@ -257,7 +273,7 @@
 
 <script setup>
 import axios from 'axios';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { formatApiUserMessage } from '../../bootstrap';
 import { ppmsConfirm, ppmsToastError, ppmsToastSuccess } from '../../ppmsUi';
@@ -269,10 +285,16 @@ const { t, locale } = useI18n();
 
 const uid = `u${Math.random().toString(36).slice(2, 9)}`;
 
+const accessStepKeys = ['accessStep1', 'accessStep2', 'accessStep3'];
+
 const rbacLoading = ref(true);
 const myRbacRole = ref('');
 const roleOptions = ref([]);
 const canManageRbac = ref(false);
+const permissionAdminRoles = ref([]);
+const permissionAdminRolesListed = computed(() =>
+    permissionAdminRoles.value.map((r) => roleLabel(r)).join(', '),
+);
 const selfRoleDraft = ref('');
 const delegatorRoleDraft = ref('');
 const delegatorRoleReady = ref(false);
@@ -310,6 +332,8 @@ async function loadRbac() {
         myRbacRole.value = data.role || '';
         roleOptions.value = Array.isArray(data.role_options) ? data.role_options : [];
         canManageRbac.value = !!data.can_manage;
+        const raw = Array.isArray(data.permission_admin_roles) ? data.permission_admin_roles : ['admin'];
+        permissionAdminRoles.value = raw.length ? raw : ['admin'];
         selfRoleDraft.value = myRbacRole.value || roleOptions.value[0] || '';
     } catch (e) {
         ppmsToastError(formatApiUserMessage(e, t('common.loading')));
@@ -627,6 +651,92 @@ onUnmounted(() => {
 .ppms-profile-access-steps li {
     margin-bottom: 0.35rem;
 }
+.ppms-profile-access-steps--cards {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 0.65rem;
+    grid-template-columns: 1fr;
+}
+@media (min-width: 720px) {
+    .ppms-profile-access-steps--cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+}
+.ppms-profile-access-step-card {
+    display: flex;
+    gap: 0.65rem;
+    align-items: flex-start;
+    padding: 0.65rem 0.75rem;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    background: var(--ppms-pf-card-bg, rgba(255, 255, 255, 0.55));
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.ppms-profile-access-step-num {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.65rem;
+    height: 1.65rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #1d4ed8;
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.22);
+}
+.ppms-profile-access-step-text {
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: var(--ppms-pf-muted);
+}
+.ppms-profile-access-banner {
+    margin-bottom: 1rem;
+}
+.ppms-profile-access-banner--readonly {
+    padding: 0.85rem 1rem;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    background: rgba(254, 243, 199, 0.35);
+    border-left: 4px solid #d97706;
+}
+.ppms-profile-access-banner-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0 0 0.4rem;
+    color: var(--ppms-pf-fg, inherit);
+}
+.ppms-profile-access-banner-summary {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin: 0 0 0.5rem;
+    color: var(--ppms-pf-fg, inherit);
+}
+.ppms-profile-access-details {
+    margin: 0;
+}
+.ppms-profile-access-details-summary {
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #b45309;
+    list-style-position: outside;
+}
+.ppms-profile-access-details-summary:hover {
+    text-decoration: underline;
+}
+.ppms-profile-access-details[open] .ppms-profile-access-details-summary {
+    margin-bottom: 0.45rem;
+}
+.ppms-profile-access-banner-body {
+    font-size: 0.86rem;
+    line-height: 1.55;
+    margin: 0;
+    color: var(--ppms-pf-muted);
+}
 .ppms-profile-access-note {
     font-size: 0.85rem;
     color: var(--ppms-pf-muted);
@@ -714,17 +824,17 @@ onUnmounted(() => {
     padding: 0.35rem 0.65rem;
 }
 .ppms-profile-access-banner--context {
+    padding: 0.65rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
     background: rgba(59, 130, 246, 0.08);
     color: #1e40af;
     border: 1px solid rgba(59, 130, 246, 0.25);
 }
-.ppms-profile-access-banner {
+.ppms-profile-access-banner--err {
     padding: 0.65rem 0.75rem;
     border-radius: 8px;
     font-size: 0.9rem;
-    margin-bottom: 1rem;
-}
-.ppms-profile-access-banner--err {
     background: rgba(185, 28, 28, 0.08);
     color: #991b1b;
     border: 1px solid rgba(185, 28, 28, 0.25);
@@ -803,6 +913,10 @@ onUnmounted(() => {
     border: 1px solid rgba(148, 163, 184, 0.5);
     background: var(--ppms-pf-input-bg, #fff);
     color: inherit;
+}
+.ppms-profile-access-input:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
 }
 .ppms-profile-access-lookup {
     position: relative;

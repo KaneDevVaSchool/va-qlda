@@ -18,6 +18,7 @@ class UserRbacController extends Controller
         return response()->json([
             'role' => $user->role,
             'role_options' => array_keys(config('ppms_rbac.roles', [])),
+            'permission_admin_roles' => config('ppms_rbac.permission_admin_roles', ['admin']),
             'modules' => config('ppms_rbac.modules'),
             'actions' => config('ppms_rbac.actions'),
             'matrix' => $rbac->roleMatrix(),

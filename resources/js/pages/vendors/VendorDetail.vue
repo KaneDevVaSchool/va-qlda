@@ -28,15 +28,81 @@
                 </div>
             </header>
 
-            <div class="vm-tabs ppms-tabs" role="tablist">
-                <button type="button" class="ppms-tab" :class="{ 'ppms-tab--active': tab === 'overview' }" @click="tab = 'overview'">{{ t('vendors.tabOverview') }}</button>
-                <button type="button" class="ppms-tab" :class="{ 'ppms-tab--active': tab === 'business' }" @click="tab = 'business'">{{ t('vendors.tabBusiness') }}</button>
-                <button type="button" class="ppms-tab" :class="{ 'ppms-tab--active': tab === 'contracts' }" @click="tab = 'contracts'">{{ t('vendors.tabContracts') }}</button>
-                <button type="button" class="ppms-tab" :class="{ 'ppms-tab--active': tab === 'reviews' }" @click="tab = 'reviews'">{{ t('vendors.tabReviews') }}</button>
-                <button type="button" class="ppms-tab" :class="{ 'ppms-tab--active': tab === 'timeline' }" @click="openTimeline">{{ t('vendors.tabTimeline') }}</button>
-            </div>
+            <nav class="vm-tabs" role="tablist" :aria-label="t('vendors.detailTitle')">
+                <button
+                    id="vm-tab-overview"
+                    type="button"
+                    role="tab"
+                    class="vm-tab"
+                    :class="{ 'vm-tab--active': tab === 'overview' }"
+                    :aria-selected="tab === 'overview'"
+                    :tabindex="tab === 'overview' ? 0 : -1"
+                    @click="tab = 'overview'"
+                >
+                    <span class="vm-tab__label">{{ t('vendors.tabOverview') }}</span>
+                    <span class="vm-tab__hint">{{ t('vendors.tabOverviewHint') }}</span>
+                </button>
+                <button
+                    id="vm-tab-business"
+                    type="button"
+                    role="tab"
+                    class="vm-tab"
+                    :class="{ 'vm-tab--active': tab === 'business' }"
+                    :aria-selected="tab === 'business'"
+                    :tabindex="tab === 'business' ? 0 : -1"
+                    @click="tab = 'business'"
+                >
+                    <span class="vm-tab__label">{{ t('vendors.tabBusiness') }}</span>
+                    <span class="vm-tab__hint">{{ t('vendors.tabBusinessHint') }}</span>
+                </button>
+                <button
+                    id="vm-tab-contracts"
+                    type="button"
+                    role="tab"
+                    class="vm-tab"
+                    :class="{ 'vm-tab--active': tab === 'contracts' }"
+                    :aria-selected="tab === 'contracts'"
+                    :tabindex="tab === 'contracts' ? 0 : -1"
+                    @click="tab = 'contracts'"
+                >
+                    <span class="vm-tab__label">{{ t('vendors.tabContracts') }}</span>
+                    <span class="vm-tab__hint">{{ t('vendors.tabContractsHint') }}</span>
+                </button>
+                <button
+                    id="vm-tab-reviews"
+                    type="button"
+                    role="tab"
+                    class="vm-tab"
+                    :class="{ 'vm-tab--active': tab === 'reviews' }"
+                    :aria-selected="tab === 'reviews'"
+                    :tabindex="tab === 'reviews' ? 0 : -1"
+                    @click="tab = 'reviews'"
+                >
+                    <span class="vm-tab__label">{{ t('vendors.tabReviews') }}</span>
+                    <span class="vm-tab__hint">{{ t('vendors.tabReviewsHint') }}</span>
+                </button>
+                <button
+                    id="vm-tab-timeline"
+                    type="button"
+                    role="tab"
+                    class="vm-tab"
+                    :class="{ 'vm-tab--active': tab === 'timeline' }"
+                    :aria-selected="tab === 'timeline'"
+                    :tabindex="tab === 'timeline' ? 0 : -1"
+                    @click="openTimeline"
+                >
+                    <span class="vm-tab__label">{{ t('vendors.tabTimeline') }}</span>
+                    <span class="vm-tab__hint">{{ t('vendors.tabTimelineHint') }}</span>
+                </button>
+            </nav>
 
-            <section v-show="tab === 'overview'" class="ppms-card ppms-mt">
+            <section
+                v-show="tab === 'overview'"
+                id="vm-panel-overview"
+                class="ppms-card ppms-mt vm-panel"
+                role="tabpanel"
+                aria-labelledby="vm-tab-overview"
+            >
                 <table v-if="!editMode" class="vm-kv">
                     <tbody>
                         <tr><th>{{ t('vendors.legalName') }}</th><td>{{ vendor.legal_name || '—' }}</td></tr>
@@ -54,24 +120,94 @@
                         </tr>
                     </tbody>
                 </table>
-                <div v-if="editMode" class="ppms-stack ppms-mt">
-                    <label class="ppms-field"><span>{{ t('vendors.legalName') }}</span><input v-model="edit.legal_name" class="ppms-input" /></label>
-                    <label class="ppms-field"><span>{{ t('vendors.country') }}</span><input v-model="edit.country" class="ppms-input" /></label>
-                    <label class="ppms-field"><span>{{ t('vendors.website') }}</span><input v-model="edit.website" class="ppms-input" /></label>
-                    <label class="ppms-field"><span>{{ t('vendors.taxCode') }}</span><input v-model="edit.tax_code" class="ppms-input" /></label>
-                    <label class="ppms-field"><span>{{ t('vendors.riskLevel') }}</span>
-                        <select v-model="edit.risk_level" class="ppms-input">
-                            <option value="">{{ t('contracts.allStatuses') }}</option>
-                            <option value="low">{{ t('vendors.riskLow') }}</option>
-                            <option value="medium">{{ t('vendors.riskMedium') }}</option>
-                            <option value="high">{{ t('vendors.riskHigh') }}</option>
-                        </select>
-                    </label>
-                    <label class="ppms-field"><span>{{ t('vendors.internalNote') }}</span><textarea v-model="edit.internal_note" rows="3" class="ppms-input" /></label>
+                <div v-else class="vm-edit-form">
+                    <div class="vm-edit-banner" role="status">
+                        <strong class="vm-edit-banner__title">{{ t('vendors.editModeBanner') }}</strong>
+                        <p class="vm-edit-banner__hint">{{ t('vendors.editModeBannerHint') }}</p>
+                    </div>
+                    <section class="vm-form-section">
+                        <h3 class="vm-form-section__title">{{ t('vendors.formSectionOverview') }}</h3>
+                        <div class="vm-form-grid vm-form-grid--2">
+                            <div class="vm-field">
+                                <label class="vm-field__label" for="vm-o-legal">{{ t('vendors.legalName') }}</label>
+                                <p id="vm-o-legal-hint" class="vm-field__hint">{{ t('vendors.detailLegalNameHint') }}</p>
+                                <input
+                                    id="vm-o-legal"
+                                    v-model="edit.legal_name"
+                                    class="ppms-input vm-field__control"
+                                    :placeholder="t('vendors.detailLegalNamePlaceholder')"
+                                    aria-describedby="vm-o-legal-hint"
+                                />
+                            </div>
+                            <div class="vm-field">
+                                <label class="vm-field__label" for="vm-o-country">{{ t('vendors.country') }}</label>
+                                <p id="vm-o-country-hint" class="vm-field__hint">{{ t('vendors.detailCountryHint') }}</p>
+                                <input
+                                    id="vm-o-country"
+                                    v-model="edit.country"
+                                    class="ppms-input vm-field__control"
+                                    :placeholder="t('vendors.detailCountryPlaceholder')"
+                                    autocomplete="country-name"
+                                    aria-describedby="vm-o-country-hint"
+                                />
+                            </div>
+                            <div class="vm-field">
+                                <label class="vm-field__label" for="vm-o-web">{{ t('vendors.website') }}</label>
+                                <p id="vm-o-web-hint" class="vm-field__hint">{{ t('vendors.detailWebsiteHint') }}</p>
+                                <input
+                                    id="vm-o-web"
+                                    v-model="edit.website"
+                                    type="url"
+                                    class="ppms-input vm-field__control"
+                                    :placeholder="t('vendors.detailWebsitePlaceholder')"
+                                    aria-describedby="vm-o-web-hint"
+                                />
+                            </div>
+                            <div class="vm-field">
+                                <label class="vm-field__label" for="vm-o-tax">{{ t('vendors.taxCode') }}</label>
+                                <p id="vm-o-tax-hint" class="vm-field__hint">{{ t('vendors.detailTaxHint') }}</p>
+                                <input
+                                    id="vm-o-tax"
+                                    v-model="edit.tax_code"
+                                    class="ppms-input vm-field__control"
+                                    :placeholder="t('vendors.detailTaxPlaceholder')"
+                                    aria-describedby="vm-o-tax-hint"
+                                />
+                            </div>
+                            <div class="vm-field vm-field--span-2 vm-field--max-md">
+                                <label class="vm-field__label" for="vm-o-risk">{{ t('vendors.riskLevel') }}</label>
+                                <p id="vm-o-risk-hint" class="vm-field__hint">{{ t('vendors.detailRiskHint') }}</p>
+                                <select id="vm-o-risk" v-model="edit.risk_level" class="ppms-input vm-field__control" aria-describedby="vm-o-risk-hint">
+                                    <option value="">{{ t('vendors.riskNotSet') }}</option>
+                                    <option value="low">{{ t('vendors.riskLow') }}</option>
+                                    <option value="medium">{{ t('vendors.riskMedium') }}</option>
+                                    <option value="high">{{ t('vendors.riskHigh') }}</option>
+                                </select>
+                            </div>
+                            <div class="vm-field vm-field--full">
+                                <label class="vm-field__label" for="vm-o-note">{{ t('vendors.internalNote') }}</label>
+                                <p id="vm-o-note-hint" class="vm-field__hint">{{ t('vendors.detailInternalNoteHint') }}</p>
+                                <textarea
+                                    id="vm-o-note"
+                                    v-model="edit.internal_note"
+                                    rows="4"
+                                    class="ppms-input vm-field__control"
+                                    :placeholder="t('vendors.detailInternalNotePlaceholder')"
+                                    aria-describedby="vm-o-note-hint"
+                                />
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </section>
 
-            <section v-show="tab === 'business'" class="ppms-card ppms-mt">
+            <section
+                v-show="tab === 'business'"
+                id="vm-panel-business"
+                class="ppms-card ppms-mt vm-panel"
+                role="tabpanel"
+                aria-labelledby="vm-tab-business"
+            >
                 <h3 class="vm-sec-title">{{ t('vendors.tabBusiness') }}</h3>
                 <table v-if="!editMode" class="vm-kv">
                     <tbody>
@@ -87,30 +223,231 @@
                         <tr><th>{{ t('vendors.researchNote') }}</th><td class="vm-pre">{{ vendor.research_note || '—' }}</td></tr>
                     </tbody>
                 </table>
-                <div v-if="editMode" class="ppms-stack ppms-mt">
-                    <label class="ppms-field"><span>{{ t('vendors.filterIndustry') }}</span><input v-model="edit.industry" class="ppms-input" /></label>
-                    <label class="ppms-field"><span>{{ t('vendors.mainProducts') }}</span><textarea v-model="edit.main_products" rows="2" class="ppms-input" /></label>
-                    <label class="ppms-field"><span>{{ t('vendors.contractValue') }}</span><input v-model="edit.contract_value" type="number" min="0" step="0.01" class="ppms-input" /></label>
-                    <label class="ppms-field"><span>{{ t('vendors.estimatedCost') }}</span><input v-model="edit.estimated_cost" type="number" min="0" step="0.01" class="ppms-input" /></label>
-                    <label class="ppms-field"><span>{{ t('vendors.referencePrice') }}</span><input v-model="edit.reference_price" type="number" min="0" step="0.01" class="ppms-input" /></label>
-                    <label class="ppms-field"><span>{{ t('vendors.researchSource') }}</span><input v-model="edit.research_source" class="ppms-input" /></label>
-                    <label class="ppms-field"><span>{{ t('vendors.fitScore') }}</span><input v-model.number="edit.fit_score" type="number" min="0" max="100" class="ppms-input" /></label>
-                    <label class="ppms-field"><span>{{ t('vendors.pros') }}</span><textarea v-model="edit.pros" rows="2" class="ppms-input" /></label>
-                    <label class="ppms-field"><span>{{ t('vendors.cons') }}</span><textarea v-model="edit.cons" rows="2" class="ppms-input" /></label>
-                    <label class="ppms-field"><span>{{ t('vendors.researchNote') }}</span><textarea v-model="edit.research_note" rows="2" class="ppms-input" /></label>
-                    <label class="ppms-field"><span>{{ t('vendors.criteriaScores') }}</span></label>
-                    <div class="vm-grid-4">
-                        <label class="ppms-field"><span>{{ t('vendors.scorePrice') }}</span><input v-model="edit.score_price" type="number" min="0" max="5" step="0.1" class="ppms-input" /></label>
-                        <label class="ppms-field"><span>{{ t('vendors.scoreQuality') }}</span><input v-model="edit.score_quality" type="number" min="0" max="5" step="0.1" class="ppms-input" /></label>
-                        <label class="ppms-field"><span>{{ t('vendors.scoreSla') }}</span><input v-model="edit.score_sla" type="number" min="0" max="5" step="0.1" class="ppms-input" /></label>
-                        <label class="ppms-field"><span>{{ t('vendors.scoreSupport') }}</span><input v-model="edit.score_support" type="number" min="0" max="5" step="0.1" class="ppms-input" /></label>
+                <div v-else class="vm-edit-form">
+                    <div class="vm-edit-banner" role="status">
+                        <strong class="vm-edit-banner__title">{{ t('vendors.editModeBanner') }}</strong>
+                        <p class="vm-edit-banner__hint">{{ t('vendors.editModeBannerHint') }}</p>
                     </div>
-                    <label class="ppms-field"><span>{{ t('vendors.departments') }}</span>
-                        <select v-model="editDepartmentIds" class="ppms-input" multiple size="6">
-                            <option v-for="d in lookups.departments" :key="d.id" :value="d.id">{{ d.name }}</option>
-                        </select>
-                    </label>
-                    <p class="ppms-muted">{{ t('contracts.addDepartment') }}</p>
+                    <section class="vm-form-section">
+                        <h4 class="vm-form-section__title">{{ t('vendors.formSectionBiz') }}</h4>
+                        <div class="vm-form-grid vm-form-grid--3">
+                            <div class="vm-field">
+                                <label class="vm-field__label" for="vm-b-ind">{{ t('vendors.filterIndustry') }}</label>
+                                <p id="vm-b-ind-hint" class="vm-field__hint">{{ t('vendors.detailIndustryHint') }}</p>
+                                <input
+                                    id="vm-b-ind"
+                                    v-model="edit.industry"
+                                    class="ppms-input vm-field__control"
+                                    :placeholder="t('vendors.detailIndustryPlaceholder')"
+                                    aria-describedby="vm-b-ind-hint"
+                                />
+                            </div>
+                            <div class="vm-field">
+                                <label class="vm-field__label" for="vm-b-src">{{ t('vendors.researchSource') }}</label>
+                                <p id="vm-b-src-hint" class="vm-field__hint">{{ t('vendors.detailResearchSourceHint') }}</p>
+                                <input
+                                    id="vm-b-src"
+                                    v-model="edit.research_source"
+                                    class="ppms-input vm-field__control"
+                                    :placeholder="t('vendors.detailResearchSourcePlaceholder')"
+                                    aria-describedby="vm-b-src-hint"
+                                />
+                            </div>
+                            <div class="vm-field">
+                                <label class="vm-field__label" for="vm-b-fit">{{ t('vendors.fitScore') }}</label>
+                                <p id="vm-b-fit-hint" class="vm-field__hint">{{ t('vendors.detailFitScoreHint') }}</p>
+                                <input
+                                    id="vm-b-fit"
+                                    v-model.number="edit.fit_score"
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    class="ppms-input vm-field__control"
+                                    :placeholder="t('vendors.detailFitScorePlaceholder')"
+                                    aria-describedby="vm-b-fit-hint"
+                                />
+                            </div>
+                        </div>
+                    </section>
+                    <section class="vm-form-section">
+                        <h4 class="vm-form-section__title">{{ t('vendors.formSectionBizValue') }}</h4>
+                        <div class="vm-form-grid vm-form-grid--3">
+                            <div class="vm-field">
+                                <label class="vm-field__label" for="vm-b-cv">{{ t('vendors.contractValue') }}</label>
+                                <p id="vm-b-cv-hint" class="vm-field__hint">{{ t('vendors.detailContractValueHint') }}</p>
+                                <input
+                                    id="vm-b-cv"
+                                    v-model="edit.contract_value"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    class="ppms-input vm-field__control"
+                                    :placeholder="t('vendors.detailContractValuePlaceholder')"
+                                    inputmode="decimal"
+                                    aria-describedby="vm-b-cv-hint"
+                                />
+                            </div>
+                            <div class="vm-field">
+                                <label class="vm-field__label" for="vm-b-ec">{{ t('vendors.estimatedCost') }}</label>
+                                <p id="vm-b-ec-hint" class="vm-field__hint">{{ t('vendors.detailEstimatedCostHint') }}</p>
+                                <input
+                                    id="vm-b-ec"
+                                    v-model="edit.estimated_cost"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    class="ppms-input vm-field__control"
+                                    :placeholder="t('vendors.detailEstimatedCostPlaceholder')"
+                                    inputmode="decimal"
+                                    aria-describedby="vm-b-ec-hint"
+                                />
+                            </div>
+                            <div class="vm-field">
+                                <label class="vm-field__label" for="vm-b-rp">{{ t('vendors.referencePrice') }}</label>
+                                <p id="vm-b-rp-hint" class="vm-field__hint">{{ t('vendors.detailReferencePriceHint') }}</p>
+                                <input
+                                    id="vm-b-rp"
+                                    v-model="edit.reference_price"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    class="ppms-input vm-field__control"
+                                    :placeholder="t('vendors.detailReferencePricePlaceholder')"
+                                    inputmode="decimal"
+                                    aria-describedby="vm-b-rp-hint"
+                                />
+                            </div>
+                        </div>
+                    </section>
+                    <section class="vm-form-section">
+                        <h4 class="vm-form-section__title">{{ t('vendors.formSectionBizNarrative') }}</h4>
+                        <div class="vm-field vm-field--full">
+                            <label class="vm-field__label" for="vm-b-mp">{{ t('vendors.mainProducts') }}</label>
+                            <p id="vm-b-mp-hint" class="vm-field__hint">{{ t('vendors.detailMainProductsHint') }}</p>
+                            <textarea
+                                id="vm-b-mp"
+                                v-model="edit.main_products"
+                                rows="3"
+                                class="ppms-input vm-field__control"
+                                :placeholder="t('vendors.detailMainProductsPlaceholder')"
+                                aria-describedby="vm-b-mp-hint"
+                            />
+                        </div>
+                        <div class="vm-form-grid vm-form-grid--2">
+                            <div class="vm-field">
+                                <label class="vm-field__label" for="vm-b-pros">{{ t('vendors.pros') }}</label>
+                                <textarea
+                                    id="vm-b-pros"
+                                    v-model="edit.pros"
+                                    rows="4"
+                                    class="ppms-input vm-field__control"
+                                    :placeholder="t('vendors.detailProsPlaceholder')"
+                                />
+                            </div>
+                            <div class="vm-field">
+                                <label class="vm-field__label" for="vm-b-cons">{{ t('vendors.cons') }}</label>
+                                <textarea
+                                    id="vm-b-cons"
+                                    v-model="edit.cons"
+                                    rows="4"
+                                    class="ppms-input vm-field__control"
+                                    :placeholder="t('vendors.detailConsPlaceholder')"
+                                />
+                            </div>
+                        </div>
+                        <div class="vm-field vm-field--full">
+                            <label class="vm-field__label" for="vm-b-rn">{{ t('vendors.researchNote') }}</label>
+                            <p id="vm-b-rn-hint" class="vm-field__hint">{{ t('vendors.detailResearchNoteHint') }}</p>
+                            <textarea
+                                id="vm-b-rn"
+                                v-model="edit.research_note"
+                                rows="3"
+                                class="ppms-input vm-field__control"
+                                :placeholder="t('vendors.detailResearchNotePlaceholder')"
+                                aria-describedby="vm-b-rn-hint"
+                            />
+                        </div>
+                    </section>
+                    <section class="vm-form-section">
+                        <h4 class="vm-form-section__title">{{ t('vendors.formSectionBizCriteria') }}</h4>
+                        <p class="vm-form-section__intro">{{ t('vendors.formSectionBizCriteriaHint') }}</p>
+                        <div class="vm-form-grid vm-form-grid--4">
+                            <div class="vm-field">
+                                <label class="vm-field__label" for="vm-b-sp">{{ t('vendors.scorePrice') }}</label>
+                                <p class="vm-field__hint">{{ t('vendors.detailScorePriceHint') }}</p>
+                                <input
+                                    id="vm-b-sp"
+                                    v-model="edit.score_price"
+                                    type="number"
+                                    min="0"
+                                    max="5"
+                                    step="0.1"
+                                    class="ppms-input vm-field__control"
+                                    placeholder="0–5"
+                                />
+                            </div>
+                            <div class="vm-field">
+                                <label class="vm-field__label" for="vm-b-sq">{{ t('vendors.scoreQuality') }}</label>
+                                <p class="vm-field__hint">{{ t('vendors.detailScoreQualityHint') }}</p>
+                                <input
+                                    id="vm-b-sq"
+                                    v-model="edit.score_quality"
+                                    type="number"
+                                    min="0"
+                                    max="5"
+                                    step="0.1"
+                                    class="ppms-input vm-field__control"
+                                    placeholder="0–5"
+                                />
+                            </div>
+                            <div class="vm-field">
+                                <label class="vm-field__label" for="vm-b-ss">{{ t('vendors.scoreSla') }}</label>
+                                <p class="vm-field__hint">{{ t('vendors.detailScoreSlaHint') }}</p>
+                                <input
+                                    id="vm-b-ss"
+                                    v-model="edit.score_sla"
+                                    type="number"
+                                    min="0"
+                                    max="5"
+                                    step="0.1"
+                                    class="ppms-input vm-field__control"
+                                    placeholder="0–5"
+                                />
+                            </div>
+                            <div class="vm-field">
+                                <label class="vm-field__label" for="vm-b-su">{{ t('vendors.scoreSupport') }}</label>
+                                <p class="vm-field__hint">{{ t('vendors.detailScoreSupportHint') }}</p>
+                                <input
+                                    id="vm-b-su"
+                                    v-model="edit.score_support"
+                                    type="number"
+                                    min="0"
+                                    max="5"
+                                    step="0.1"
+                                    class="ppms-input vm-field__control"
+                                    placeholder="0–5"
+                                />
+                            </div>
+                        </div>
+                    </section>
+                    <section class="vm-form-section">
+                        <h4 class="vm-form-section__title">{{ t('vendors.formSectionDepartments') }}</h4>
+                        <p id="vm-b-dept-hint" class="vm-field__hint vm-field__hint--block">{{ t('vendors.detailDepartmentsHint') }}</p>
+                        <div class="vm-field vm-field--full">
+                            <label class="vm-field__label" for="vm-b-dept">{{ t('vendors.departments') }}</label>
+                            <select
+                                id="vm-b-dept"
+                                v-model="editDepartmentIds"
+                                class="ppms-input vm-field__control vm-field__control--multiselect"
+                                multiple
+                                size="6"
+                                aria-describedby="vm-b-dept-hint"
+                            >
+                                <option v-for="d in lookups.departments" :key="d.id" :value="d.id">{{ d.name }}</option>
+                            </select>
+                        </div>
+                        <p class="vm-form-footnote">{{ t('contracts.addDepartment') }}</p>
+                    </section>
                 </div>
                 <div v-if="vendor.products?.length" class="ppms-mt">
                     <h4>{{ t('vendors.productLines') }}</h4>
@@ -120,7 +457,13 @@
                 </div>
             </section>
 
-            <section v-show="tab === 'contracts'" class="ppms-card ppms-mt">
+            <section
+                v-show="tab === 'contracts'"
+                id="vm-panel-contracts"
+                class="ppms-card ppms-mt vm-panel"
+                role="tabpanel"
+                aria-labelledby="vm-tab-contracts"
+            >
                 <table v-if="vendor.contracts?.length" class="ppms-table">
                     <thead>
                         <tr>
@@ -144,7 +487,13 @@
                 <p v-else class="ppms-muted">{{ t('vendors.contractsEmpty') }}</p>
             </section>
 
-            <section v-show="tab === 'reviews'" class="ppms-card ppms-mt">
+            <section
+                v-show="tab === 'reviews'"
+                id="vm-panel-reviews"
+                class="ppms-card ppms-mt vm-panel"
+                role="tabpanel"
+                aria-labelledby="vm-tab-reviews"
+            >
                 <VendorReview
                     :vendor-id="Number(vendor.id)"
                     :items="vendor.reviews || []"
@@ -155,34 +504,70 @@
                 />
             </section>
 
-            <section v-show="tab === 'timeline'" class="ppms-card ppms-mt">
-                <div v-if="canEdit" class="vm-timeline-form ppms-stack">
+            <section
+                v-show="tab === 'timeline'"
+                id="vm-panel-timeline"
+                class="ppms-card ppms-mt vm-panel"
+                role="tabpanel"
+                aria-labelledby="vm-tab-timeline"
+            >
+                <div v-if="canEdit" class="vm-timeline-form vm-edit-form vm-edit-form--compact">
                     <h2 class="vm-sec-title">{{ t('vendors.timelineAdd') }}</h2>
-                    <div class="vm-grid-2">
-                        <label class="ppms-field">
-                            <span>{{ t('vendors.timelinePhase') }}</span>
-                            <select v-model="tlForm.phase" class="ppms-input">
+                    <div class="vm-form-grid vm-form-grid--2">
+                        <div class="vm-field">
+                            <label class="vm-field__label" for="vm-tl-ph">{{ t('vendors.timelinePhase') }}</label>
+                            <p id="vm-tl-ph-hint" class="vm-field__hint">{{ t('vendors.timelinePhaseHint') }}</p>
+                            <select id="vm-tl-ph" v-model="tlForm.phase" class="ppms-input vm-field__control" aria-describedby="vm-tl-ph-hint">
                                 <option v-for="ph in phases" :key="ph" :value="ph">{{ timelinePhaseLabel(ph) }}</option>
                             </select>
-                        </label>
-                        <label class="ppms-field">
-                            <span>{{ t('vendors.timelineWhen') }}</span>
-                            <input v-model="tlForm.occurred_at_local" type="datetime-local" class="ppms-input" :step="60" />
-                        </label>
+                        </div>
+                        <div class="vm-field">
+                            <label class="vm-field__label" for="vm-tl-when">{{ t('vendors.timelineWhen') }}</label>
+                            <p id="vm-tl-when-hint" class="vm-field__hint">{{ t('vendors.timelineWhenHint') }}</p>
+                            <input
+                                id="vm-tl-when"
+                                v-model="tlForm.occurred_at_local"
+                                type="datetime-local"
+                                class="ppms-input vm-field__control"
+                                :step="60"
+                                aria-describedby="vm-tl-when-hint"
+                            />
+                        </div>
                     </div>
-                    <label class="ppms-field">
-                        <span>{{ t('vendors.timelineActor') }}</span>
-                        <input v-model.number="tlForm.performed_by_user_id" type="number" min="1" class="ppms-input" />
-                    </label>
-                    <label class="ppms-field">
-                        <span>{{ t('vendors.timelineNote') }}</span>
-                        <textarea v-model="tlForm.note" rows="2" class="ppms-input" />
-                    </label>
-                    <label class="ppms-field ppms-field-inline">
-                        <input v-model="tlForm.is_current" type="checkbox" />
-                        <span>{{ t('vendors.timelineCurrent') }}</span>
-                    </label>
-                    <button type="button" class="ppms-btn-primary" :disabled="tlSaving" @click="addTimeline">{{ t('vendors.timelineAdd') }}</button>
+                    <div class="vm-form-grid vm-form-grid--2">
+                        <div class="vm-field">
+                            <label class="vm-field__label" for="vm-tl-act">{{ t('vendors.timelineActor') }}</label>
+                            <p id="vm-tl-act-hint" class="vm-field__hint">{{ t('vendors.timelineActorHint') }}</p>
+                            <input
+                                id="vm-tl-act"
+                                v-model.number="tlForm.performed_by_user_id"
+                                type="number"
+                                min="1"
+                                class="ppms-input vm-field__control"
+                                :placeholder="t('vendors.timelineActorPlaceholder')"
+                                aria-describedby="vm-tl-act-hint"
+                            />
+                        </div>
+                        <div class="vm-field vm-field--checkbox">
+                            <label class="vm-field__checkbox">
+                                <input v-model="tlForm.is_current" type="checkbox" />
+                                <span>{{ t('vendors.timelineCurrent') }}</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="vm-field vm-field--full">
+                        <label class="vm-field__label" for="vm-tl-note">{{ t('vendors.timelineNote') }}</label>
+                        <textarea
+                            id="vm-tl-note"
+                            v-model="tlForm.note"
+                            rows="3"
+                            class="ppms-input vm-field__control"
+                            :placeholder="t('vendors.timelineNotePlaceholder')"
+                        />
+                    </div>
+                    <div class="vm-timeline-form__actions">
+                        <button type="button" class="ppms-btn-primary" :disabled="tlSaving" @click="addTimeline">{{ t('vendors.timelineAdd') }}</button>
+                    </div>
                 </div>
                 <VendorTimeline
                     :events="timelineEvents"
@@ -493,6 +878,70 @@ onMounted(async () => {
     gap: 0.5rem;
     margin-top: 0.5rem;
 }
+
+/* —— Tabs —— */
+.vm-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.5rem 0 0;
+    padding: 0.35rem;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid var(--ppms-border, #e2e8f0);
+}
+.vm-tab {
+    flex: 1 1 9.5rem;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    padding: 0.55rem 0.75rem 0.6rem;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ppms-text, #0f172a);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+.vm-tab:hover {
+    background: rgba(255, 255, 255, 0.75);
+    border-color: var(--ppms-border, #e2e8f0);
+}
+.vm-tab:focus-visible {
+    outline: 2px solid var(--ppms-accent, #4f46e5);
+    outline-offset: 2px;
+}
+.vm-tab--active {
+    background: #fff;
+    border-color: #c7d2fe;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+.vm-tab__label {
+    font-weight: 700;
+    font-size: 0.9rem;
+    line-height: 1.25;
+}
+.vm-tab__hint {
+    font-size: 0.7rem;
+    line-height: 1.35;
+    color: var(--ppms-muted, #64748b);
+    font-weight: 500;
+}
+.vm-tab--active .vm-tab__hint {
+    color: #475569;
+}
+
+.vm-panel {
+    scroll-margin-top: 0.5rem;
+}
+
 .vm-kv {
     width: 100%;
     border-collapse: collapse;
@@ -500,13 +949,19 @@ onMounted(async () => {
 .vm-kv th,
 .vm-kv td {
     text-align: left;
-    padding: 0.35rem 0.5rem;
+    padding: 0.5rem 0.65rem;
     vertical-align: top;
+    border-bottom: 1px solid var(--ppms-border, #e8ecf0);
 }
 .vm-kv th {
     width: 200px;
     color: var(--ppms-muted, #5c6470);
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+.vm-kv tr:last-child th,
+.vm-kv tr:last-child td {
+    border-bottom: none;
 }
 .vm-pre {
     white-space: pre-wrap;
@@ -515,24 +970,20 @@ onMounted(async () => {
     margin: 0 0 0.75rem;
     font-size: 1.05rem;
 }
-.vm-grid-4 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 0.75rem;
-}
-.vm-grid-2 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 0.75rem;
-}
 .vm-product-list {
     margin: 0.5rem 0 0;
     padding-left: 1.2rem;
 }
 .vm-timeline-form {
     margin-bottom: 1.25rem;
-    padding-bottom: 1rem;
+    padding: 1rem 1.1rem;
+    border-radius: 10px;
+    background: var(--ppms-bg-subtle, rgba(248, 250, 252, 0.95));
+    border: 1px solid var(--ppms-border, #e2e6ea);
     border-bottom: 1px solid var(--ppms-border, #e2e6ea);
+}
+.vm-timeline-form__actions {
+    margin-top: 0.75rem;
 }
 .vm-dept-badge {
     display: inline-block;
@@ -542,5 +993,155 @@ onMounted(async () => {
     background: #e0e7ff;
     color: #3730a3;
     font-size: 0.85rem;
+}
+
+/* —— Edit form —— */
+.vm-edit-form {
+    padding-top: 0.25rem;
+}
+.vm-edit-form--compact {
+    padding-top: 0;
+}
+.vm-edit-banner {
+    margin: 0 0 1.1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    border: 1px solid #c7d2fe;
+}
+.vm-edit-banner__title {
+    display: block;
+    font-size: 0.95rem;
+    color: #312e81;
+}
+.vm-edit-banner__hint {
+    margin: 0.35rem 0 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: #4338ca;
+    opacity: 0.95;
+}
+.vm-form-section {
+    margin-bottom: 1.35rem;
+}
+
+.vm-form-section:last-child {
+    margin-bottom: 0;
+}
+.vm-form-section__title {
+    margin: 0 0 0.65rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ppms-muted, #64748b);
+}
+.vm-form-section__intro {
+    margin: 0 0 0.65rem;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--ppms-muted, #64748b);
+}
+.vm-form-footnote {
+    margin: 0.5rem 0 0;
+    font-size: 0.8125rem;
+    color: var(--ppms-muted, #64748b);
+}
+
+.vm-form-grid {
+    display: grid;
+    gap: 1rem 1.1rem;
+    align-items: start;
+}
+.vm-form-grid--2 {
+    grid-template-columns: 1fr;
+}
+.vm-form-grid--3 {
+    grid-template-columns: 1fr;
+}
+.vm-form-grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 640px) {
+    .vm-form-grid--2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .vm-form-grid--3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (min-width: 900px) {
+    .vm-form-grid--3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .vm-form-grid--4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.vm-field {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+.vm-field--full {
+    grid-column: 1 / -1;
+}
+.vm-field--span-2 {
+    grid-column: span 2;
+}
+@media (max-width: 639px) {
+    .vm-field--span-2 {
+        grid-column: span 1;
+    }
+}
+.vm-field--max-md .vm-field__control {
+    max-width: 22rem;
+}
+.vm-field__label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ppms-text, #0f172a);
+}
+.vm-field__hint {
+    margin: 0;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--ppms-muted, #64748b);
+}
+.vm-field__hint--block {
+    margin-bottom: 0.35rem;
+}
+.vm-field__control {
+    width: 100%;
+    min-height: 2.5rem;
+    box-sizing: border-box;
+}
+.vm-field__control--multiselect {
+    min-height: 8rem;
+    padding: 0.55rem 0.5rem;
+    overflow-y: auto;
+}
+textarea.vm-field__control {
+    min-height: 5rem;
+    resize: vertical;
+}
+.vm-field--checkbox {
+    justify-content: flex-end;
+    padding-bottom: 0.25rem;
+}
+.vm-field__checkbox {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    font-size: 0.875rem;
+    color: var(--ppms-text, #0f172a);
+    cursor: pointer;
+}
+.vm-field__checkbox input {
+    margin-top: 0.2rem;
+    flex-shrink: 0;
 }
 </style>
