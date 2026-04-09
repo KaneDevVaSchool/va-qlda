@@ -32,9 +32,21 @@ return new class extends Migration
                     $newVal = json_decode($newVal, true);
                 }
 
+                // contract_id may be null (nullOnDelete on contract_logs); recover from payload id.
+                $contractId = $row->contract_id !== null ? (int) $row->contract_id : null;
+                if ($contractId === null || $contractId === 0) {
+                    $contractId = is_array($newVal) && isset($newVal['id']) ? (int) $newVal['id'] : null;
+                }
+                if ($contractId === null || $contractId === 0) {
+                    $contractId = is_array($oldVal) && isset($oldVal['id']) ? (int) $oldVal['id'] : null;
+                }
+                if ($contractId === null || $contractId === 0) {
+                    continue;
+                }
+
                 $existsDup = AuditLog::query()
                     ->where('auditable_type', Contract::class)
-                    ->where('auditable_id', $row->contract_id)
+                    ->where('auditable_id', $contractId)
                     ->where('action', $row->action)
                     ->where('created_at', $row->created_at)
                     ->where('user_id', $row->user_id)
@@ -44,13 +56,19 @@ return new class extends Migration
                     continue;
                 }
 
-                $code = DB::table('contracts')->where('id', $row->contract_id)->value('code');
-                $subjectLabel = $code ? (string) $code : 'Contract #'.$row->contract_id;
+                $code = DB::table('contracts')->where('id', $contractId)->value('code');
+                if (! $code && is_array($newVal) && ! empty($newVal['code'])) {
+                    $code = (string) $newVal['code'];
+                }
+                if (! $code && is_array($oldVal) && ! empty($oldVal['code'])) {
+                    $code = (string) $oldVal['code'];
+                }
+                $subjectLabel = $code ? (string) $code : 'Contract #'.$contractId;
 
                 AuditLog::query()->create([
                     'user_id' => $row->user_id,
                     'auditable_type' => Contract::class,
-                    'auditable_id' => $row->contract_id,
+                    'auditable_id' => $contractId,
                     'action' => $row->action,
                     'activity_kind' => ActivityKindResolver::resolve($row->action, is_array($oldVal) ? $oldVal : null, is_array($newVal) ? $newVal : null),
                     'old_values' => is_array($oldVal) ? $oldVal : null,
