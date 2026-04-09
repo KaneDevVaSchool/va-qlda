@@ -54,24 +54,6 @@
                 </div>
                 <p v-else-if="!canManageRbac" class="ppms-profile-access-note">{{ t('profile.accessRoleUserHint') }}</p>
                 <p v-else class="ppms-profile-access-note">{{ t('profile.accessRoleNoRoleOptions') }}</p>
-
-                <template v-if="canManageOthers && delegatorContext && delegatorRoleReady">
-                    <hr class="ppms-profile-access-hr" />
-                    <p class="ppms-profile-access-subtitle">{{ t('profile.accessDelegatorRoleTitle', { name: delegatorContext.name }) }}</p>
-                    <p class="ppms-profile-access-note">{{ t('profile.accessDelegatorRoleLead') }}</p>
-                    <div v-if="canManageRbac && roleOptions.length" class="ppms-profile-access-row">
-                        <label class="ppms-profile-access-label" for="delegator-role">{{ t('profile.accessRoleChange') }}</label>
-                        <select
-                            id="delegator-role"
-                            v-model="delegatorRoleDraft"
-                            class="ppms-profile-access-input"
-                            :disabled="roleSaving"
-                            @change="saveDelegatorRole"
-                        >
-                            <option v-for="r in roleOptions" :key="'d-' + r" :value="r">{{ roleLabel(r) }}</option>
-                        </select>
-                    </div>
-                </template>
             </div>
         </section>
 
@@ -143,6 +125,26 @@
                 role="status"
             >
                 {{ t('profile.delegationContextBanner', { name: delegatorContext.name }) }}
+            </div>
+
+            <div
+                v-if="canManageOthers && delegatorContext && delegatorRoleReady && roleOptions.length"
+                class="ppms-profile-access-card ppms-profile-access-card--delegator-role"
+            >
+                <p class="ppms-profile-access-subtitle">{{ t('profile.accessDelegatorRoleTitle', { name: delegatorContext.name }) }}</p>
+                <p class="ppms-profile-access-note">{{ t('profile.accessDelegatorRoleLead') }}</p>
+                <div class="ppms-profile-access-row">
+                    <label class="ppms-profile-access-label" for="delegator-role">{{ t('profile.accessRoleChange') }}</label>
+                    <select
+                        id="delegator-role"
+                        v-model="delegatorRoleDraft"
+                        class="ppms-profile-access-input"
+                        :disabled="roleSaving"
+                        @change="saveDelegatorRole"
+                    >
+                        <option v-for="r in roleOptions" :key="'d-' + r" :value="r">{{ roleLabel(r) }}</option>
+                    </select>
+                </div>
             </div>
 
             <div v-if="delErr" class="ppms-profile-access-banner ppms-profile-access-banner--err" role="alert">
@@ -450,6 +452,9 @@ async function loadDelegations() {
         }
         const { data } = await axios.get('/api/me/delegations', { params });
         canManageOthers.value = !!data.can_manage_others;
+        if (Array.isArray(data.role_options) && data.role_options.length) {
+            roleOptions.value = data.role_options;
+        }
         items.value = Array.isArray(data.items) ? data.items : [];
         if (Array.isArray(data.scopes) && data.scopes.length) {
             scopeOptions.value = data.scopes;
@@ -808,6 +813,11 @@ onUnmounted(() => {
 }
 .ppms-profile-access-card--delegator {
     margin-bottom: 0.75rem;
+}
+.ppms-profile-access-card--delegator-role {
+    margin-bottom: 1rem;
+    border-color: rgba(59, 130, 246, 0.28);
+    background: rgba(59, 130, 246, 0.04);
 }
 .ppms-profile-access-delegator-actions {
     display: flex;

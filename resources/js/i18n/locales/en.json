@@ -1228,7 +1228,7 @@
         "accessSectionPermissions": "2. Permission matrix (modules & actions)",
         "accessSectionDelegation": "3. Delegation",
         "delegationIntro": "Grant another user limited authority to act on your behalf. You can revoke delegation at any time.",
-        "delegationIntroAdmin": "As an administrator, you can also configure delegations on behalf of another user (select delegator below).",
+        "delegationIntroAdmin": "As a permission admin, you can configure delegations for another user: pick a delegator below, then change their PPMS role in the card right under the context banner if needed.",
         "delegationDelegatorLabel": "Delegator (manage for this user)",
         "delegationDelegatorPlaceholder": "Search by name or email…",
         "delegationDelegatorSelf": "My delegations only",

@@ -39,6 +39,7 @@ class UserDelegationController extends Controller
         return response()->json([
             'scopes' => self::SCOPES,
             'can_manage_others' => $asAdmin,
+            'role_options' => array_keys(config('ppms_rbac.roles', [])),
             'view_delegator_id' => $delegatorId,
             'items' => $rows,
         ]);

@@ -1229,7 +1229,7 @@
         "accessSectionPermissions": "2. Ma trận quyền (module & hành động)",
         "accessSectionDelegation": "3. Ủy quyền thay mặt",
         "delegationIntro": "Cho phép người dùng khác thay mặt bạn trong phạm vi đã chọn. Bạn có thể thu hồi ủy quyền bất cứ lúc nào.",
-        "delegationIntroAdmin": "Quản trị viên có thể thiết lập ủy quyền thay cho user khác — chọn «người ủy quyền» bên dưới.",
+        "delegationIntroAdmin": "Quản trị viên có thể thiết lập ủy quyền thay cho user khác: chọn «người ủy quyền» bên dưới, rồi (nếu cần) đổi vai trò PPMS của người đó trong khối ngay sau banner.",
         "delegationDelegatorLabel": "Người ủy quyền (thiết lập thay cho)",
         "delegationDelegatorPlaceholder": "Tìm theo tên hoặc email…",
         "delegationDelegatorSelf": "Chỉ ủy quyền của tôi",
