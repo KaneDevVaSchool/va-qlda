@@ -3307,18 +3307,112 @@ body.ppms-drawer-open {
     }
 }
 
+/* Danh sách dự án: không giới hạn chiều cao — cuộn theo trang; chỉ cuộn ngang khi bảng rộng. */
+.ppms-pl-list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 0;
+}
+
+.ppms-pl-list-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.65rem 1rem;
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 12px;
+    border: 1px solid var(--ppms-border);
+    background: linear-gradient(165deg, rgba(37, 99, 235, 0.06), rgba(255, 255, 255, 0) 52%);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.ppms-pl-list-meta-list {
+    margin: 0;
+    padding-left: 1.15rem;
+    max-width: min(100%, 46rem);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--ppms-muted, #64748b);
+}
+
+.ppms-pl-list-meta-list li {
+    padding-left: 0.15rem;
+}
+
+.ppms-pl-list-meta-list li + li {
+    margin-top: 0.2rem;
+}
+
+.ppms-pl-list-meta-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.ppms-pl-list-meta-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2rem;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--ppms-text);
+    background: var(--ppms-surface, #fff);
+    border: 1px solid var(--ppms-border);
+    border-radius: 999px;
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease,
+        color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.ppms-pl-list-meta-btn:hover {
+    border-color: rgba(37, 99, 235, 0.45);
+    color: var(--ppms-primary, #2563eb);
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.12);
+}
+
+.ppms-pl-list-meta-btn--primary {
+    border-color: rgba(37, 99, 235, 0.35);
+    background: rgba(37, 99, 235, 0.08);
+    color: var(--ppms-primary, #1d4ed8);
+}
+
+.ppms-pl-list-meta-btn--primary:hover {
+    background: rgba(37, 99, 235, 0.14);
+    border-color: rgba(37, 99, 235, 0.55);
+}
+
+@media (max-width: 640px) {
+    .ppms-pl-list-meta {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ppms-pl-list-meta-actions {
+        justify-content: flex-start;
+    }
+}
+
 .ppms-table-scroll.ppms-table-scroll--sticky-head.ppms-project-list-table-wrap {
     overflow-x: auto;
-    overflow-y: auto;
-    max-height: min(65vh, 38rem);
+    overflow-y: visible;
+    max-height: none;
     -webkit-overflow-scrolling: touch;
-    border-radius: var(--ppms-radius-sm);
+    border-radius: 12px;
     border: 1px solid var(--ppms-border);
     background: var(--ppms-surface);
     padding: 0;
     margin-left: 0;
     margin-right: 0;
-    /* Bảng có thể rộng hơn khung: cuộn ngang để xem đủ cột / tên dài */
     overscroll-behavior-x: contain;
 }
 
@@ -3360,33 +3454,13 @@ body.ppms-drawer-open {
     white-space: nowrap;
 }
 
-.ppms-pl-list-hint--customer {
-    margin-top: 0.1rem;
-    margin-bottom: 0;
-    font-size: 0.8rem;
-}
-
-.ppms-pl-list-customer-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem 0.5rem;
-    align-items: center;
-    margin-bottom: 0.65rem;
-}
-
-.ppms-pl-list-customer-toolbar-btn {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    padding: 0.3rem 0.65rem;
-}
-
 .ppms-pl-customer-group-row td {
     padding: 0 !important;
     vertical-align: middle;
 }
 
 .ppms-pl-customer-group-cell {
-    background: rgba(37, 99, 235, 0.06);
+    background: linear-gradient(90deg, rgba(37, 99, 235, 0.07), rgba(37, 99, 235, 0.02));
     border-top: 1px solid var(--ppms-border);
 }
 
@@ -3400,20 +3474,21 @@ body.ppms-drawer-open {
     gap: 0.5rem;
     width: 100%;
     margin: 0;
-    padding: 0.5rem 0.7rem;
+    padding: 0.42rem 0.75rem;
     text-align: left;
     font: inherit;
     font-weight: 700;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     color: var(--ppms-text);
     background: transparent;
     border: none;
     cursor: pointer;
     border-radius: 0;
+    letter-spacing: 0.01em;
 }
 
 .ppms-pl-customer-group-head:hover {
-    background: rgba(37, 99, 235, 0.07);
+    background: rgba(255, 255, 255, 0.45);
 }
 
 .ppms-pl-customer-group-chevron {
@@ -3435,9 +3510,13 @@ body.ppms-drawer-open {
 }
 
 .ppms-pl-customer-group-count {
-    font-size: 0.78rem;
-    font-weight: 600;
+    font-size: 0.72rem;
+    font-weight: 700;
     flex-shrink: 0;
+    padding: 0.12rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.12);
+    color: var(--ppms-primary, #1d4ed8);
 }
 
 .ppms-bulk-dock.ppms-bulk-dock--full {

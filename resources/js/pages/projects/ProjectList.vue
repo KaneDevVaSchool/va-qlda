@@ -56,18 +56,23 @@
             <div v-if="!projects.length" class="ppms-empty-hint ppms-mt">
                 <p class="ppms-empty-hint-text">{{ t('projects.tableEmpty') }}</p>
             </div>
-            <div v-else-if="viewMode === 'list'" class="ppms-table-scroll ppms-table-scroll--sticky-head ppms-project-list-table-wrap ppms-mt">
-                <p v-if="projects.length" class="ppms-pl-list-hint ppms-muted">{{ t('projects.listGroupHint') }}</p>
-                <p v-if="projects.length" class="ppms-pl-list-hint ppms-muted ppms-pl-list-hint--customer">{{ t('projects.listGroupByCustomerHint') }}</p>
-                <div v-if="projects.length" class="ppms-pl-list-customer-toolbar">
-                    <button type="button" class="ppms-btn-ghost ppms-pl-list-customer-toolbar-btn" @click="collapseAllCustomerGroups">
-                        {{ t('projects.listCollapseAll') }}
-                    </button>
-                    <button type="button" class="ppms-btn-ghost ppms-pl-list-customer-toolbar-btn" @click="expandAllCustomerGroups">
-                        {{ t('projects.listExpandAll') }}
-                    </button>
+            <div v-else-if="viewMode === 'list'" class="ppms-pl-list-view ppms-mt">
+                <div v-if="projects.length" class="ppms-pl-list-meta">
+                    <ul class="ppms-pl-list-meta-list">
+                        <li>{{ t('projects.listGroupHint') }}</li>
+                        <li>{{ t('projects.listGroupByCustomerHint') }}</li>
+                    </ul>
+                    <div class="ppms-pl-list-meta-actions" role="group" :aria-label="t('projects.listMetaActionsAria')">
+                        <button type="button" class="ppms-pl-list-meta-btn" @click="collapseAllCustomerGroups">
+                            {{ t('projects.listCollapseAll') }}
+                        </button>
+                        <button type="button" class="ppms-pl-list-meta-btn ppms-pl-list-meta-btn--primary" @click="expandAllCustomerGroups">
+                            {{ t('projects.listExpandAll') }}
+                        </button>
+                    </div>
                 </div>
-                <table class="ppms-table ppms-table--project-staging">
+                <div class="ppms-table-scroll ppms-table-scroll--sticky-head ppms-project-list-table-wrap">
+                    <table class="ppms-table ppms-table--project-staging">
                     <caption class="ppms-sr-only">
                         {{ t('projects.listSectionTitle') }}
                     </caption>
@@ -117,7 +122,7 @@
                                             <polyline points="9 18 15 12 9 6" />
                                         </svg>
                                         <span class="ppms-pl-customer-group-title">{{ customerGroupLabel(group) }}</span>
-                                        <span class="ppms-pl-customer-group-count ppms-muted">{{
+                                        <span class="ppms-pl-customer-group-count">{{
                                             t('projects.listGroupCustomerCount', { n: group.projects.length })
                                         }}</span>
                                     </button>
@@ -317,6 +322,7 @@
                         </template>
                     </tbody>
                 </table>
+                </div>
             </div>
             <div v-else class="ppms-pl-kanban-wrap ppms-mt">
                 <p v-if="canBulk" class="ppms-pl-kanban-hint ppms-muted">{{ t('projects.kanbanDragHint') }}</p>
