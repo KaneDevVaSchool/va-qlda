@@ -1,62 +1,64 @@
 <template>
     <div class="ppms-page ppms-activity-page">
         <div class="ppms-activity-toolbar">
-            <div class="ppms-activity-filters">
-                <label class="ppms-activity-field ppms-activity-field--sm">
-                    <span class="ppms-muted">{{ t('activityFeed.filterSubject') }}</span>
-                    <select v-model="filters.subject_type" class="ppms-input" @change="resetAndLoad">
-                        <option value="">{{ t('activityFeed.filterAll') }}</option>
-                        <option value="project">{{ t('activityFeed.subject.project') }}</option>
-                        <option value="contract">{{ t('activityFeed.subject.contract') }}</option>
-                    </select>
-                </label>
-                <label class="ppms-activity-field ppms-activity-field--sm">
-                    <span class="ppms-muted">{{ t('activityFeed.filterKind') }}</span>
-                    <select v-model="filters.activity_kind" class="ppms-input" @change="resetAndLoad">
-                        <option value="">{{ t('activityFeed.filterAll') }}</option>
-                        <option v-for="k in kindOptions" :key="k" :value="k">
-                            {{ t(`activityFeed.kind.${k}`) }}
-                        </option>
-                    </select>
-                </label>
-                <label class="ppms-activity-field ppms-activity-field--xs">
-                    <span class="ppms-muted">{{ t('activityFeed.filterUser') }}</span>
-                    <input
-                        v-model.number="filters.user_id"
-                        type="number"
-                        min="1"
-                        inputmode="numeric"
-                        class="ppms-input"
-                        :placeholder="t('activityFeed.userIdPlaceholder')"
-                        @change="resetAndLoad"
-                    />
-                </label>
-                <label class="ppms-activity-field ppms-activity-field--date">
-                    <span class="ppms-muted">{{ t('activityFeed.filterFrom') }}</span>
-                    <input v-model="filters.from" type="date" class="ppms-input" @change="resetAndLoad" />
-                </label>
-                <label class="ppms-activity-field ppms-activity-field--date">
-                    <span class="ppms-muted">{{ t('activityFeed.filterTo') }}</span>
-                    <input v-model="filters.to" type="date" class="ppms-input" @change="resetAndLoad" />
-                </label>
-                <label class="ppms-activity-field ppms-activity-field--grow">
-                    <span class="ppms-muted">{{ t('common.search') }}</span>
-                    <input
-                        v-model="searchQ"
-                        type="search"
-                        class="ppms-input"
-                        :placeholder="t('activityFeed.searchPlaceholder')"
-                        enterkeyhint="search"
-                        @keyup.enter="resetAndLoad"
-                    />
-                </label>
-            </div>
-            <div class="ppms-activity-actions">
-                <button type="button" class="ppms-btn-ghost" @click="applySearch">{{ t('activityFeed.apply') }}</button>
-                <button type="button" class="ppms-btn-ghost" @click="clearFilters">{{ t('activityFeed.clearFilters') }}</button>
-                <button type="button" class="ppms-btn-ghost" :disabled="initialLoading" @click="markAll">
-                    {{ t('activityFeed.markAllRead') }}
-                </button>
+            <div class="ppms-activity-toolbar-card">
+                <div class="ppms-activity-filters">
+                    <label class="ppms-activity-field ppms-activity-field--sm">
+                        <span class="ppms-muted">{{ t('activityFeed.filterSubject') }}</span>
+                        <select v-model="filters.subject_type" class="ppms-input" @change="resetAndLoad">
+                            <option value="">{{ t('activityFeed.filterAll') }}</option>
+                            <option value="project">{{ t('activityFeed.subject.project') }}</option>
+                            <option value="contract">{{ t('activityFeed.subject.contract') }}</option>
+                        </select>
+                    </label>
+                    <label class="ppms-activity-field ppms-activity-field--sm">
+                        <span class="ppms-muted">{{ t('activityFeed.filterKind') }}</span>
+                        <select v-model="filters.activity_kind" class="ppms-input" @change="resetAndLoad">
+                            <option value="">{{ t('activityFeed.filterAll') }}</option>
+                            <option v-for="k in kindOptions" :key="k" :value="k">
+                                {{ t(`activityFeed.kind.${k}`) }}
+                            </option>
+                        </select>
+                    </label>
+                    <label class="ppms-activity-field ppms-activity-field--xs">
+                        <span class="ppms-muted">{{ t('activityFeed.filterUser') }}</span>
+                        <input
+                            v-model.number="filters.user_id"
+                            type="number"
+                            min="1"
+                            inputmode="numeric"
+                            class="ppms-input"
+                            :placeholder="t('activityFeed.userIdPlaceholder')"
+                            @change="resetAndLoad"
+                        />
+                    </label>
+                    <label class="ppms-activity-field ppms-activity-field--date">
+                        <span class="ppms-muted">{{ t('activityFeed.filterFrom') }}</span>
+                        <input v-model="filters.from" type="date" class="ppms-input" @change="resetAndLoad" />
+                    </label>
+                    <label class="ppms-activity-field ppms-activity-field--date">
+                        <span class="ppms-muted">{{ t('activityFeed.filterTo') }}</span>
+                        <input v-model="filters.to" type="date" class="ppms-input" @change="resetAndLoad" />
+                    </label>
+                    <label class="ppms-activity-field ppms-activity-field--grow">
+                        <span class="ppms-muted">{{ t('common.search') }}</span>
+                        <input
+                            v-model="searchQ"
+                            type="search"
+                            class="ppms-input"
+                            :placeholder="t('activityFeed.searchPlaceholder')"
+                            enterkeyhint="search"
+                            @keyup.enter="resetAndLoad"
+                        />
+                    </label>
+                </div>
+                <div class="ppms-activity-actions">
+                    <button type="button" class="ppms-btn-ghost" @click="applySearch">{{ t('activityFeed.apply') }}</button>
+                    <button type="button" class="ppms-btn-ghost" @click="clearFilters">{{ t('activityFeed.clearFilters') }}</button>
+                    <button type="button" class="ppms-btn-ghost" :disabled="initialLoading" @click="markAll">
+                        {{ t('activityFeed.markAllRead') }}
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -470,34 +472,59 @@ onUnmounted(() => {
 <style scoped>
 .ppms-activity-page {
     width: 100%;
-    max-width: min(920px, 100%);
-    margin-inline: auto;
-    padding-inline: clamp(0.75rem, 2vw, 0);
+    max-width: none;
+    margin-inline: 0;
     box-sizing: border-box;
 }
 
 .ppms-activity-toolbar {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.85rem;
     position: sticky;
     top: 0;
     z-index: 2;
-    padding-bottom: 0.5rem;
-    background: linear-gradient(to bottom, var(--ppms-bg, #f8fafc) 85%, transparent);
+    padding-bottom: 0.35rem;
+    background: linear-gradient(to bottom, var(--ppms-bg, #f8fafc) 88%, transparent);
+}
+
+.ppms-activity-toolbar-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--ppms-border, #e5e7eb);
+    border-radius: 10px;
+    background: var(--ppms-surface, #fff);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+@media (min-width: 1100px) {
+    .ppms-activity-toolbar-card {
+        flex-direction: row;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 0.65rem 1rem;
+    }
+
+    .ppms-activity-toolbar-card .ppms-activity-filters {
+        flex: 1;
+        min-width: min(100%, 42rem);
+    }
+
+    .ppms-activity-toolbar-card .ppms-activity-actions {
+        margin-left: auto;
+    }
 }
 
 .ppms-activity-filters {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr));
-    gap: 0.65rem 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 112px), 1fr));
+    gap: 0.45rem 0.55rem;
     align-items: end;
 }
 
 @media (min-width: 640px) {
     .ppms-activity-filters {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
     }
 }
 
@@ -519,6 +546,13 @@ onUnmounted(() => {
     }
 }
 
+@media (min-width: 1100px) {
+    .ppms-activity-field--grow {
+        grid-column: span 3;
+        min-width: 12rem;
+    }
+}
+
 .ppms-activity-field--xs :deep(.ppms-input) {
     max-width: 100%;
 }
@@ -526,13 +560,16 @@ onUnmounted(() => {
 .ppms-activity-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.4rem;
+    align-items: center;
 }
 
 .ppms-activity-actions .ppms-btn-ghost {
     flex: 1 1 auto;
-    min-width: min(100%, 8rem);
+    min-width: min(100%, 7.5rem);
     justify-content: center;
+    padding: 0.4rem 0.65rem;
+    font-size: 0.85rem;
 }
 
 @media (min-width: 480px) {
@@ -631,9 +668,13 @@ onUnmounted(() => {
 
 .ppms-activity-day {
     font-weight: 600;
-    font-size: clamp(0.9rem, 2.5vw, 0.95rem);
-    margin: 1.1rem 0 0.5rem;
+    font-size: clamp(0.88rem, 2.2vw, 0.92rem);
+    margin: 0.85rem 0 0.4rem;
     color: var(--ppms-heading, #111827);
+}
+
+.ppms-activity-day:first-of-type {
+    margin-top: 0.15rem;
 }
 
 .ppms-activity-timeline {
@@ -644,8 +685,8 @@ onUnmounted(() => {
 
 .ppms-activity-item {
     position: relative;
-    padding-left: 1rem;
-    padding-bottom: 1rem;
+    padding-left: 0.85rem;
+    padding-bottom: 0.75rem;
 }
 
 @media (min-width: 480px) {
@@ -681,14 +722,14 @@ onUnmounted(() => {
 
 .ppms-activity-card {
     border: 1px solid var(--ppms-border, #e5e7eb);
-    border-radius: 12px;
-    padding: 0.75rem 0.85rem;
+    border-radius: 10px;
+    padding: 0.65rem 0.75rem;
     background: var(--ppms-surface, #fff);
 }
 
 @media (min-width: 480px) {
     .ppms-activity-card {
-        padding: 0.85rem 1rem;
+        padding: 0.7rem 0.9rem;
     }
 }
 
@@ -806,30 +847,60 @@ onUnmounted(() => {
 }
 
 .ppms-activity-changes {
-    margin: 0.75rem 0 0;
-    padding: 0.5rem 0 0;
+    margin: 0.55rem 0 0;
+    padding: 0.45rem 0 0;
     list-style: none;
     border-top: 1px dashed var(--ppms-border, #e5e7eb);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.35rem 0.75rem;
+}
+
+@media (min-width: 720px) {
+    .ppms-activity-changes {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1200px) {
+    .ppms-activity-changes {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 }
 
 .ppms-activity-change {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    margin-bottom: 0.45rem;
-    font-size: clamp(0.82rem, 2.4vw, 0.88rem);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.12rem;
+    margin: 0;
+    padding: 0.35rem 0.45rem;
+    font-size: clamp(0.78rem, 2.1vw, 0.84rem);
+    border-radius: 6px;
+    background: rgba(248, 250, 252, 0.85);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    min-width: 0;
+}
+
+@media (min-width: 560px) {
+    .ppms-activity-change {
+        grid-template-columns: minmax(0, 10rem) minmax(0, 1fr);
+        gap: 0.35rem 0.5rem;
+        align-items: baseline;
+    }
 }
 
 .ppms-activity-change-field {
     font-weight: 600;
     color: var(--ppms-heading, #111827);
+    word-break: break-word;
 }
 
 .ppms-activity-diff {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.35rem;
+    gap: 0.25rem 0.35rem;
     align-items: baseline;
+    min-width: 0;
 }
 
 .ppms-activity-old {
