@@ -288,6 +288,7 @@
                             :class="{
                                 'ppms-pl-kanban-col--over':
                                     canBulk && kanbanDraggingId != null && kanbanDragOverPhase === col.phase,
+                                'ppms-pl-kanban-col--many': col.projects.length > 5,
                             }"
                             @dragover.prevent="onKanbanColumnDragOver(col.phase, $event)"
                             @drop.prevent="onKanbanDrop(col.phase, $event)"
