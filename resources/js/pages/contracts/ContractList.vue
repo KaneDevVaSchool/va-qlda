@@ -331,8 +331,12 @@
                                         class="ppms-input"
                                         required
                                         autocomplete="organization"
+                                        list="cm-vendor-list"
                                         :placeholder="t('contracts.fieldVendorPlaceholder')"
                                     />
+                                    <datalist id="cm-vendor-list">
+                                        <option v-for="v in lookups.vendors" :key="v.id" :value="v.name" />
+                                    </datalist>
                                 </div>
                                 <div class="contract-modal__field">
                                     <label for="cm-product">{{ t('contracts.fieldProduct') }}</label>
@@ -346,11 +350,44 @@
                                     />
                                 </div>
                                 <div class="contract-modal__field contract-modal__field--full">
-                                    <label for="cm-dept">{{ t('contracts.fieldDepartment') }}</label>
+                                    <div class="contract-modal__dept-toolbar">
+                                        <label for="cm-dept">{{ t('contracts.fieldDepartment') }}</label>
+                                        <button
+                                            type="button"
+                                            class="ppms-btn-ghost ppms-btn-sm contract-modal__dept-add"
+                                            @click="deptCreateOpen = !deptCreateOpen"
+                                        >
+                                            {{ deptCreateOpen ? t('contracts.addDepartmentClose') : t('contracts.addDepartment') }}
+                                        </button>
+                                    </div>
                                     <select id="cm-dept" v-model.number="form.department_id" class="ppms-input" required>
                                         <option disabled :value="0">{{ t('contracts.fieldDepartment') }}</option>
                                         <option v-for="d in lookups.departments" :key="d.id" :value="d.id">{{ d.name }}</option>
                                     </select>
+                                    <div v-if="deptCreateOpen" class="contract-modal__dept-inline">
+                                        <input
+                                            v-model.trim="newDeptName"
+                                            type="text"
+                                            class="ppms-input"
+                                            :placeholder="t('contracts.departmentNewNamePlaceholder')"
+                                            maxlength="255"
+                                        />
+                                        <input
+                                            v-model.trim="newDeptCode"
+                                            type="text"
+                                            class="ppms-input"
+                                            :placeholder="t('contracts.departmentNewCodePlaceholder')"
+                                            maxlength="64"
+                                        />
+                                        <button
+                                            type="button"
+                                            class="ppms-btn-primary ppms-btn-sm"
+                                            :disabled="departmentSaving"
+                                            @click="submitNewDepartment"
+                                        >
+                                            {{ t('contracts.departmentCreate') }}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </section>
@@ -540,7 +577,12 @@ const uploadingAttachments = ref(false);
 const fileInputRef = ref(null);
 let dragDepth = 0;
 
-const createBusy = computed(() => saving.value || uploadingAttachments.value);
+const departmentSaving = ref(false);
+const deptCreateOpen = ref(false);
+const newDeptName = ref('');
+const newDeptCode = ref('');
+
+const createBusy = computed(() => saving.value || uploadingAttachments.value || departmentSaving.value);
 
 const lookups = reactive({
     vendors: [],
@@ -836,6 +878,34 @@ async function loadLookups() {
     }
 }
 
+async function submitNewDepartment() {
+    const name = newDeptName.value.trim();
+    if (!name) {
+        ppmsToastError(t('contracts.departmentNameRequired'));
+        return;
+    }
+    departmentSaving.value = true;
+    try {
+        const { data } = await axios.post('/api/departments', {
+            name,
+            code: newDeptCode.value.trim() || null,
+        });
+        const d = data.data ?? data;
+        await loadLookups();
+        if (d?.id != null) {
+            form.department_id = d.id;
+        }
+        deptCreateOpen.value = false;
+        newDeptName.value = '';
+        newDeptCode.value = '';
+        ppmsToastSuccess(t('contracts.departmentCreated'));
+    } catch (e) {
+        ppmsToastError(formatApiUserMessage(e, t('contracts.loadError')));
+    } finally {
+        departmentSaving.value = false;
+    }
+}
+
 function newPendingUid() {
     return typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID()
@@ -958,6 +1028,9 @@ function openCreate() {
     form.end_date = '';
     form.total_value = '';
     form.payment_cycle = 'monthly';
+    deptCreateOpen.value = false;
+    newDeptName.value = '';
+    newDeptCode.value = '';
     modalOpen.value = true;
 }
 
@@ -1580,400 +1653,5 @@ onMounted(async () => {
     color: var(--ppms-fg, #0f172a);
 }
 
-/* —— Modal —— */
-.contract-modal__backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.5);
-    z-index: 80;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: min(24px, 4vw);
-    overflow: auto;
-}
-.contract-modal {
-    width: min(920px, calc(100vw - 32px));
-    margin-top: min(40px, 5vh);
-    margin-bottom: 40px;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    max-height: min(92vh, 900px);
-    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
-}
-.contract-modal__head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 20px 22px 12px;
-    flex-shrink: 0;
-    border-bottom: 1px solid var(--ppms-border, #e2e8f0);
-}
-.contract-modal__head-text {
-    flex: 1;
-    min-width: 0;
-}
-.contract-modal__title {
-    margin: 0;
-    font-size: 1.2rem;
-    font-weight: 700;
-}
-.contract-modal__subtitle {
-    margin: 8px 0 0;
-    font-size: 0.875rem;
-    line-height: 1.5;
-    color: var(--ppms-muted, #64748b);
-    max-width: 42rem;
-}
-.contract-modal__close {
-    flex-shrink: 0;
-    width: 36px;
-    height: 36px;
-    margin: -6px -6px 0 0;
-    border: none;
-    border-radius: 8px;
-    background: transparent;
-    font-size: 1.5rem;
-    line-height: 1;
-    color: var(--ppms-muted, #64748b);
-    cursor: pointer;
-}
-.contract-modal__close:hover {
-    background: rgba(148, 163, 184, 0.2);
-    color: var(--ppms-fg, #0f172a);
-}
-.contract-modal__close:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-.contract-modal__form {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    flex: 1;
-}
-.contract-modal__body {
-    padding: 16px 22px 12px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    flex: 1;
-    min-height: 0;
-}
-.contract-modal__section-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px 12px;
-    margin-bottom: 8px;
-}
-.contract-modal__section-head .contract-modal__section-title {
-    margin-bottom: 0;
-}
-.contract-modal__attach-badge {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--ppms-accent, #4f46e5);
-    background: rgba(79, 70, 229, 0.08);
-    padding: 4px 10px;
-    border-radius: 999px;
-}
-.contract-modal__attach-hint {
-    margin: 0 0 12px;
-    font-size: 0.8rem;
-    line-height: 1.45;
-    color: var(--ppms-muted, #64748b);
-}
-.contract-modal__section {
-    margin-bottom: 18px;
-    padding: 16px 18px;
-    border-radius: 12px;
-    border: 1px solid var(--ppms-border, #e2e8f0);
-    background: rgba(248, 250, 252, 0.65);
-}
-.contract-modal__section:last-child {
-    margin-bottom: 8px;
-}
-.contract-modal__section--attachments {
-    background: #fff;
-    border-style: dashed;
-    border-color: #cbd5e1;
-}
-.contract-modal__section-title {
-    margin: 0 0 14px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--ppms-muted, #64748b);
-}
-.contract-modal__section--attachments .contract-modal__section-title {
-    margin-bottom: 0;
-}
-.contract-modal__grid {
-    display: grid;
-    gap: 12px 16px;
-}
-.contract-modal__grid--2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-@media (max-width: 640px) {
-    .contract-modal__grid--2 {
-        grid-template-columns: 1fr;
-    }
-}
-.contract-modal__field label {
-    display: block;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    margin-bottom: 8px;
-    color: #334155;
-}
-
-.contract-modal__field--full {
-    grid-column: 1 / -1;
-}
-
-.contract-modal__amount-words {
-    margin: 8px 0 0;
-    font-size: 0.8125rem;
-    line-height: 1.5;
-    color: #475569;
-}
-
-/* Inputs trong modal: đồng bộ với bộ lọc, nền sáng, focus rõ */
-.contract-modal .ppms-input {
-    display: block;
-    width: 100%;
-    min-height: 44px;
-    padding: 10px 14px;
-    font-size: 0.9375rem;
-    line-height: 1.45;
-    color: #0f172a;
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    transition:
-        border-color 0.15s ease,
-        box-shadow 0.15s ease,
-        background-color 0.15s ease;
-}
-
-.contract-modal .ppms-input::placeholder {
-    color: #94a3b8;
-}
-
-.contract-modal .ppms-input:hover:not(:disabled) {
-    border-color: #cbd5e1;
-}
-
-.contract-modal .ppms-input:focus {
-    outline: none;
-    border-color: rgba(79, 70, 229, 0.55);
-    box-shadow:
-        0 0 0 1px rgba(79, 70, 229, 0.2),
-        0 0 0 4px rgba(79, 70, 229, 0.12);
-}
-
-.contract-modal select.ppms-input {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    padding: 10px 2.5rem 10px 14px;
-    cursor: pointer;
-    background-color: #fff;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 1.1rem;
-}
-
-.contract-modal input[type='date'].ppms-input {
-    color-scheme: light;
-    min-height: 44px;
-}
-
-.contract-modal textarea.ppms-input {
-    min-height: 88px;
-    padding-top: 12px;
-    padding-bottom: 12px;
-    line-height: 1.5;
-}
-
-.contract-modal__textarea {
-    resize: vertical;
-    min-height: 88px;
-    max-height: 200px;
-}
-
-.contract-modal__dropzone {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    min-height: 132px;
-    padding: 16px 14px;
-    border-radius: 12px;
-    border: 2px dashed #cbd5e1;
-    background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
-    cursor: pointer;
-    transition:
-        border-color 0.15s ease,
-        background 0.15s ease,
-        box-shadow 0.15s ease;
-    outline: none;
-}
-.contract-modal__dropzone:hover,
-.contract-modal__dropzone:focus-visible {
-    border-color: rgba(79, 70, 229, 0.45);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
-}
-.contract-modal__dropzone--active {
-    border-color: #4f46e5;
-    background: rgba(79, 70, 229, 0.06);
-}
-.contract-modal__dropzone-inner {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-    color: #4f46e5;
-}
-.contract-modal__dropzone-svg {
-    width: 28px;
-    height: 28px;
-}
-.contract-modal__dropzone-text {
-    margin: 0;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--ppms-fg, #0f172a);
-    text-align: center;
-}
-.contract-modal__browse-btn {
-    font-weight: 600;
-}
-.contract-modal__file-list {
-    list-style: none;
-    margin: 14px 0 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-.contract-modal__file-item {
-    display: grid;
-    grid-template-columns: 120px 1fr auto;
-    gap: 12px;
-    align-items: center;
-    padding: 10px 12px;
-    border-radius: 10px;
-    border: 1px solid var(--ppms-border, #e2e8f0);
-    background: #f8fafc;
-}
-@media (max-width: 560px) {
-    .contract-modal__file-item {
-        grid-template-columns: 1fr;
-    }
-}
-.contract-modal__file-preview {
-    border-radius: 8px;
-    overflow: hidden;
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    min-height: 72px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.contract-modal__thumb {
-    display: block;
-    width: 100%;
-    max-height: 100px;
-    height: auto;
-    object-fit: contain;
-}
-.contract-modal__pdf-frame {
-    width: 100%;
-    height: 100px;
-    border: none;
-    background: #f1f5f9;
-}
-.contract-modal__file-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    min-height: 72px;
-    padding: 8px;
-}
-.contract-modal__file-doc-icon {
-    display: block;
-    width: 36px;
-    height: 44px;
-    border-radius: 4px;
-    background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
-    position: relative;
-    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.12);
-}
-.contract-modal__file-doc-icon::before {
-    content: '';
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    right: 8px;
-    height: 4px;
-    border-radius: 2px;
-    background: rgba(255, 255, 255, 0.5);
-    box-shadow: 0 10px 0 rgba(255, 255, 255, 0.35);
-}
-.contract-modal__file-meta {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-.contract-modal__file-name {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--ppms-fg, #0f172a);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.contract-modal__file-size {
-    font-size: 0.75rem;
-    color: var(--ppms-muted, #64748b);
-    font-variant-numeric: tabular-nums;
-}
-.contract-modal__file-remove {
-    justify-self: end;
-}
-.contract-modal__submit {
-    min-width: 8.5rem;
-}
-
-.contract-modal__footer {
-    flex-shrink: 0;
-    padding: 12px 22px 20px;
-    border-top: 1px solid var(--ppms-border, #e2e8f0);
-    background: rgba(255, 255, 255, 0.96);
-}
-.contract-modal__error {
-    margin: 0 0 10px;
-}
-.contract-modal__actions {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-}
 </style>
+<style src="./contract-modal.css"></style>

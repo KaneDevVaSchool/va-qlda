@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ContractLookupController;
 use App\Http\Controllers\Api\ContractPaymentController;
 use App\Http\Controllers\Api\CsatController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\EvaluationController;
 use App\Http\Controllers\Api\EvaluationPeerController;
 use App\Http\Controllers\Api\InnovationIdeaController;
@@ -169,8 +170,11 @@ Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
     Route::delete('evaluation-peers/{peer}', [EvaluationPeerController::class, 'destroy']);
 
     Route::get('contract-lookups', ContractLookupController::class);
+    Route::post('departments', [DepartmentController::class, 'store']);
     Route::get('contracts/upcoming-payments', [ContractPaymentController::class, 'upcoming']);
     Route::get('contracts/export.csv', [ContractController::class, 'exportCsv']);
+    Route::get('contracts/{contract}/summary.pdf', [ContractController::class, 'summaryPdf'])->whereNumber('contract');
+    Route::get('contracts/{contract}/logs/actions', [ContractController::class, 'logActions'])->whereNumber('contract');
     Route::apiResource('contracts', ContractController::class)->whereNumber('contract');
     Route::get('contracts/{contract}/logs', [ContractController::class, 'logs'])->whereNumber('contract');
     Route::post('contracts/{contract}/submit', [ContractController::class, 'submit'])->whereNumber('contract');
@@ -180,6 +184,9 @@ Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
     Route::get('contracts/{contract}/files', [ContractFileController::class, 'index'])->whereNumber('contract');
     Route::post('contracts/{contract}/files', [ContractFileController::class, 'store'])->whereNumber('contract');
     Route::get('contracts/{contract}/files/{file}/download', [ContractFileController::class, 'download'])
+        ->whereNumber('contract')
+        ->whereNumber('file');
+    Route::get('contracts/{contract}/files/{file}/preview', [ContractFileController::class, 'preview'])
         ->whereNumber('contract')
         ->whereNumber('file');
     Route::get('contracts/{contract}/payments', [ContractPaymentController::class, 'index'])->whereNumber('contract');

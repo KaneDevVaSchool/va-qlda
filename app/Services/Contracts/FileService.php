@@ -93,6 +93,37 @@ class FileService
     }
 
     /**
+     * Inline preview in browser (PDF / images only).
+     */
+    public function previewResponse(Contract $contract, ContractFile $file)
+    {
+        if ($file->contract_id !== $contract->id) {
+            abort(404);
+        }
+
+        [$disk, $path] = $this->resolveStoragePath($file);
+        $mime = (string) ($file->file_type ?? '');
+        $lower = strtolower($file->file_name);
+
+        if ($mime === '') {
+            if (str_ends_with($lower, '.pdf')) {
+                $mime = 'application/pdf';
+            } elseif (preg_match('/\.(jpe?g|png|gif|webp|bmp|svg)$/i', $lower)) {
+                $mime = 'image/jpeg';
+            }
+        }
+
+        if ($mime === '' || (! str_starts_with($mime, 'application/pdf') && ! str_starts_with($mime, 'image/'))) {
+            abort(415, 'Preview only supports PDF and images.');
+        }
+
+        return Storage::disk($disk)->response($path, $file->file_name, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline; filename="'.$file->file_name.'"',
+        ]);
+    }
+
+    /**
      * @return array{0: string, 1: string} [disk, path]
      */
     private function resolveStoragePath(ContractFile $file): array

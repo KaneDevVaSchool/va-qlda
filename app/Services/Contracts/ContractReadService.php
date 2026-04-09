@@ -30,12 +30,17 @@ class ContractReadService
         return $this->contractRepository->findDetailById($id);
     }
 
-    public function paginateLogs(Contract $contract, int $perPage = 50): LengthAwarePaginator
+    public function paginateLogs(Contract $contract, ?string $action = null, int $perPage = 50): LengthAwarePaginator
     {
-        return $contract->logs()
+        $query = $contract->logs()
             ->with('user:id,name,email')
-            ->orderByDesc('id')
-            ->paginate($perPage);
+            ->orderByDesc('id');
+
+        if ($action !== null && $action !== '') {
+            $query->where('action', $action);
+        }
+
+        return $query->paginate($perPage);
     }
 
     public function exportCsvResponse(Request $request): StreamedResponse

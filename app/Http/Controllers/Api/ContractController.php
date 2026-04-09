@@ -12,6 +12,7 @@ use App\Models\Contract;
 use App\Services\Contracts\ApprovalService;
 use App\Services\Contracts\ContractReadService;
 use App\Services\Contracts\ContractService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class ContractController extends Controller
@@ -89,10 +90,44 @@ class ContractController extends Controller
         );
     }
 
-    public function logs(Contract $contract)
+    public function logs(Request $request, Contract $contract)
     {
         $this->authorize('view', $contract);
 
-        return ContractLogResource::collection($this->contractRead->paginateLogs($contract));
+        $action = $request->query('action');
+        $action = is_string($action) ? $action : null;
+
+        return ContractLogResource::collection(
+            $this->contractRead->paginateLogs($contract, $action)
+        );
+    }
+
+    public function logActions(Contract $contract)
+    {
+        $this->authorize('view', $contract);
+
+        $actions = $contract->logs()
+            ->distinct()
+            ->orderBy('action')
+            ->pluck('action')
+            ->values();
+
+        return response()->json(['data' => $actions]);
+    }
+
+    public function summaryPdf(Contract $contract)
+    {
+        $this->authorize('view', $contract);
+
+        $c = $this->contractRead->detailById($contract->id);
+
+        $pdf = Pdf::loadView('contracts.summary-pdf', [
+            'contract' => $c,
+            'generatedAt' => now()->toDateTimeString(),
+        ])->setPaper('a4', 'portrait');
+
+        $safeCode = preg_replace('/[^a-zA-Z0-9._-]+/', '_', (string) $c->code) ?: 'contract';
+
+        return $pdf->download('contract-'.$safeCode.'.pdf');
     }
 }

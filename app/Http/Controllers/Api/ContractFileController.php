@@ -48,4 +48,11 @@ class ContractFileController extends Controller
 
         return $this->files->downloadResponse($contract, $file);
     }
+
+    public function preview(Contract $contract, ContractFile $file)
+    {
+        $this->authorize('view', $contract);
+
+        return $this->files->previewResponse($contract, $file);
+    }
 }
