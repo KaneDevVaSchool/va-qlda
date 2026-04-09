@@ -7,18 +7,6 @@
 
         <ProjectListSavedViews :saved-views="savedViews" @apply="applySavedView($event)" @remove="removeSavedView" />
 
-        <section class="ppms-card ppms-mt ppms-pl-team-filter" :aria-label="t('projects.filterTeamSection')">
-            <div class="ppms-pl-team-filter-row">
-                <label class="ppms-field ppms-field--inline ppms-pl-team-filter-field">
-                    <span>{{ t('projects.filterTeam') }}</span>
-                    <select v-model="filters.team_id" class="ppms-select ppms-pl-team-select" @change="onFilterChange">
-                        <option value="">{{ t('projects.filterTeamAll') }}</option>
-                        <option v-for="tm in teamOptions" :key="'tf-' + tm.id" :value="String(tm.id)">{{ tm.name }}</option>
-                    </select>
-                </label>
-            </div>
-        </section>
-
         <ProjectListToolbar
             ref="toolbarRef"
             v-model:menu-open="toolbarMenuOpen"
@@ -29,6 +17,7 @@
             :can-import="canImport"
             :can-export="canExport"
             :filters="filters"
+            :team-options="teamOptions"
             :column-picker-options="columnPickerOptions"
             :column-visibility="columnVisibility"
             :selected-count="selectedProjectIds.length"

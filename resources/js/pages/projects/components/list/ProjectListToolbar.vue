@@ -60,6 +60,13 @@
             </div>
         </div>
         <div v-if="!loading" class="ppms-pl-subtoolbar-right ppms-pl-subtoolbar-right--fill">
+            <label class="ppms-field ppms-field--inline ppms-pl-team-filter-field ppms-pl-subtoolbar-team">
+                <span>{{ t('projects.filterTeam') }}</span>
+                <select v-model="filters.team_id" class="ppms-select ppms-pl-team-select" @change="$emit('filter-change')">
+                    <option value="">{{ t('projects.filterTeamAll') }}</option>
+                    <option v-for="tm in teamOptions" :key="'tf-' + tm.id" :value="String(tm.id)">{{ tm.name }}</option>
+                </select>
+            </label>
             <div v-if="lastPage > 1" class="ppms-pl-page-arrows">
                 <button
                     type="button"
@@ -241,6 +248,7 @@ defineProps({
     canImport: { type: Boolean, default: false },
     canExport: { type: Boolean, default: false },
     filters: { type: Object, required: true },
+    teamOptions: { type: Array, default: () => [] },
     columnPickerOptions: { type: Array, required: true },
     columnVisibility: { type: Object, required: true },
     selectedCount: { type: Number, required: true },

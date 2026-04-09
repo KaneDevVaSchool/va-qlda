@@ -1,5 +1,5 @@
 <template>
-    <div class="ppms-page">
+    <div class="ppms-page" :class="{ 'ppms-page--teams-tree': viewMode === 'tree' }">
         <section class="ppms-card">
             <div class="ppms-teams-head">
                 <div>
@@ -752,18 +752,40 @@ onUnmounted(() => {
 .ppms-team-card__actions {
     padding: 0 1rem 1rem;
 }
+.ppms-page--teams-tree {
+    width: 100%;
+    max-width: min(100%, 1920px);
+    margin-left: auto;
+    margin-right: auto;
+}
 .ppms-team-forest {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    align-content: start;
+    width: 100%;
+    grid-auto-rows: min-content;
+}
+@media (min-width: 900px) {
+    .ppms-team-forest {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem 1.25rem;
+        min-height: min(62vh, 820px);
+    }
+}
+@media (min-width: 1440px) {
+    .ppms-team-forest {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 }
 .ppms-team-tree-legend {
-    margin: 0 0 0.25rem;
-    font-size: 0.875rem;
-    line-height: 1.5;
+    grid-column: 1 / -1;
+    margin: 0 0 0.15rem;
+    font-size: 0.82rem;
+    line-height: 1.4;
     color: var(--ppms-muted, #64748b);
-    padding: 0.65rem 0.85rem;
-    border-radius: 10px;
+    padding: 0.45rem 0.65rem;
+    border-radius: 8px;
     background: rgba(37, 99, 235, 0.06);
     border: 1px solid rgba(37, 99, 235, 0.12);
 }
@@ -800,7 +822,7 @@ onUnmounted(() => {
     align-items: flex-start;
     justify-content: space-between;
     gap: 0.75rem 1rem;
-    padding: 1rem 1.15rem;
+    padding: 0.85rem 1rem;
     background: linear-gradient(135deg, rgba(37, 99, 235, 0.07) 0%, rgba(255, 255, 255, 0) 55%);
     border-bottom: 1px solid var(--ppms-border, #f1f5f9);
 }
@@ -889,15 +911,25 @@ onUnmounted(() => {
     margin: 0;
 }
 .ppms-team-tree {
-    padding: 0 1rem 1.15rem 1.15rem;
+    padding: 0 0.75rem 0.85rem 0.85rem;
 }
 .ppms-team-tree__structure {
-    padding-top: 0.35rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+    align-items: start;
+    padding-top: 0.2rem;
+}
+@media (min-width: 640px) {
+    .ppms-team-tree__structure {
+        grid-template-columns: minmax(200px, 300px) minmax(0, 1fr);
+        gap: 0.75rem 1rem;
+    }
 }
 .ppms-team-tree__leaders {
     display: flex;
     flex-direction: column;
-    gap: 0.65rem;
+    gap: 0.5rem;
 }
 .ppms-team-tree-node {
     display: flex;
@@ -919,6 +951,7 @@ onUnmounted(() => {
     border: 1px solid var(--ppms-border, #e2e8f0);
     flex: 1;
     min-width: 0;
+    height: 100%;
 }
 .ppms-team-tree-node__avatar {
     flex-shrink: 0;
@@ -979,8 +1012,9 @@ onUnmounted(() => {
     color: var(--ppms-muted, #64748b);
 }
 .ppms-team-tree__branch-wrap {
-    margin-top: 1rem;
-    padding-left: 0.15rem;
+    margin-top: 0;
+    padding-left: 0;
+    min-width: 0;
 }
 .ppms-team-tree__branch-label {
     display: flex;
@@ -1002,27 +1036,19 @@ onUnmounted(() => {
 }
 .ppms-team-tree__members {
     list-style: none;
-    margin: 0.25rem 0 0;
-    padding: 0 0 0 1.15rem;
-    border-left: 2px solid var(--ppms-tree-line-soft);
+    margin: 0.35rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.55rem;
+    border-left: none;
 }
 .ppms-team-tree__li {
     position: relative;
-    padding: 0 0 0.65rem 0;
-}
-.ppms-team-tree__li:last-child {
-    padding-bottom: 0;
+    padding: 0;
 }
 .ppms-team-tree__li::before {
-    content: '';
-    position: absolute;
-    left: -1.15rem;
-    top: 1.35rem;
-    width: 0.75rem;
-    height: 2px;
-    background: var(--ppms-tree-line);
-    border-radius: 0 2px 2px 0;
-    opacity: 0.85;
+    display: none;
 }
 @media (max-width: 520px) {
     .ppms-team-tree-block__head {

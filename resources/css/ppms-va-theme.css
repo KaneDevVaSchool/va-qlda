@@ -4426,6 +4426,10 @@ body.ppms-drawer-open {
     justify-content: flex-end;
 }
 
+.ppms-pl-subtoolbar-right--fill .ppms-pl-subtoolbar-team {
+    margin-right: auto;
+}
+
 .ppms-pl-page-arrows {
     display: inline-flex;
     align-items: center;
