@@ -1,5 +1,5 @@
 <template>
-    <div class="ppms-profile-perm">
+    <div class="ppms-profile-perm" :class="{ 'ppms-profile-perm--compact': compact }">
         <div v-if="loading" class="ppms-profile-skel" role="status" :aria-label="t('common.loading')">
             <div class="ppms-profile-skel-line ppms-profile-perm-skel-a" />
             <div class="ppms-profile-skel-line ppms-profile-perm-skel-b" />
@@ -27,7 +27,7 @@
             </div>
 
             <div class="ppms-profile-table-wrap ppms-profile-perm-table-wrap">
-                <table class="ppms-profile-table ppms-profile-matrix">
+                <table class="ppms-profile-table ppms-profile-matrix ppms-profile-perm-matrix">
                     <thead>
                         <tr>
                             <th class="ppms-profile-matrix-corner" scope="col">{{ t('profile.matrixModule') }}</th>
@@ -56,7 +56,7 @@
                 <button
                     type="button"
                     class="ppms-pf-btn ppms-pf-btn--primary"
-                    :disabled="saving"
+                    :disabled="saving || !hasPendingOverrides"
                     :aria-busy="saving"
                     @click="save"
                 >
@@ -72,7 +72,7 @@ import axios from 'axios';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { formatApiUserMessage } from '../../bootstrap';
-import { ppmsToastError, ppmsToastSuccess } from '../../ppmsUi';
+import { ppmsConfirm, ppmsToastError, ppmsToastSuccess } from '../../ppmsUi';
 
 defineProps({
     compact: {
@@ -168,6 +168,8 @@ function buildOverrides() {
     return out;
 }
 
+const hasPendingOverrides = computed(() => buildOverrides().length > 0);
+
 onMounted(async () => {
     try {
         const { data } = await axios.get('/api/me/rbac');
@@ -188,6 +190,17 @@ onMounted(async () => {
 });
 
 async function save() {
+    if (!hasPendingOverrides.value) {
+        return;
+    }
+    const ok = await ppmsConfirm(t('profile.confirmPermissionsSave'), {
+        title: t('profile.save'),
+        confirmLabel: t('profile.save'),
+        cancelLabel: t('common.cancel'),
+    });
+    if (!ok) {
+        return;
+    }
     saving.value = true;
     try {
         await axios.patch('/api/me/rbac', { overrides: buildOverrides() });
@@ -267,7 +280,34 @@ async function save() {
     opacity: 0.55;
 }
 .ppms-profile-perm-actions {
-    margin-top: 1rem;
+    margin-top: 0.85rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.ppms-profile-perm--compact .ppms-profile-perm-readonly {
+    padding: 0.5rem 0.6rem;
+    margin-bottom: 0.5rem;
+}
+
+.ppms-profile-perm--compact .ppms-profile-perm-hint {
+    margin-bottom: 0.45rem;
+    font-size: 0.8rem;
+}
+
+.ppms-profile-perm--compact .ppms-profile-perm-search {
+    margin: 0.5rem 0;
+}
+
+.ppms-profile-perm-matrix :deep(th),
+.ppms-profile-perm-matrix :deep(td) {
+    padding: 0.4rem 0.45rem;
+    font-size: 0.82rem;
+}
+
+.ppms-profile-perm-matrix :deep(th[scope='row']) {
+    font-weight: 500;
+    text-align: left;
 }
 .ppms-profile-perm-skel-a {
     width: 55%;

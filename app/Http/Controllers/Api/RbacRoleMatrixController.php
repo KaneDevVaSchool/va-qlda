@@ -21,6 +21,7 @@ class RbacRoleMatrixController extends Controller
             'actions' => config('ppms_rbac.actions'),
             'roles' => array_keys(config('ppms_rbac.roles', [])),
             'roles_with_custom_matrix' => $rbac->rolesWithCustomMatrix(),
+            'permission_admin_roles' => config('ppms_rbac.permission_admin_roles', ['admin']),
         ]);
     }
 

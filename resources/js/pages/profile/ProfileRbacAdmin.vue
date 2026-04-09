@@ -57,29 +57,36 @@
                     <button type="button" class="ppms-rbac-admin-chip-clear" @click="clearAssignUser">{{ t('common.cancel') }}</button>
                 </div>
 
-                <div v-if="assignUser" class="ppms-rbac-admin-field">
-                    <label class="ppms-rbac-admin-label" for="rbac-assign-role">{{ t('profile.rbacAdminNewRoleLabel') }}</label>
-                    <select
-                        id="rbac-assign-role"
-                        v-model="assignRoleDraft"
-                        class="ppms-profile-access-input ppms-rbac-admin-input"
-                        :disabled="assignSaving"
-                    >
-                        <option v-for="r in roleList" :key="'a-' + r" :value="r">{{ roleLabel(r) }}</option>
-                    </select>
-                </div>
+                <p v-if="assignUser && selectedAssignUserIsPermissionAdmin" class="ppms-rbac-admin-lock">
+                    {{ t('profile.rbacAdminTargetIsPermissionAdmin') }}
+                </p>
 
-                <div v-if="assignUser" class="ppms-rbac-admin-panel-actions">
-                    <button
-                        type="button"
-                        class="ppms-pf-btn ppms-pf-btn--primary ppms-rbac-admin-btn-full"
-                        :disabled="assignSaving"
-                        :aria-busy="assignSaving"
-                        @click="saveUserRole"
-                    >
-                        {{ t('profile.rbacAdminSaveUserRole') }}
-                    </button>
-                </div>
+                <template v-else-if="assignUser">
+                    <p class="ppms-rbac-admin-restrict-hint">{{ t('profile.rbacAdminAssignRestrictedHint') }}</p>
+                    <div class="ppms-rbac-admin-field">
+                        <label class="ppms-rbac-admin-label" for="rbac-assign-role">{{ t('profile.rbacAdminNewRoleLabel') }}</label>
+                        <select
+                            id="rbac-assign-role"
+                            v-model="assignRoleDraft"
+                            class="ppms-profile-access-input ppms-rbac-admin-input"
+                            :disabled="assignSaving || assignableRolesForUser.length === 0"
+                        >
+                            <option v-for="r in assignableRolesForUser" :key="'a-' + r" :value="r">{{ roleLabel(r) }}</option>
+                        </select>
+                    </div>
+
+                    <div class="ppms-rbac-admin-panel-actions">
+                        <button
+                            type="button"
+                            class="ppms-pf-btn ppms-pf-btn--primary ppms-rbac-admin-btn-full"
+                            :disabled="assignSaving || assignableRolesForUser.length === 0"
+                            :aria-busy="assignSaving"
+                            @click="saveUserRole"
+                        >
+                            {{ t('profile.rbacAdminSaveUserRole') }}
+                        </button>
+                    </div>
+                </template>
 
                 <p v-if="!assignUser" class="ppms-rbac-admin-hint">{{ t('profile.rbacAdminAssignHint') }}</p>
             </div>
@@ -204,6 +211,15 @@ const selectedRole = ref('pm');
 const desired = ref({});
 
 const rolesWithCustom = ref([]);
+const permissionAdminRoles = ref(['admin']);
+
+const assignableRolesForUser = computed(() =>
+    roleList.value.filter((r) => !permissionAdminRoles.value.includes(r)),
+);
+
+const selectedAssignUserIsPermissionAdmin = computed(
+    () => !!assignUser.value && permissionAdminRoles.value.includes(String(assignUser.value.role)),
+);
 
 const userSearchQ = ref('');
 const userPickCandidates = ref([]);
@@ -291,6 +307,7 @@ async function loadMatrix() {
         matrix.value = data.matrix || {};
         roleList.value = Array.isArray(data.roles) ? data.roles : [];
         rolesWithCustom.value = Array.isArray(data.roles_with_custom_matrix) ? data.roles_with_custom_matrix : [];
+        permissionAdminRoles.value = Array.isArray(data.permission_admin_roles) ? data.permission_admin_roles : ['admin'];
         if (!roleList.value.includes(selectedRole.value) && roleList.value.length) {
             selectedRole.value = roleList.value[0];
         }
@@ -303,6 +320,17 @@ async function loadMatrix() {
 }
 
 async function saveMatrix() {
+    const ok = await ppmsConfirm(
+        t('profile.rbacAdminConfirmMatrixSave', { role: roleLabel(selectedRole.value) }),
+        {
+            title: t('profile.rbacAdminSaveRoleMatrix'),
+            confirmLabel: t('profile.rbacAdminSaveRoleMatrix'),
+            cancelLabel: t('common.cancel'),
+        },
+    );
+    if (!ok) {
+        return;
+    }
     saving.value = true;
     try {
         await axios.patch(`/api/admin/rbac/roles/${encodeURIComponent(selectedRole.value)}`, {
@@ -358,7 +386,8 @@ function onUserSearchInput() {
 
 function selectUserForRole(u) {
     assignUser.value = u;
-    assignRoleDraft.value = u.role || roleList.value[0] || 'developer';
+    const prefer = u.role || assignableRolesForUser.value[0] || roleList.value[0] || 'developer';
+    assignRoleDraft.value = assignableRolesForUser.value.includes(prefer) ? prefer : assignableRolesForUser.value[0] || prefer;
     userSearchQ.value = '';
     userPickCandidates.value = [];
 }
@@ -368,7 +397,24 @@ function clearAssignUser() {
 }
 
 async function saveUserRole() {
-    if (!assignUser.value?.id) {
+    if (!assignUser.value?.id || selectedAssignUserIsPermissionAdmin.value) {
+        return;
+    }
+    if (!assignableRolesForUser.value.includes(assignRoleDraft.value)) {
+        return;
+    }
+    const ok = await ppmsConfirm(
+        t('profile.rbacAdminConfirmAssignRole', {
+            name: assignUser.value.name,
+            role: roleLabel(assignRoleDraft.value),
+        }),
+        {
+            title: t('profile.rbacAdminSaveUserRole'),
+            confirmLabel: t('profile.rbacAdminSaveUserRole'),
+            cancelLabel: t('common.cancel'),
+        },
+    );
+    if (!ok) {
         return;
     }
     assignSaving.value = true;
@@ -621,6 +667,24 @@ onUnmounted(() => {
     font-size: 0.72rem;
     color: var(--ppms-pf-muted);
     margin-top: 0.15rem;
+}
+
+.ppms-rbac-admin-lock {
+    margin: 0 0 0.5rem;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    padding: 0.5rem 0.55rem;
+    border-radius: 6px;
+    background: rgba(100, 116, 139, 0.1);
+    border: 1px solid rgba(100, 116, 139, 0.25);
+    color: var(--ppms-pf-fg, inherit);
+}
+
+.ppms-rbac-admin-restrict-hint {
+    margin: 0 0 0.55rem;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: var(--ppms-pf-muted);
 }
 
 :deep(.ppms-profile-perm-input:focus-visible),
