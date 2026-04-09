@@ -58,6 +58,15 @@
             </div>
             <div v-else-if="viewMode === 'list'" class="ppms-table-scroll ppms-table-scroll--sticky-head ppms-project-list-table-wrap ppms-mt">
                 <p v-if="projects.length" class="ppms-pl-list-hint ppms-muted">{{ t('projects.listGroupHint') }}</p>
+                <p v-if="projects.length" class="ppms-pl-list-hint ppms-muted ppms-pl-list-hint--customer">{{ t('projects.listGroupByCustomerHint') }}</p>
+                <div v-if="projects.length" class="ppms-pl-list-customer-toolbar">
+                    <button type="button" class="ppms-btn-ghost ppms-pl-list-customer-toolbar-btn" @click="collapseAllCustomerGroups">
+                        {{ t('projects.listCollapseAll') }}
+                    </button>
+                    <button type="button" class="ppms-btn-ghost ppms-pl-list-customer-toolbar-btn" @click="expandAllCustomerGroups">
+                        {{ t('projects.listExpandAll') }}
+                    </button>
+                </div>
                 <table class="ppms-table ppms-table--project-staging">
                     <caption class="ppms-sr-only">
                         {{ t('projects.listSectionTitle') }}
@@ -87,7 +96,35 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="p in projects" :key="p.id" class="ppms-pl-data-row">
+                        <template v-for="group in listGroupsByCustomer" :key="'cust-' + group.key">
+                            <tr class="ppms-pl-customer-group-row">
+                                <td :colspan="listTableColspan" class="ppms-pl-customer-group-cell">
+                                    <button
+                                        type="button"
+                                        class="ppms-pl-customer-group-head"
+                                        :aria-expanded="!isCustomerGroupCollapsed(group.key)"
+                                        @click="toggleCustomerGroup(group.key)"
+                                    >
+                                        <svg
+                                            class="ppms-pl-customer-group-chevron"
+                                            :class="{ 'ppms-pl-customer-group-chevron--collapsed': isCustomerGroupCollapsed(group.key) }"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            aria-hidden="true"
+                                        >
+                                            <polyline points="9 18 15 12 9 6" />
+                                        </svg>
+                                        <span class="ppms-pl-customer-group-title">{{ customerGroupLabel(group) }}</span>
+                                        <span class="ppms-pl-customer-group-count ppms-muted">{{
+                                            t('projects.listGroupCustomerCount', { n: group.projects.length })
+                                        }}</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            <template v-if="!isCustomerGroupCollapsed(group.key)">
+                                <tr v-for="p in group.projects" :key="p.id" class="ppms-pl-data-row">
                                 <td v-if="canBulk" class="ppms-td-check">
                                     <input v-model="selectedProjectIds" type="checkbox" :value="p.id" />
                                 </td>
@@ -275,7 +312,9 @@
                                         </button>
                                     </div>
                                 </td>
-                            </tr>
+                                </tr>
+                            </template>
+                        </template>
                     </tbody>
                 </table>
             </div>
@@ -795,6 +834,78 @@ const kanbanColumns = computed(() =>
 const kanbanShowsSubset = computed(
     () => viewMode.value === 'kanban' && total.value > 0 && projects.value.length < total.value,
 );
+
+/** Nhóm theo khách hàng (phòng ban) — trường customer_name trên dự án. */
+const listGroupsByCustomer = computed(() => {
+    const map = new Map();
+    for (const p of projects.value) {
+        const raw = (p.customer_name && String(p.customer_name).trim()) || '';
+        const key = raw || '__none__';
+        if (!map.has(key)) {
+            map.set(key, { key, label: raw || null, projects: [] });
+        }
+        map.get(key).projects.push(p);
+    }
+    const arr = Array.from(map.values());
+    arr.sort((a, b) => {
+        if (a.key === '__none__') {
+            return 1;
+        }
+        if (b.key === '__none__') {
+            return -1;
+        }
+
+        return (a.label || '').localeCompare(b.label || '', 'vi');
+    });
+
+    return arr;
+});
+
+const listTableColspan = computed(() => {
+    let n = 0;
+    if (canBulk.value) {
+        n++;
+    }
+    for (const k of PL_COL_ORDER) {
+        if (colVis(k)) {
+            n++;
+        }
+    }
+
+    return Math.max(1, n);
+});
+
+const collapsedCustomerGroups = ref(new Set());
+
+function isCustomerGroupCollapsed(key) {
+    return collapsedCustomerGroups.value.has(key);
+}
+
+function toggleCustomerGroup(key) {
+    const next = new Set(collapsedCustomerGroups.value);
+    if (next.has(key)) {
+        next.delete(key);
+    } else {
+        next.add(key);
+    }
+    collapsedCustomerGroups.value = next;
+}
+
+function collapseAllCustomerGroups() {
+    collapsedCustomerGroups.value = new Set(listGroupsByCustomer.value.map((g) => g.key));
+}
+
+function expandAllCustomerGroups() {
+    collapsedCustomerGroups.value = new Set();
+}
+
+function customerGroupLabel(group) {
+    if (group.key === '__none__') {
+        return t('projects.listGroupCustomerUnassigned');
+    }
+
+    return group.label || t('projects.listGroupCustomerUnassigned');
+}
 
 function kanbanLabelPreview(p) {
     return projectLabelsPreview(p, 2);
