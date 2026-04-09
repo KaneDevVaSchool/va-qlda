@@ -5,27 +5,27 @@
             {{ t('dashboard.loading') }}
         </div>
         <div v-else-if="err" class="ppms-error">{{ err }}</div>
-        <div v-else class="pbi-canvas">
-            <header class="pbi-report-header">
-                <div class="pbi-report-title-block">
-                    <h2 class="pbi-report-title">{{ t('dashboard.reportTitle') }}</h2>
-                    <p class="pbi-report-sub">{{ t('dashboard.reportSubtitle') }}</p>
-                    <nav class="pbi-dash-tabs" role="tablist" :aria-label="t('dashboard.tabs.aria')">
+        <div v-else class="pbi-canvas pbi-board">
+            <header class="pbi-board-header">
+                <div class="pbi-board-header-main">
+                    <h2 class="pbi-board-title">{{ t('dashboard.board.pageTitle') }}</h2>
+                    <p class="pbi-board-dates">{{ boardDateRange }}</p>
+                    <nav class="pbi-board-tabs" role="tablist" :aria-label="t('dashboard.tabs.aria')">
                         <button
                             type="button"
                             role="tab"
-                            class="pbi-dash-tab"
-                            :class="{ 'pbi-dash-tab--active': activeTab === 'overview' }"
+                            class="pbi-board-tab"
+                            :class="{ 'pbi-board-tab--active': activeTab === 'overview' }"
                             :aria-selected="activeTab === 'overview'"
                             @click="activeTab = 'overview'"
                         >
-                            {{ t('dashboard.tabs.overview') }}
+                            {{ t('dashboard.board.tabCompany') }}
                         </button>
                         <button
                             type="button"
                             role="tab"
-                            class="pbi-dash-tab"
-                            :class="{ 'pbi-dash-tab--active': activeTab === 'tasks' }"
+                            class="pbi-board-tab"
+                            :class="{ 'pbi-board-tab--active': activeTab === 'tasks' }"
                             :aria-selected="activeTab === 'tasks'"
                             @click="activeTab = 'tasks'"
                         >
@@ -33,7 +33,15 @@
                         </button>
                     </nav>
                 </div>
-                <div class="pbi-report-meta">
+                <div class="pbi-board-header-actions">
+                    <button
+                        type="button"
+                        class="pbi-board-filter"
+                        disabled
+                        :title="t('dashboard.board.filterSoon')"
+                    >
+                        <span class="pbi-board-filter-icon" aria-hidden="true" />
+                    </button>
                     <button
                         type="button"
                         class="pbi-present-toggle"
@@ -43,12 +51,14 @@
                     >
                         {{ presentationMode ? t('dashboard.exec.presentExit') : t('dashboard.exec.presentOn') }}
                     </button>
-                    <span class="pbi-refresh-label">{{ t('dashboard.lastRefreshed') }}</span>
-                    <time class="pbi-refresh-time" :datetime="refreshedIso">{{ refreshedDisplay }}</time>
+                    <div class="pbi-report-meta">
+                        <span class="pbi-refresh-label">{{ t('dashboard.lastRefreshed') }}</span>
+                        <time class="pbi-refresh-time" :datetime="refreshedIso">{{ refreshedDisplay }}</time>
+                    </div>
                 </div>
             </header>
 
-            <section class="pbi-exec-summary" :aria-label="t('dashboard.exec.aria')">
+            <section class="pbi-exec-summary pbi-exec-summary--board" :aria-label="t('dashboard.exec.aria')">
                 <div class="pbi-exec-summary__accent" aria-hidden="true" />
                 <div class="pbi-exec-summary__body">
                     <p class="pbi-exec-summary__kicker">{{ t('dashboard.exec.kicker') }}</p>
@@ -58,15 +68,120 @@
             </section>
 
             <div v-show="activeTab === 'overview'" class="pbi-dash-panel">
-            <section class="pbi-kpi-row" :aria-label="t('dashboard.reportTitle')">
-                <article v-for="card in kpiCards" :key="card.id" class="pbi-kpi-card" :title="card.hint">
-                    <span class="pbi-kpi-label">{{ card.label }}</span>
-                    <span class="pbi-kpi-value">{{ formatInt(card.value) }}</span>
-                    <span class="pbi-kpi-hint">{{ card.hint }}</span>
-                </article>
-            </section>
+                <section class="pbi-board-hero" :aria-label="t('dashboard.board.heroAria')">
+                    <article
+                        v-for="card in boardHeroCards"
+                        :key="card.id"
+                        class="pbi-stat-card"
+                        :class="'pbi-stat-card--' + card.tone"
+                    >
+                        <!-- eslint-disable-next-line vue/no-v-html -- static SVG from script -->
+                        <div class="pbi-stat-card__icon" aria-hidden="true" v-html="card.iconSvg" />
+                        <div class="pbi-stat-card__body">
+                            <span class="pbi-stat-card__label">{{ card.label }}</span>
+                            <span class="pbi-stat-card__value">{{ formatInt(card.value) }}</span>
+                        </div>
+                    </article>
+                </section>
 
-            <section class="pbi-visual-row pbi-visual-row--2">
+                <section class="pbi-board-chart-row">
+                    <article class="pbi-widget-card">
+                        <header class="pbi-widget-card__head">
+                            <h3 class="pbi-widget-card__title">{{ t('dashboard.board.chartTaskRatio') }}</h3>
+                            <p class="pbi-widget-card__sub">{{ t('dashboard.board.chartTaskRatioSub') }}</p>
+                        </header>
+                        <div class="pbi-widget-card__body">
+                            <div v-if="hasTaskStatusData" class="pbi-chart-host pbi-chart-host--board">
+                                <canvas ref="overviewTaskPieRef" height="280" />
+                            </div>
+                            <p v-else class="pbi-visual-empty">{{ t('dashboard.board.emptyPie') }}</p>
+                        </div>
+                    </article>
+                    <article class="pbi-widget-card">
+                        <header class="pbi-widget-card__head">
+                            <h3 class="pbi-widget-card__title">{{ t('dashboard.board.chartByPm') }}</h3>
+                            <p class="pbi-widget-card__sub">{{ t('dashboard.board.chartByPmSub') }}</p>
+                        </header>
+                        <div class="pbi-widget-card__body">
+                            <div v-if="hasProjectsByOwner" class="pbi-chart-host pbi-chart-host--board">
+                                <canvas ref="overviewOwnerBarRef" height="280" />
+                            </div>
+                            <p v-else class="pbi-visual-empty">{{ t('dashboard.board.emptyBar') }}</p>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="pbi-board-hero pbi-board-hero--secondary" :aria-label="t('dashboard.board.secondaryAria')">
+                    <article
+                        v-for="card in boardSecondaryCards"
+                        :key="card.id"
+                        class="pbi-stat-card pbi-stat-card--compact"
+                        :class="'pbi-stat-card--' + card.tone"
+                    >
+                        <!-- eslint-disable-next-line vue/no-v-html -- static SVG from script -->
+                        <div class="pbi-stat-card__icon pbi-stat-card__icon--sm" aria-hidden="true" v-html="card.iconSvg" />
+                        <div class="pbi-stat-card__body">
+                            <span class="pbi-stat-card__label">{{ card.label }}</span>
+                            <span class="pbi-stat-card__value">{{ formatInt(card.value) }}</span>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="pbi-board-chart-row pbi-board-chart-row--triple">
+                    <article class="pbi-widget-card">
+                        <header class="pbi-widget-card__head">
+                            <h3 class="pbi-widget-card__title">{{ t('dashboard.charts.radarPhase') }}</h3>
+                            <p class="pbi-widget-card__sub">{{ t('dashboard.charts.radarPhaseSub') }}</p>
+                        </header>
+                        <div class="pbi-widget-card__body pbi-widget-card__body--radar">
+                            <div v-if="hasRadarPhaseData" class="pbi-chart-host pbi-chart-host--radar">
+                                <canvas ref="overviewRadarPhaseRef" height="300" />
+                            </div>
+                            <p v-else class="pbi-visual-empty">{{ t('dashboard.charts.emptyPhase') }}</p>
+                        </div>
+                    </article>
+                    <article class="pbi-widget-card">
+                        <header class="pbi-widget-card__head">
+                            <h3 class="pbi-widget-card__title">{{ t('dashboard.charts.polarStatus') }}</h3>
+                            <p class="pbi-widget-card__sub">{{ t('dashboard.charts.polarStatusSub') }}</p>
+                        </header>
+                        <div class="pbi-widget-card__body pbi-widget-card__body--polar">
+                            <div v-if="hasPolarStatusData" class="pbi-chart-host pbi-chart-host--polar">
+                                <canvas ref="overviewPolarStatusRef" height="300" />
+                            </div>
+                            <p v-else class="pbi-visual-empty">{{ t('dashboard.charts.emptyStatus') }}</p>
+                        </div>
+                    </article>
+                    <article class="pbi-widget-card">
+                        <header class="pbi-widget-card__head">
+                            <h3 class="pbi-widget-card__title">{{ t('dashboard.charts.funnelBars') }}</h3>
+                            <p class="pbi-widget-card__sub">{{ t('dashboard.charts.funnelBarsSub') }}</p>
+                        </header>
+                        <div class="pbi-widget-card__body">
+                            <div v-if="hasFunnelChartData" class="pbi-chart-host pbi-chart-host--funnel">
+                                <canvas ref="overviewFunnelBarRef" height="300" />
+                            </div>
+                            <p v-else class="pbi-visual-empty">{{ t('dashboard.charts.emptyFunnel') }}</p>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="pbi-board-chart-row pbi-board-chart-row--full">
+                    <article class="pbi-widget-card pbi-widget-card--stretch">
+                        <header class="pbi-widget-card__head">
+                            <h3 class="pbi-widget-card__title">{{ t('dashboard.charts.workloadHBar') }}</h3>
+                            <p class="pbi-widget-card__sub">{{ t('dashboard.charts.workloadHBarSub') }}</p>
+                        </header>
+                        <div class="pbi-widget-card__body">
+                            <div v-if="hasWorkloadChartData" class="pbi-chart-host pbi-chart-host--hbar">
+                                <canvas ref="overviewWorkloadBarRef" height="320" />
+                            </div>
+                            <p v-else class="pbi-visual-empty">{{ t('dashboard.charts.emptyWorkload') }}</p>
+                        </div>
+                    </article>
+                </section>
+
+            <section class="pbi-visual-row pbi-visual-row--2 pbi-board-section">
                 <article class="pbi-visual">
                     <header class="pbi-visual-header">
                         <div class="pbi-visual-accent" aria-hidden="true" />
@@ -385,6 +500,9 @@ import {
     LineController,
     LineElement,
     PointElement,
+    PolarAreaController,
+    RadialLinearScale,
+    RadarController,
     Title,
     Tooltip,
 } from 'chart.js';
@@ -392,9 +510,19 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } 
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 import { getApiErrorMessage } from '@/bootstrap';
+import {
+    barVerticalGradient,
+    chartAnimation,
+    chartFont,
+    legendBottom,
+    lineAreaGradient,
+    tooltipPremium,
+} from '@/utils/dashboardChartTheme';
 
 Chart.register(
     DoughnutController,
+    PolarAreaController,
+    RadarController,
     LineController,
     BarController,
     BarElement,
@@ -402,6 +530,7 @@ Chart.register(
     CategoryScale,
     Legend,
     LinearScale,
+    RadialLinearScale,
     LineElement,
     PointElement,
     Title,
@@ -428,6 +557,12 @@ function togglePresentation() {
 
 const typeChartRef = ref(null);
 const kpiChartRef = ref(null);
+const overviewTaskPieRef = ref(null);
+const overviewOwnerBarRef = ref(null);
+const overviewRadarPhaseRef = ref(null);
+const overviewPolarStatusRef = ref(null);
+const overviewFunnelBarRef = ref(null);
+const overviewWorkloadBarRef = ref(null);
 const taskStatusChartRef = ref(null);
 const hoursCompareChartRef = ref(null);
 const progressBucketChartRef = ref(null);
@@ -436,6 +571,12 @@ const categoryChartRef = ref(null);
 
 let typeChart;
 let kpiChart;
+let overviewTaskPieChart;
+let overviewOwnerBarChart;
+let overviewRadarPhaseChart;
+let overviewPolarStatusChart;
+let overviewFunnelBarChart;
+let overviewWorkloadBarChart;
 let statusChart;
 let hoursCompareChart;
 let progressBucketChart;
@@ -461,6 +602,8 @@ const summary = reactive({
         project_progress_buckets: {},
         tasks_by_category: {},
     },
+    board_stats: {},
+    projects_by_owner: [],
 });
 
 const numberLocale = computed(() => (locale.value === 'en' ? 'en-GB' : 'vi-VN'));
@@ -496,32 +639,126 @@ const innovationPipeline = computed(() => {
     return (Number(f.submitted) || 0) + (Number(f.poc) || 0) + (Number(f.applied) || 0);
 });
 
-const kpiCards = computed(() => [
-    {
-        id: 'tp',
-        value: totalProjects.value,
-        label: t('dashboard.kpi.totalProjects'),
-        hint: t('dashboard.kpiHint.totalProjects'),
-    },
-    {
-        id: 'att',
-        value: attentionProjects.value,
-        label: t('dashboard.kpi.attentionProjects'),
-        hint: t('dashboard.kpiHint.attentionProjects'),
-    },
-    {
-        id: 'tasks',
-        value: openTasksTotal.value,
-        label: t('dashboard.kpi.openTasks'),
-        hint: t('dashboard.kpiHint.openTasks'),
-    },
-    {
-        id: 'inn',
-        value: innovationPipeline.value,
-        label: t('dashboard.kpi.innovationPipeline'),
-        hint: t('dashboard.kpiHint.innovationPipeline'),
-    },
-]);
+const boardStats = computed(() => summary.board_stats || {});
+
+const boardDateRange = computed(() => {
+    const loc = numberLocale.value;
+    const fmt = new Intl.DateTimeFormat(loc, { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const end = new Date();
+    const start = new Date(end.getFullYear(), end.getMonth(), 1);
+    return `${fmt.format(start)} — ${fmt.format(end)}`;
+});
+
+/** SVG tĩnh cho widget — chỉ dùng chuỗi cố định trong code (an toàn cho v-html). */
+const BOARD_ICON = {
+    list: '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+    activity:
+        '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+    folder:
+        '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>',
+    flag: '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',
+    plus: '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14"/></svg>',
+    check:
+        '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>',
+    play: '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>',
+    alert:
+        '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    bulb: '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18h6M10 22h4M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17h-8v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z"/></svg>',
+    users:
+        '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>',
+};
+
+const boardHeroCards = computed(() => {
+    const b = boardStats.value;
+    return [
+        {
+            id: 'h1',
+            tone: 'blue',
+            value: Number(b.tasks_in_progress ?? 0),
+            label: t('dashboard.board.hero.inProgress'),
+            iconSvg: BOARD_ICON.list,
+        },
+        {
+            id: 'h2',
+            tone: 'purple',
+            value: Number(b.tasks_this_month ?? 0),
+            label: t('dashboard.board.hero.tasksMonth'),
+            iconSvg: BOARD_ICON.activity,
+        },
+        {
+            id: 'h3',
+            tone: 'green',
+            value: Number(b.projects_unfinished ?? 0),
+            label: t('dashboard.board.hero.projectsOpen'),
+            iconSvg: BOARD_ICON.folder,
+        },
+        {
+            id: 'h4',
+            tone: 'amber',
+            value: Number(b.tasks_due_today ?? 0),
+            label: t('dashboard.board.hero.dueToday'),
+            iconSvg: BOARD_ICON.flag,
+        },
+    ];
+});
+
+const boardSecondaryCards = computed(() => {
+    const b = boardStats.value;
+    return [
+        {
+            id: 's1',
+            tone: 'amber',
+            value: Number(b.projects_new_month ?? 0),
+            label: t('dashboard.board.secondary.newMonth'),
+            iconSvg: BOARD_ICON.plus,
+        },
+        {
+            id: 's2',
+            tone: 'green',
+            value: Number(b.projects_phase_done ?? 0),
+            label: t('dashboard.board.secondary.done'),
+            iconSvg: BOARD_ICON.check,
+        },
+        {
+            id: 's3',
+            tone: 'blue',
+            value: Number(b.projects_active ?? 0),
+            label: t('dashboard.board.secondary.active'),
+            iconSvg: BOARD_ICON.play,
+        },
+        {
+            id: 's4',
+            tone: 'amber',
+            value: Number(b.projects_blocked ?? 0),
+            label: t('dashboard.board.secondary.blocked'),
+            iconSvg: BOARD_ICON.alert,
+        },
+        {
+            id: 's5',
+            tone: 'purple',
+            value: innovationPipeline.value,
+            label: t('dashboard.board.secondary.innovation'),
+            iconSvg: BOARD_ICON.bulb,
+        },
+        {
+            id: 's6',
+            tone: 'blue',
+            value: openTasksTotal.value,
+            label: t('dashboard.board.secondary.openTasks'),
+            iconSvg: BOARD_ICON.users,
+        },
+    ];
+});
+
+const hasProjectsByOwner = computed(() => (summary.projects_by_owner || []).length > 0);
+
+const hasRadarPhaseData = computed(() => Object.keys(summary.projects?.by_phase || {}).length > 0);
+
+const hasPolarStatusData = computed(() => Object.keys(summary.projects?.by_status || {}).length > 0);
+
+const hasFunnelChartData = computed(() => Object.keys(summary.innovation_funnel || {}).length > 0);
+
+const hasWorkloadChartData = computed(() => (summary.workload_open_tasks || []).length > 0);
 
 const hasProjectTypeData = computed(() => Object.keys(summary.projects?.by_type || {}).length > 0);
 
@@ -656,15 +893,60 @@ const chartColors = {
     textDark: '#1a1d26',
     grid: '#e8eaef',
     primary: '#9a0036',
-    teal: '#0d9488',
-    amber: '#d97706',
-    indigo: '#4f46e5',
-    rose: '#e11d48',
+    teal: '#475569',
+    amber: '#57534e',
+    indigo: '#4b5563',
+    rose: '#64748b',
 };
 
 const barPalette = [chartColors.primary, chartColors.teal, chartColors.amber, chartColors.indigo, chartColors.rose];
 
+/** Bảng màu dịu — dễ đọc, ít gắt (thay vì neon nhiều sắc) */
+const piePaletteBoard = [
+    '#475569',
+    '#64748b',
+    '#57534e',
+    '#78716c',
+    '#9a0036',
+    '#6b5b63',
+    '#4b5563',
+    '#334155',
+    '#5c4d56',
+    '#526077',
+];
+
+function truncateAxisLabel(s, max = 20) {
+    if (!s) {
+        return '';
+    }
+    return s.length > max ? `${s.slice(0, max)}…` : s;
+}
+
 function destroyOverviewCharts() {
+    if (overviewTaskPieChart) {
+        overviewTaskPieChart.destroy();
+        overviewTaskPieChart = null;
+    }
+    if (overviewOwnerBarChart) {
+        overviewOwnerBarChart.destroy();
+        overviewOwnerBarChart = null;
+    }
+    if (overviewRadarPhaseChart) {
+        overviewRadarPhaseChart.destroy();
+        overviewRadarPhaseChart = null;
+    }
+    if (overviewPolarStatusChart) {
+        overviewPolarStatusChart.destroy();
+        overviewPolarStatusChart = null;
+    }
+    if (overviewFunnelBarChart) {
+        overviewFunnelBarChart.destroy();
+        overviewFunnelBarChart = null;
+    }
+    if (overviewWorkloadBarChart) {
+        overviewWorkloadBarChart.destroy();
+        overviewWorkloadBarChart = null;
+    }
     if (typeChart) {
         typeChart.destroy();
         typeChart = null;
@@ -706,6 +988,334 @@ function destroyAllCharts() {
 function renderOverviewCharts() {
     destroyOverviewCharts();
 
+    const anim = chartAnimation();
+    const tt = tooltipPremium();
+
+    const pieOverviewEl = overviewTaskPieRef.value;
+    const ownerBarEl = overviewOwnerBarRef.value;
+    const radarEl = overviewRadarPhaseRef.value;
+    const polarEl = overviewPolarStatusRef.value;
+    const funnelEl = overviewFunnelBarRef.value;
+    const workloadEl = overviewWorkloadBarRef.value;
+
+    const rgbCycle = ['154, 0, 54', '13, 148, 136', '217, 119, 6', '79, 70, 229', '225, 29, 72'];
+
+    if (hasTaskStatusData.value && pieOverviewEl) {
+        const byStatus = taskAnalytics.value.tasks_by_status || {};
+        const keys = Object.keys(byStatus).sort();
+        const data = keys.map((k) => Number(byStatus[k]));
+        overviewTaskPieChart = new Chart(pieOverviewEl, {
+            type: 'doughnut',
+            data: {
+                labels: keys.map(taskStatusLabel),
+                datasets: [
+                    {
+                        data,
+                        backgroundColor: keys.map((_, i) => piePaletteBoard[i % piePaletteBoard.length]),
+                        borderWidth: 2,
+                        borderColor: '#fff',
+                        borderRadius: 8,
+                        hoverOffset: 10,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '64%',
+                animation: anim,
+                plugins: {
+                    legend: legendBottom(chartColors.text),
+                    tooltip: {
+                        ...tt,
+                        callbacks: {
+                            label(ctx) {
+                                const v = ctx.raw ?? 0;
+                                return ` ${ctx.label}: ${formatInt(v)}`;
+                            },
+                        },
+                    },
+                },
+            },
+        });
+    }
+
+    if (hasProjectsByOwner.value && ownerBarEl) {
+        const owners = summary.projects_by_owner || [];
+        overviewOwnerBarChart = new Chart(ownerBarEl, {
+            type: 'bar',
+            data: {
+                labels: owners.map((o) => truncateAxisLabel(o.name)),
+                datasets: [
+                    {
+                        label: t('dashboard.board.chartByPmDataset'),
+                        data: owners.map((o) => o.count),
+                        backgroundColor(context) {
+                            const { chart, dataIndex } = context;
+                            const { ctx: c, chartArea } = chart;
+                            const rgb = rgbCycle[dataIndex % rgbCycle.length];
+                            return barVerticalGradient(c, chartArea, rgb);
+                        },
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: anim,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        ...tt,
+                        callbacks: {
+                            title(items) {
+                                const i = items[0]?.dataIndex ?? 0;
+                                return owners[i]?.name ?? '';
+                            },
+                            label(ctx) {
+                                return `${formatInt(ctx.raw)}`;
+                            },
+                        },
+                    },
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: chartColors.text,
+                            maxRotation: 50,
+                            minRotation: 45,
+                            font: chartFont(10),
+                        },
+                        grid: { display: false },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: chartColors.text, precision: 0 },
+                        grid: { color: chartColors.grid },
+                    },
+                },
+            },
+        });
+    }
+
+    if (hasRadarPhaseData.value && radarEl) {
+        const byPh = summary.projects?.by_phase || {};
+        const keys = Object.keys(byPh).sort();
+        const data = keys.map((k) => Number(byPh[k]));
+        overviewRadarPhaseChart = new Chart(radarEl, {
+            type: 'radar',
+            data: {
+                labels: keys.map(phaseLabel),
+                datasets: [
+                    {
+                        label: t('dashboard.charts.radarDataset'),
+                        data,
+                        borderColor: chartColors.primary,
+                        backgroundColor: 'rgba(154, 0, 54, 0.2)',
+                        borderWidth: 2,
+                        pointBackgroundColor: chartColors.primary,
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: chartColors.primary,
+                        pointRadius: 4,
+                        pointHoverRadius: 7,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: anim,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        ...tt,
+                        callbacks: {
+                            label(ctx) {
+                                return `${ctx.label}: ${formatInt(ctx.raw)}`;
+                            },
+                        },
+                    },
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        ticks: { color: chartColors.text, backdropColor: 'transparent' },
+                        grid: { color: 'rgba(15, 23, 42, 0.08)' },
+                        angleLines: { color: 'rgba(15, 23, 42, 0.1)' },
+                        pointLabels: { font: chartFont(10), color: chartColors.text },
+                    },
+                },
+            },
+        });
+    }
+
+    if (hasPolarStatusData.value && polarEl) {
+        const bySt = summary.projects?.by_status || {};
+        const keys = Object.keys(bySt).sort();
+        const data = keys.map((k) => Number(bySt[k]));
+        const polarColors = keys.map((_, i) => {
+            const a = [0.78, 0.72, 0.68, 0.64][i % 4];
+            const rgb = ['154, 0, 54', '13, 148, 136', '217, 119, 6', '79, 70, 229'][i % 4];
+            return `rgba(${rgb}, ${a})`;
+        });
+        overviewPolarStatusChart = new Chart(polarEl, {
+            type: 'polarArea',
+            data: {
+                labels: keys.map(statusLabel),
+                datasets: [
+                    {
+                        data,
+                        backgroundColor: polarColors,
+                        borderWidth: 2,
+                        borderColor: '#fff',
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: anim,
+                plugins: {
+                    legend: legendBottom(chartColors.text),
+                    tooltip: {
+                        ...tt,
+                        callbacks: {
+                            label(ctx) {
+                                return `${ctx.label}: ${formatInt(ctx.raw)}`;
+                            },
+                        },
+                    },
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        ticks: { color: chartColors.text, backdropColor: 'transparent', showLabelBackdrop: false },
+                        grid: { color: 'rgba(15, 23, 42, 0.07)' },
+                        angleLines: { color: 'rgba(15, 23, 42, 0.09)' },
+                        pointLabels: { font: chartFont(10), color: chartColors.text },
+                    },
+                },
+            },
+        });
+    }
+
+    if (hasFunnelChartData.value && funnelEl) {
+        const f = summary.innovation_funnel || {};
+        const funnelRgb = ['154, 0, 54', '13, 148, 136', '217, 119, 6'];
+        overviewFunnelBarChart = new Chart(funnelEl, {
+            type: 'bar',
+            data: {
+                labels: [
+                    t('dashboard.funnel.submitted'),
+                    t('dashboard.funnel.poc'),
+                    t('dashboard.funnel.applied'),
+                ],
+                datasets: [
+                    {
+                        data: [
+                            Number(f.submitted ?? 0),
+                            Number(f.poc ?? 0),
+                            Number(f.applied ?? 0),
+                        ],
+                        backgroundColor(context) {
+                            const { chart, dataIndex } = context;
+                            const { ctx: c, chartArea } = chart;
+                            return barVerticalGradient(c, chartArea, funnelRgb[dataIndex]);
+                        },
+                        borderRadius: 10,
+                        borderSkipped: false,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: anim,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        ...tt,
+                        callbacks: {
+                            label(ctx) {
+                                return `${formatInt(ctx.raw)}`;
+                            },
+                        },
+                    },
+                },
+                scales: {
+                    x: {
+                        ticks: { color: chartColors.text, font: chartFont(11) },
+                        grid: { display: false },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: chartColors.text, precision: 0 },
+                        grid: { color: chartColors.grid },
+                    },
+                },
+            },
+        });
+    }
+
+    if (hasWorkloadChartData.value && workloadEl) {
+        const rows = (summary.workload_open_tasks || []).slice(0, 16);
+        overviewWorkloadBarChart = new Chart(workloadEl, {
+            type: 'bar',
+            data: {
+                labels: rows.map((r) => truncateAxisLabel(r.assignee_name, 24)),
+                datasets: [
+                    {
+                        label: t('dashboard.table.openTasks'),
+                        data: rows.map((r) => Number(r.open_tasks)),
+                        backgroundColor(context) {
+                            const { chart, dataIndex } = context;
+                            const { ctx: c, chartArea } = chart;
+                            const rgb = rgbCycle[dataIndex % rgbCycle.length];
+                            return barVerticalGradient(c, chartArea, rgb);
+                        },
+                        borderRadius: 6,
+                        borderSkipped: false,
+                    },
+                ],
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: anim,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        ...tt,
+                        callbacks: {
+                            title(items) {
+                                const i = items[0]?.dataIndex ?? 0;
+                                return rows[i]?.assignee_name ?? '';
+                            },
+                            label(ctx) {
+                                return `${formatInt(ctx.raw)}`;
+                            },
+                        },
+                    },
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { color: chartColors.text, precision: 0 },
+                        grid: { color: chartColors.grid },
+                    },
+                    y: {
+                        ticks: { color: chartColors.text, font: chartFont(10) },
+                        grid: { display: false },
+                    },
+                },
+            },
+        });
+    }
+
     const typeEl = typeChartRef.value;
     const kpiEl = kpiChartRef.value;
 
@@ -724,22 +1334,24 @@ function renderOverviewCharts() {
                         backgroundColor: [chartColors.primary, chartColors.teal, chartColors.amber],
                         borderWidth: 2,
                         borderColor: '#fff',
+                        borderRadius: 8,
+                        hoverOffset: 8,
                     },
                 ],
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '58%',
+                animation: anim,
                 plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { color: chartColors.text, padding: 14, usePointStyle: true },
-                    },
+                    legend: legendBottom(chartColors.text),
                     tooltip: {
+                        ...tt,
                         callbacks: {
                             label(ctx) {
                                 const v = ctx.raw ?? 0;
-                                return `${ctx.label}: ${formatInt(v)}`;
+                                return ` ${ctx.label}: ${formatInt(v)}`;
                             },
                         },
                     },
@@ -759,20 +1371,30 @@ function renderOverviewCharts() {
                         label: t('dashboard.visual.performancePct'),
                         data: trend.map((r) => Number(r.value)),
                         borderColor: chartColors.primary,
-                        backgroundColor: 'rgba(154, 0, 54, 0.08)',
+                        borderWidth: 2,
+                        backgroundColor(context) {
+                            const { chart } = context;
+                            const { ctx, chartArea } = chart;
+                            return lineAreaGradient(ctx, chartArea, '154, 0, 54', 0.02);
+                        },
                         fill: true,
-                        tension: 0.25,
-                        pointRadius: 3,
-                        pointHoverRadius: 5,
+                        tension: 0.35,
+                        pointRadius: 4,
+                        pointHoverRadius: 7,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: chartColors.primary,
+                        pointBorderWidth: 2,
                     },
                 ],
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: anim,
+                interaction: { mode: 'index', intersect: false },
                 scales: {
                     x: {
-                        ticks: { color: chartColors.text, maxRotation: 45, minRotation: 0 },
+                        ticks: { color: chartColors.text, maxRotation: 45, minRotation: 0, font: chartFont(10) },
                         grid: { color: chartColors.grid },
                     },
                     y: {
@@ -782,8 +1404,9 @@ function renderOverviewCharts() {
                     },
                 },
                 plugins: {
-                    legend: { labels: { color: chartColors.textDark } },
+                    legend: { labels: { color: chartColors.textDark, font: chartFont(11) } },
                     tooltip: {
+                        ...tt,
                         callbacks: {
                             label(ctx) {
                                 const v = ctx.raw ?? 0;
@@ -800,6 +1423,10 @@ function renderOverviewCharts() {
 function renderTaskCharts() {
     destroyTaskCharts();
 
+    const anim = chartAnimation();
+    const tt = tooltipPremium();
+    const rgbCycle = ['154, 0, 54', '13, 148, 136', '217, 119, 6', '79, 70, 229', '225, 29, 72'];
+
     const ta = taskAnalytics.value;
     const byStatus = ta.tasks_by_status || {};
 
@@ -814,17 +1441,25 @@ function renderTaskCharts() {
                     {
                         label: t('dashboard.taskReport.chartStatusDataset'),
                         data,
-                        backgroundColor: keys.map((_, i) => barPalette[i % barPalette.length]),
-                        borderRadius: 4,
+                        backgroundColor(context) {
+                            const { chart, dataIndex } = context;
+                            const { ctx: c, chartArea } = chart;
+                            const rgb = rgbCycle[dataIndex % rgbCycle.length];
+                            return barVerticalGradient(c, chartArea, rgb);
+                        },
+                        borderRadius: 8,
+                        borderSkipped: false,
                     },
                 ],
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: anim,
                 plugins: {
                     legend: { display: false },
                     tooltip: {
+                        ...tt,
                         callbacks: {
                             label(ctx) {
                                 return `${ctx.label}: ${formatInt(ctx.raw)}`;
@@ -834,7 +1469,7 @@ function renderTaskCharts() {
                 },
                 scales: {
                     x: {
-                        ticks: { color: chartColors.text, maxRotation: 45, minRotation: 0 },
+                        ticks: { color: chartColors.text, maxRotation: 45, minRotation: 0, font: chartFont(10) },
                         grid: { display: false },
                     },
                     y: {
@@ -859,23 +1494,35 @@ function renderTaskCharts() {
                     {
                         label: t('dashboard.taskReport.hoursEstimate'),
                         data: [Number(all.estimate), Number(done.estimate)],
-                        backgroundColor: chartColors.teal,
-                        borderRadius: 4,
+                        backgroundColor(context) {
+                            const { chart } = context;
+                            const { ctx: c, chartArea } = chart;
+                            return barVerticalGradient(c, chartArea, '13, 148, 136');
+                        },
+                        borderRadius: 8,
+                        borderSkipped: false,
                     },
                     {
                         label: t('dashboard.taskReport.hoursActual'),
                         data: [Number(all.actual), Number(done.actual)],
-                        backgroundColor: chartColors.primary,
-                        borderRadius: 4,
+                        backgroundColor(context) {
+                            const { chart } = context;
+                            const { ctx: c, chartArea } = chart;
+                            return barVerticalGradient(c, chartArea, '154, 0, 54');
+                        },
+                        borderRadius: 8,
+                        borderSkipped: false,
                     },
                 ],
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: anim,
                 plugins: {
-                    legend: { labels: { color: chartColors.textDark } },
+                    legend: { labels: { color: chartColors.textDark, font: chartFont(11) } },
                     tooltip: {
+                        ...tt,
                         callbacks: {
                             label(ctx) {
                                 return `${ctx.dataset.label}: ${formatHours(ctx.raw)}`;
@@ -885,7 +1532,7 @@ function renderTaskCharts() {
                 },
                 scales: {
                     x: {
-                        ticks: { color: chartColors.text },
+                        ticks: { color: chartColors.text, font: chartFont(10) },
                         grid: { display: false },
                     },
                     y: {
@@ -918,18 +1565,20 @@ function renderTaskCharts() {
                         backgroundColor: [chartColors.teal, chartColors.amber, chartColors.indigo, chartColors.primary],
                         borderWidth: 2,
                         borderColor: '#fff',
+                        borderRadius: 8,
+                        hoverOffset: 8,
                     },
                 ],
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '58%',
+                animation: anim,
                 plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { color: chartColors.text, padding: 12, usePointStyle: true },
-                    },
+                    legend: legendBottom(chartColors.text),
                     tooltip: {
+                        ...tt,
                         callbacks: {
                             label(ctx) {
                                 return `${ctx.label}: ${formatInt(ctx.raw)}`;
@@ -955,18 +1604,20 @@ function renderTaskCharts() {
                         backgroundColor: keys.map((_, i) => barPalette[i % barPalette.length]),
                         borderWidth: 2,
                         borderColor: '#fff',
+                        borderRadius: 8,
+                        hoverOffset: 8,
                     },
                 ],
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '58%',
+                animation: anim,
                 plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { color: chartColors.text, padding: 12, usePointStyle: true },
-                    },
+                    legend: legendBottom(chartColors.text),
                     tooltip: {
+                        ...tt,
                         callbacks: {
                             label(ctx) {
                                 return `${ctx.label}: ${formatInt(ctx.raw)}`;
@@ -990,8 +1641,14 @@ function renderTaskCharts() {
                     {
                         label: t('dashboard.taskReport.chartCategoryDataset'),
                         data,
-                        backgroundColor: chartColors.indigo,
-                        borderRadius: 4,
+                        backgroundColor(context) {
+                            const { chart, dataIndex } = context;
+                            const { ctx: c, chartArea } = chart;
+                            const rgb = rgbCycle[dataIndex % rgbCycle.length];
+                            return barVerticalGradient(c, chartArea, rgb);
+                        },
+                        borderRadius: 6,
+                        borderSkipped: false,
                     },
                 ],
             },
@@ -999,9 +1656,11 @@ function renderTaskCharts() {
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: anim,
                 plugins: {
                     legend: { display: false },
                     tooltip: {
+                        ...tt,
                         callbacks: {
                             label(ctx) {
                                 return `${ctx.label}: ${formatInt(ctx.raw)}`;
@@ -1012,11 +1671,11 @@ function renderTaskCharts() {
                 scales: {
                     x: {
                         beginAtZero: true,
-                        ticks: { color: chartColors.text, precision: 0 },
+                        ticks: { color: chartColors.text, precision: 0, font: chartFont(10) },
                         grid: { color: chartColors.grid },
                     },
                     y: {
-                        ticks: { color: chartColors.text },
+                        ticks: { color: chartColors.text, font: chartFont(10) },
                         grid: { display: false },
                     },
                 },

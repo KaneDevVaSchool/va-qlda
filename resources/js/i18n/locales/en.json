@@ -74,6 +74,49 @@
             "presentExit": "Exit presentation mode",
             "presentHint": "Larger KPIs and charts — ideal for projectors or screen sharing"
         },
+        "board": {
+            "pageTitle": "Organization summary",
+            "tabCompany": "Organization summary",
+            "filterSoon": "Time filters (coming soon)",
+            "heroAria": "Work & project KPIs",
+            "secondaryAria": "Projects and innovation",
+            "chartTaskRatio": "Work mix",
+            "chartTaskRatioSub": "By task status",
+            "chartByPm": "Projects by owner (PM)",
+            "chartByPmSub": "Top PMs by project count — proxy for “by department” until org units exist",
+            "chartByPmDataset": "Projects",
+            "emptyPie": "No task data yet.",
+            "emptyBar": "No PM distribution yet.",
+            "hero": {
+                "inProgress": "Tasks in progress",
+                "tasksMonth": "Tasks created this month",
+                "projectsOpen": "Projects not finished",
+                "dueToday": "Tasks due today"
+            },
+            "secondary": {
+                "newMonth": "New projects this month",
+                "done": "Completed projects (phase)",
+                "active": "Projects in progress",
+                "blocked": "Blocked projects",
+                "innovation": "Innovation pipeline (total)",
+                "openTasks": "Open tasks (workload)"
+            }
+        },
+        "charts": {
+            "radarPhase": "Projects by phase (radar)",
+            "radarPhaseSub": "Lifecycle phase distribution",
+            "radarDataset": "Projects",
+            "polarStatus": "Project status (polar)",
+            "polarStatusSub": "Balance across health states",
+            "funnelBars": "Innovation funnel",
+            "funnelBarsSub": "Submitted → POC → Applied",
+            "workloadHBar": "Workload by assignee",
+            "workloadHBarSub": "Open tasks — top assignees",
+            "emptyPhase": "No phase data yet.",
+            "emptyStatus": "No project status data yet.",
+            "emptyFunnel": "No funnel data yet.",
+            "emptyWorkload": "No workload yet."
+        },
         "reportTitle": "Executive overview",
         "reportSubtitle": "PPMS · VA Schools — projects, KPIs and innovation",
         "tabs": {

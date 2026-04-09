@@ -77,7 +77,63 @@ class DashboardController extends Controller
             'kpi_performance_trend' => $kpiTrend,
             'innovation_funnel' => $kpiEngine->innovationFunnelCounts(),
             'task_analytics' => $this->taskAnalytics(),
+            'board_stats' => $this->boardStats(),
+            'projects_by_owner' => $this->projectsByOwner(),
         ]);
+    }
+
+    /**
+     * Chỉ số dạng board (widget hàng đầu / lưới) — theo mô hình tổng hợp công ty.
+     *
+     * @return array<string, int>
+     */
+    private function boardStats(): array
+    {
+        $tasksBase = Task::query()->whereHas('project', function ($q) {
+            $q->whereNull('archived_at');
+        });
+
+        $startMonth = now()->startOfMonth();
+
+        $projectsBase = Project::query()->whereNull('archived_at');
+
+        return [
+            'tasks_in_progress' => (int) (clone $tasksBase)->where('status', 'in_progress')->count(),
+            'tasks_this_month' => (int) (clone $tasksBase)->where('created_at', '>=', $startMonth)->count(),
+            'projects_unfinished' => (int) (clone $projectsBase)->where('phase', '!=', 'done')->count(),
+            'tasks_due_today' => (int) (clone $tasksBase)
+                ->whereDate('due_date', now()->toDateString())
+                ->where('status', '!=', 'done')
+                ->count(),
+            'projects_new_month' => (int) (clone $projectsBase)->where('created_at', '>=', $startMonth)->count(),
+            'projects_phase_done' => (int) (clone $projectsBase)->where('phase', 'done')->count(),
+            'projects_active' => (int) (clone $projectsBase)->where('phase', '!=', 'done')->count(),
+            'projects_blocked' => (int) (clone $projectsBase)->where('status', 'blocked')->count(),
+        ];
+    }
+
+    /**
+     * Top PM theo số dự án (thay thế “theo phòng ban” khi chưa có org unit).
+     *
+     * @return list<array{owner_id: int, name: string, count: int}>
+     */
+    private function projectsByOwner(): array
+    {
+        $rows = DB::table('projects')
+            ->join(MigrationCms::usersJoinTarget(), 'users.id', '=', 'projects.owner_id')
+            ->whereNull('projects.archived_at')
+            ->whereNotNull('projects.owner_id')
+            ->groupBy('projects.owner_id', 'users.name')
+            ->select('projects.owner_id as owner_id', 'users.name as name', DB::raw('count(*) as c'))
+            ->orderByDesc('c')
+            ->limit(14)
+            ->get();
+
+        return $rows->map(fn ($r) => [
+            'owner_id' => (int) $r->owner_id,
+            'name' => (string) $r->name,
+            'count' => (int) $r->c,
+        ])->values()->all();
     }
 
     /**
