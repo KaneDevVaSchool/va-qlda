@@ -123,10 +123,19 @@
                                 >
                                     <div
                                         class="ppms-team-tree-node__avatar ppms-team-tree-node__avatar--leader"
-                                        :style="{ background: avatarColor(node.name || node.email) }"
+                                        :class="{ 'ppms-team-tree-node__avatar--photo': !!memberAvatarUrl(node) }"
+                                        :style="memberAvatarUrl(node) ? {} : { background: avatarColor(node.name || node.email) }"
                                         :title="node.name"
                                     >
-                                        {{ initials(node.name) }}
+                                        <img
+                                            v-if="memberAvatarUrl(node)"
+                                            class="ppms-team-tree-node__avatar-img"
+                                            :src="memberAvatarUrl(node)"
+                                            :alt="node.name || ''"
+                                            loading="lazy"
+                                            decoding="async"
+                                        />
+                                        <template v-else>{{ initials(node.name) }}</template>
                                     </div>
                                     <div class="ppms-team-tree-node__body">
                                         <div class="ppms-team-tree-node__row">
@@ -148,10 +157,19 @@
                                         <div class="ppms-team-tree-node ppms-team-tree-node--member">
                                             <div
                                                 class="ppms-team-tree-node__avatar"
-                                                :style="{ background: avatarColor(node.name || node.email) }"
+                                                :class="{ 'ppms-team-tree-node__avatar--photo': !!memberAvatarUrl(node) }"
+                                                :style="memberAvatarUrl(node) ? {} : { background: avatarColor(node.name || node.email) }"
                                                 :title="node.name"
                                             >
-                                                {{ initials(node.name) }}
+                                                <img
+                                                    v-if="memberAvatarUrl(node)"
+                                                    class="ppms-team-tree-node__avatar-img"
+                                                    :src="memberAvatarUrl(node)"
+                                                    :alt="node.name || ''"
+                                                    loading="lazy"
+                                                    decoding="async"
+                                                />
+                                                <template v-else>{{ initials(node.name) }}</template>
                                             </div>
                                             <div class="ppms-team-tree-node__body">
                                                 <div class="ppms-team-tree-node__row">
@@ -203,11 +221,20 @@
                             <td class="ppms-td-teams-avatar">
                                 <span
                                     class="ppms-teams-user-avatar"
-                                    :style="{ background: avatarColor(m.name || m.email) }"
+                                    :class="{ 'ppms-teams-user-avatar--photo': !!memberAvatarUrl(m) }"
+                                    :style="memberAvatarUrl(m) ? {} : { background: avatarColor(m.name || m.email) }"
                                     :title="m.name"
                                     aria-hidden="true"
                                 >
-                                    {{ initials(m.name) }}
+                                    <img
+                                        v-if="memberAvatarUrl(m)"
+                                        class="ppms-teams-user-avatar-img"
+                                        :src="memberAvatarUrl(m)"
+                                        :alt="m.name || ''"
+                                        loading="lazy"
+                                        decoding="async"
+                                    />
+                                    <template v-else>{{ initials(m.name) }}</template>
                                 </span>
                             </td>
                             <td>{{ m.name }}</td>
@@ -532,6 +559,11 @@ function avatarColor(seed) {
     const hue = hashHue(seed);
 
     return `hsl(${hue} 52% 42%)`;
+}
+
+function memberAvatarUrl(m) {
+    const u = m?.avatar_url;
+    return typeof u === 'string' && u.trim() ? u.trim() : '';
 }
 
 function initials(name) {
@@ -965,38 +997,12 @@ onUnmounted(() => {
 
 .ppms-team-forest {
     --ppms-team-forest-gap: clamp(1rem, 1.75vw, 1.85rem);
-    --ppms-team-forest-col-min: minmax(0, 1fr);
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--ppms-team-forest-gap);
     align-content: start;
     width: 100%;
     grid-auto-rows: min-content;
-}
-
-@media (min-width: 880px) {
-    .ppms-team-forest {
-        grid-template-columns: repeat(2, var(--ppms-team-forest-col-min));
-    }
-}
-
-@media (min-width: 1280px) {
-    .ppms-team-forest {
-        grid-template-columns: repeat(3, var(--ppms-team-forest-col-min));
-    }
-}
-
-@media (min-width: 1680px) {
-    .ppms-team-forest {
-        grid-template-columns: repeat(4, var(--ppms-team-forest-col-min));
-    }
-}
-
-@media (min-width: 2100px) {
-    .ppms-team-forest {
-        --ppms-team-forest-gap: clamp(1.15rem, 1.5vw, 2rem);
-        grid-template-columns: repeat(5, var(--ppms-team-forest-col-min));
-    }
 }
 
 .ppms-team-tree-legend {
@@ -1147,29 +1153,10 @@ onUnmounted(() => {
 
 .ppms-team-tree__structure {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: clamp(0.65rem, 1.2vw, 0.95rem);
     align-items: start;
     padding-top: 0.15rem;
-}
-
-@media (min-width: 640px) {
-    .ppms-team-tree__structure {
-        grid-template-columns: minmax(13.5rem, min(32vw, 22rem)) minmax(0, 1fr);
-        gap: clamp(0.75rem, 1.5vw, 1.1rem) clamp(0.85rem, 1.8vw, 1.35rem);
-    }
-}
-
-@media (min-width: 1100px) {
-    .ppms-team-tree__structure {
-        grid-template-columns: minmax(16rem, min(36vw, 28rem)) minmax(0, 1fr);
-    }
-}
-
-@media (min-width: 1600px) {
-    .ppms-team-tree__structure {
-        grid-template-columns: minmax(17rem, min(34vw, 30rem)) minmax(0, 1fr);
-    }
 }
 
 .ppms-team-tree__leaders {
@@ -1218,6 +1205,18 @@ onUnmounted(() => {
 }
 .ppms-team-tree-node__avatar--leader {
     box-shadow: 0 2px 10px rgba(15, 23, 42, 0.18);
+}
+.ppms-team-tree-node__avatar--photo {
+    padding: 0;
+    background: transparent !important;
+    overflow: hidden;
+    text-shadow: none;
+}
+.ppms-team-tree-node__avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 .ppms-team-tree-node__body {
     min-width: 0;
@@ -1285,22 +1284,12 @@ onUnmounted(() => {
     list-style: none;
     margin: 0.35rem 0 0;
     padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
-    gap: clamp(0.55rem, 1.2vw, 0.95rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.55rem, 1.2vw, 0.85rem);
     border-left: none;
-}
-
-@media (min-width: 1400px) {
-    .ppms-team-tree__members {
-        grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
-    }
-}
-
-@media (min-width: 2000px) {
-    .ppms-team-tree__members {
-        grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
-    }
+    width: 100%;
+    min-width: 0;
 }
 .ppms-team-tree__li {
     position: relative;
@@ -1482,6 +1471,19 @@ onUnmounted(() => {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
     border: 1px solid rgba(255, 255, 255, 0.25);
     box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+    overflow: hidden;
+    vertical-align: middle;
+}
+.ppms-teams-user-avatar--photo {
+    padding: 0;
+    background: transparent !important;
+    text-shadow: none;
+}
+.ppms-teams-user-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .ppms-team-tree-block__head-right {

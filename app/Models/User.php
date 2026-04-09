@@ -60,6 +60,7 @@ class User extends Authenticatable
         'remember_token',
         'password_history',
         'avatar_path',
+        'avatar',
     ];
 
     /**
@@ -182,10 +183,24 @@ class User extends Authenticatable
 
     public function getAvatarUrlAttribute(): ?string
     {
-        if (! $this->avatar_path) {
+        if ($this->avatar_path) {
+            return Storage::disk('public')->url($this->avatar_path);
+        }
+
+        $raw = $this->attributes['avatar'] ?? null;
+        if (! is_string($raw) || $raw === '') {
             return null;
         }
 
-        return Storage::disk('public')->url($this->avatar_path);
+        $trim = trim($raw);
+        if (filter_var($trim, FILTER_VALIDATE_URL)) {
+            return $trim;
+        }
+
+        if (str_starts_with($trim, '/')) {
+            return url($trim);
+        }
+
+        return Storage::disk('public')->url($trim);
     }
 }

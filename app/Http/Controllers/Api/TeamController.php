@@ -7,10 +7,36 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class TeamController extends Controller
 {
+    /** @var list<string>|null */
+    private static ?array $cachedMemberSelectColumns = null;
+
+    /**
+     * Columns loaded for team members so `avatar_url` (User append) resolves.
+     *
+     * @return list<string>
+     */
+    private function memberSelectColumns(): array
+    {
+        if (self::$cachedMemberSelectColumns !== null) {
+            return self::$cachedMemberSelectColumns;
+        }
+
+        $cols = ['users.id', 'users.name', 'users.email', 'users.role', 'users.avatar_path'];
+        $conn = (new User)->getConnectionName();
+        if ($conn !== null && Schema::connection($conn)->hasColumn('users', 'avatar')) {
+            $cols[] = 'users.avatar';
+        }
+
+        self::$cachedMemberSelectColumns = $cols;
+
+        return self::$cachedMemberSelectColumns;
+    }
+
     /** @return list<string> */
     private static function memberPermissionKeys(): array
     {
@@ -26,9 +52,10 @@ class TeamController extends Controller
             ->orderBy('name');
 
         if ($request->query('include') === 'members') {
+            $cols = $this->memberSelectColumns();
             $q->with([
                 'members' => fn ($mq) => $mq
-                    ->select('users.id', 'users.name', 'users.email', 'users.role')
+                    ->select($cols)
                     ->orderBy('name'),
             ]);
         }
@@ -81,9 +108,10 @@ class TeamController extends Controller
     {
         $this->assertUserCanAccessTeam($request->user(), $team);
 
+        $cols = $this->memberSelectColumns();
         $team->load([
             'creator:id,name,email',
-            'members' => fn ($q) => $q->select('users.id', 'users.name', 'users.email', 'users.role')->orderBy('name'),
+            'members' => fn ($q) => $q->select($cols)->orderBy('name'),
         ]);
         $team->loadCount('members');
         $team->setAttribute('can_manage', $this->userCanManageTeam($request->user(), $team));
@@ -214,9 +242,10 @@ class TeamController extends Controller
             $team->members()->updateExistingPivot($userId, $updates);
         }
 
+        $cols = $this->memberSelectColumns();
         $team->load([
             'creator:id,name,email',
-            'members' => fn ($q) => $q->select('users.id', 'users.name', 'users.email', 'users.role')->orderBy('name'),
+            'members' => fn ($q) => $q->select($cols)->orderBy('name'),
         ]);
         $team->loadCount('members');
         $team->setAttribute('can_manage', $this->userCanManageTeam($request->user(), $team));
