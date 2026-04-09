@@ -1537,6 +1537,14 @@
         "ipPrefix": "IP",
         "sourceHint": "Where this action was performed",
         "diffArrow": "New value",
+        "detailModalTitle": "Notification detail",
+        "listHint": "Click for full details",
+        "changeCount": "{n} changes",
+        "noChangesShort": "No field breakdown",
+        "closeDetail": "Close",
+        "openSubject": "Open record",
+        "detailModalCloseLabel": "Close detail dialog",
+        "diffSectionTitle": "Field changes",
         "source": {
             "api": "API",
             "web": "Web"

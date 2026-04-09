@@ -1538,6 +1538,14 @@
         "ipPrefix": "IP",
         "sourceHint": "Nguồn thực hiện thao tác",
         "diffArrow": "Giá trị mới",
+        "detailModalTitle": "Chi tiết thông báo",
+        "listHint": "Bấm để xem đầy đủ",
+        "changeCount": "{n} thay đổi trường",
+        "noChangesShort": "Không có chi tiết từng trường",
+        "closeDetail": "Đóng",
+        "openSubject": "Mở bản ghi",
+        "detailModalCloseLabel": "Đóng hộp thoại chi tiết",
+        "diffSectionTitle": "Chi tiết thay đổi",
         "source": {
             "api": "API",
             "web": "Web"

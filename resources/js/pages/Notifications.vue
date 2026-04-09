@@ -89,26 +89,22 @@
                         :class="{ unread: !item.read }"
                     >
                         <div class="ppms-activity-line" aria-hidden="true" />
-                        <div class="ppms-activity-card">
+                        <div
+                            class="ppms-activity-card ppms-activity-card--interactive"
+                            role="button"
+                            tabindex="0"
+                            :aria-label="listCardAria(item)"
+                            @click="openDetail(item)"
+                            @keydown.enter.prevent="openDetail(item)"
+                            @keydown.space.prevent="openDetail(item)"
+                        >
                             <div class="ppms-activity-card-head">
                                 <div class="ppms-activity-avatar" aria-hidden="true">
                                     {{ initials(item.actor?.name) }}
                                 </div>
                                 <div class="ppms-activity-head-text">
-                                    <p class="ppms-activity-actor-line">
-                                        <span class="ppms-activity-actor-seg">
-                                            <strong>{{ item.actor?.name || t('activityFeed.systemUser') }}</strong>
-                                        </span>
-                                        <span class="ppms-activity-actor-seg ppms-activity-verb">{{
-                                            kindVerb(item.activity_kind)
-                                        }}</span>
-                                        <span class="ppms-activity-actor-seg">{{ t(`activityFeed.subject.${item.subject_type}`) }}</span>
-                                        <span class="ppms-activity-actor-seg">
-                                            <router-link v-if="item.link" :to="item.link" class="ppms-activity-subject-link">
-                                                {{ item.subject_label || t('activityFeed.valueEmpty') }}
-                                            </router-link>
-                                            <span v-else class="ppms-activity-subject">{{ item.subject_label || t('activityFeed.valueEmpty') }}</span>
-                                        </span>
+                                    <p class="ppms-activity-list-summary">
+                                        {{ listSummaryLine(item) }}
                                     </p>
                                     <div class="ppms-activity-meta">
                                         <span class="ppms-activity-badge" :class="'ppms-activity-badge--' + (item.kind_color || 'yellow')">
@@ -126,27 +122,21 @@
                                             {{ sourceLabel(item.metadata.source) }}
                                         </span>
                                     </div>
+                                    <p class="ppms-activity-peek">
+                                        <span class="ppms-activity-peek-count">{{ changePeekLine(item) }}</span>
+                                        <span class="ppms-activity-peek-hint">{{ t('activityFeed.listHint') }}</span>
+                                        <span class="ppms-activity-peek-chev" aria-hidden="true">›</span>
+                                    </p>
                                 </div>
                                 <button
                                     v-if="!item.read"
                                     type="button"
                                     class="ppms-btn-ghost ppms-btn-sm ppms-activity-mark-read"
-                                    @click="markOne(item)"
+                                    @click.stop="markOne(item)"
                                 >
                                     {{ t('activityFeed.markRead') }}
                                 </button>
                             </div>
-                            <ul v-if="item.changes?.length" class="ppms-activity-changes">
-                                <li v-for="(ch, ci) in item.changes" :key="ci" class="ppms-activity-change">
-                                    <span class="ppms-activity-change-field">{{ fieldLabel(ch.label_key) }}</span>
-                                    <span class="ppms-activity-diff">
-                                        <span class="ppms-activity-old">{{ fmt(ch.old) }}</span>
-                                        <span class="ppms-activity-arrow" aria-hidden="true" :title="t('activityFeed.diffArrow')">→</span>
-                                        <span class="ppms-activity-new">{{ fmt(ch.new) }}</span>
-                                    </span>
-                                </li>
-                            </ul>
-                            <p v-else class="ppms-muted ppms-activity-no-diff">{{ t('activityFeed.noFieldDiff') }}</p>
                         </div>
                     </li>
                 </ul>
@@ -163,6 +153,123 @@
             </div>
             <div v-if="!hasMore && items.length > 0 && !loadingMore" class="ppms-activity-end">{{ t('activityFeed.endOfFeed') }}</div>
         </div>
+
+        <Teleport to="body">
+            <div
+                v-if="detailModalItem"
+                class="ppms-modal-backdrop ppms-activity-modal-backdrop"
+                role="presentation"
+                @click.self="closeDetail"
+            >
+                <div
+                    class="ppms-modal ppms-modal--wide ppms-activity-detail-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    :aria-labelledby="detailModalTitleId"
+                >
+                    <div class="ppms-activity-detail-head">
+                        <div class="ppms-activity-detail-head-top">
+                            <p :id="detailModalTitleId" class="ppms-activity-detail-title">
+                                {{ t('activityFeed.detailModalTitle') }}
+                            </p>
+                            <button
+                                ref="detailModalCloseRef"
+                                type="button"
+                                class="ppms-activity-detail-close"
+                                :aria-label="t('activityFeed.detailModalCloseLabel')"
+                                @click="closeDetail"
+                            >
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </div>
+                        <div class="ppms-activity-detail-badges">
+                            <span
+                                class="ppms-activity-badge"
+                                :class="'ppms-activity-badge--' + (detailModalItem.kind_color || 'yellow')"
+                            >
+                                {{ t(`activityFeed.kind.${detailModalItem.activity_kind || 'updated'}`) }}
+                            </span>
+                            <span class="ppms-muted ppms-activity-detail-time">{{ detailModalItem.created_at_vn }}</span>
+                        </div>
+                    </div>
+
+                    <div class="ppms-activity-detail-body">
+                        <div class="ppms-activity-detail-hero">
+                            <div class="ppms-activity-detail-avatar" aria-hidden="true">
+                                {{ initials(detailModalItem.actor?.name) }}
+                            </div>
+                            <div class="ppms-activity-detail-hero-text">
+                                <p class="ppms-activity-actor-line ppms-activity-actor-line--modal">
+                                    <span class="ppms-activity-actor-seg">
+                                        <strong>{{ detailModalItem.actor?.name || t('activityFeed.systemUser') }}</strong>
+                                    </span>
+                                    <span class="ppms-activity-actor-seg ppms-activity-verb">{{
+                                        kindVerb(detailModalItem.activity_kind)
+                                    }}</span>
+                                    <span class="ppms-activity-actor-seg">{{ t(`activityFeed.subject.${detailModalItem.subject_type}`) }}</span>
+                                    <span class="ppms-activity-actor-seg">
+                                        <router-link
+                                            v-if="detailModalItem.link"
+                                            :to="detailModalItem.link"
+                                            class="ppms-activity-subject-link"
+                                            @click="closeDetail"
+                                        >
+                                            {{ detailModalItem.subject_label || t('activityFeed.valueEmpty') }}
+                                        </router-link>
+                                        <span v-else class="ppms-activity-subject">{{
+                                            detailModalItem.subject_label || t('activityFeed.valueEmpty')
+                                        }}</span>
+                                    </span>
+                                </p>
+                                <div class="ppms-activity-meta ppms-activity-meta--modal">
+                                    <span v-if="detailModalItem.metadata?.ip" class="ppms-muted ppms-activity-meta-ip">
+                                        {{ t('activityFeed.ipPrefix') }} {{ detailModalItem.metadata.ip }}
+                                    </span>
+                                    <span
+                                        v-if="detailModalItem.metadata?.source"
+                                        class="ppms-activity-source"
+                                        :title="t('activityFeed.sourceHint')"
+                                    >
+                                        {{ sourceLabel(detailModalItem.metadata.source) }}
+                                    </span>
+                                </div>
+                                <router-link
+                                    v-if="detailModalItem.link"
+                                    :to="detailModalItem.link"
+                                    class="ppms-activity-open-record"
+                                    @click="closeDetail"
+                                >
+                                    {{ t('activityFeed.openSubject') }} →
+                                </router-link>
+                            </div>
+                        </div>
+
+                        <div class="ppms-activity-detail-section">
+                            <h3 class="ppms-activity-detail-section-title">{{ t('activityFeed.diffSectionTitle') }}</h3>
+                            <ul v-if="detailModalItem.changes?.length" class="ppms-activity-changes ppms-activity-changes--modal">
+                                <li v-for="(ch, ci) in detailModalItem.changes" :key="ci" class="ppms-activity-change">
+                                    <span class="ppms-activity-change-field">{{ fieldLabel(ch.label_key) }}</span>
+                                    <span class="ppms-activity-diff">
+                                        <span class="ppms-activity-old">{{ fmt(ch.old) }}</span>
+                                        <span class="ppms-activity-arrow" aria-hidden="true" :title="t('activityFeed.diffArrow')">→</span>
+                                        <span class="ppms-activity-new">{{ fmt(ch.new) }}</span>
+                                    </span>
+                                </li>
+                            </ul>
+                            <p v-else class="ppms-muted ppms-activity-no-diff ppms-activity-no-diff--modal">
+                                {{ t('activityFeed.noFieldDiff') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="ppms-activity-detail-foot">
+                        <button type="button" class="ppms-btn-primary ppms-activity-detail-done" @click="closeDetail">
+                            {{ t('activityFeed.closeDetail') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </div>
 </template>
 
@@ -199,6 +306,48 @@ const cursor = ref(null);
 
 const sentinel = ref(null);
 let observer;
+
+const detailModalTitleId = 'ppms-activity-detail-modal-title';
+const detailModalItem = ref(null);
+const detailModalCloseRef = ref(null);
+
+function listSummaryLine(item) {
+    const actor = item.actor?.name || t('activityFeed.systemUser');
+    const verb = kindVerb(item.activity_kind);
+    const st = t(`activityFeed.subject.${item.subject_type}`);
+    const label = item.subject_label || t('activityFeed.valueEmpty');
+    return `${actor} ${verb} ${st} ${label}`;
+}
+
+function changePeekLine(item) {
+    const n = item.changes?.length || 0;
+    if (n > 0) {
+        return t('activityFeed.changeCount', { n });
+    }
+    return t('activityFeed.noChangesShort');
+}
+
+function listCardAria(item) {
+    return `${listSummaryLine(item)}. ${changePeekLine(item)}. ${t('activityFeed.listHint')}`;
+}
+
+function openDetail(item) {
+    detailModalItem.value = item;
+    nextTick(() => {
+        detailModalCloseRef.value?.focus();
+    });
+}
+
+function closeDetail() {
+    detailModalItem.value = null;
+}
+
+function onDetailEscape(e) {
+    if (e.key === 'Escape' && detailModalItem.value) {
+        e.preventDefault();
+        closeDetail();
+    }
+}
 
 function initials(name) {
     const n = (name || '?').trim();
@@ -512,9 +661,26 @@ watch(
     () => scrollToFocus(),
 );
 
+watch(detailModalItem, (v) => {
+    if (typeof document === 'undefined') {
+        return;
+    }
+    if (v) {
+        document.body.classList.add('ppms-modal-open');
+        window.addEventListener('keydown', onDetailEscape);
+    } else {
+        document.body.classList.remove('ppms-modal-open');
+        window.removeEventListener('keydown', onDetailEscape);
+    }
+});
+
 onUnmounted(() => {
     observer?.disconnect();
     observer = undefined;
+    window.removeEventListener('keydown', onDetailEscape);
+    if (typeof document !== 'undefined') {
+        document.body.classList.remove('ppms-modal-open');
+    }
 });
 </script>
 
@@ -776,10 +942,73 @@ onUnmounted(() => {
     background: var(--ppms-surface, #fff);
 }
 
+.ppms-activity-card--interactive {
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    box-sizing: border-box;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.ppms-activity-card--interactive:hover {
+    border-color: rgba(79, 70, 229, 0.35);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.ppms-activity-card--interactive:focus {
+    outline: none;
+}
+
+.ppms-activity-card--interactive:focus-visible {
+    outline: 2px solid var(--ppms-primary, #4f46e5);
+    outline-offset: 2px;
+}
+
 @media (min-width: 480px) {
     .ppms-activity-card {
         padding: 0.7rem 0.9rem;
     }
+}
+
+.ppms-activity-list-summary {
+    margin: 0 0 0.35rem;
+    font-size: clamp(0.88rem, 2.6vw, 0.94rem);
+    line-height: 1.45;
+    color: var(--ppms-text, #111827);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+.ppms-activity-peek {
+    margin: 0.4rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+    font-size: 0.78rem;
+    color: var(--ppms-muted, #64748b);
+}
+
+.ppms-activity-peek-count {
+    font-weight: 600;
+    color: var(--ppms-heading, #334155);
+}
+
+.ppms-activity-peek-hint {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ppms-activity-peek-chev {
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--ppms-primary, #4f46e5);
+    font-weight: 300;
 }
 
 .ppms-activity-card-head {
@@ -919,6 +1148,12 @@ onUnmounted(() => {
     color: #991b1b;
 }
 
+.ppms-activity-changes--modal {
+    margin: 0;
+    padding: 0;
+    border-top: none;
+}
+
 .ppms-activity-changes {
     margin: 0.55rem 0 0;
     padding: 0.45rem 0 0;
@@ -1000,6 +1235,172 @@ onUnmounted(() => {
 .ppms-activity-no-diff {
     margin: 0.5rem 0 0;
     font-size: 0.85rem;
+}
+
+.ppms-activity-no-diff--modal {
+    margin: 0;
+    padding: 0.75rem;
+    border-radius: 8px;
+    background: rgba(248, 250, 252, 0.9);
+    border: 1px dashed var(--ppms-border, #e5e7eb);
+}
+
+.ppms-activity-modal-backdrop {
+    z-index: 10000;
+}
+
+.ppms-activity-detail-modal {
+    max-width: min(96vw, 52rem);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    max-height: min(92vh, 44rem);
+    overflow: hidden;
+    border-radius: 14px;
+    box-shadow:
+        0 24px 48px rgba(15, 23, 42, 0.14),
+        0 0 0 1px rgba(15, 23, 42, 0.06);
+}
+
+.ppms-activity-detail-head {
+    flex-shrink: 0;
+    padding: 1rem 1.15rem 0.85rem;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(255, 140, 0, 0.06) 100%);
+    border-bottom: 1px solid var(--ppms-border, #e5e7eb);
+}
+
+.ppms-activity-detail-head-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.ppms-activity-detail-title {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ppms-muted, #64748b);
+}
+
+.ppms-activity-detail-close {
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: -0.35rem -0.25rem 0 0;
+    border: none;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.65);
+    color: var(--ppms-text, #334155);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.ppms-activity-detail-close:hover {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.ppms-activity-detail-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.6rem;
+    margin-top: 0.5rem;
+}
+
+.ppms-activity-detail-time {
+    font-size: 0.82rem;
+}
+
+.ppms-activity-detail-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    padding: 1rem 1.15rem 1.1rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+.ppms-activity-detail-hero {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--ppms-border, #e5e7eb);
+}
+
+.ppms-activity-detail-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    background: linear-gradient(145deg, #e0e7ff, #c7d2fe);
+    color: #3730a3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+    font-size: 1rem;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.15);
+}
+
+.ppms-activity-detail-hero-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.ppms-activity-actor-line--modal {
+    margin-bottom: 0.4rem;
+}
+
+.ppms-activity-meta--modal {
+    margin-top: 0.25rem;
+}
+
+.ppms-activity-open-record {
+    display: inline-flex;
+    margin-top: 0.65rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ppms-primary, #4f46e5);
+    text-decoration: none;
+}
+
+.ppms-activity-open-record:hover {
+    text-decoration: underline;
+}
+
+.ppms-activity-detail-section {
+    margin-top: 0.25rem;
+}
+
+.ppms-activity-detail-section-title {
+    margin: 0 0 0.65rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ppms-muted, #64748b);
+}
+
+.ppms-activity-detail-foot {
+    flex-shrink: 0;
+    padding: 0.85rem 1.15rem 1rem;
+    border-top: 1px solid var(--ppms-border, #e5e7eb);
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.9) 0%, var(--ppms-surface, #fff) 100%);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.ppms-activity-detail-done {
+    min-width: 7.5rem;
 }
 
 .ppms-activity-sentinel {
