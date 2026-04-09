@@ -41,7 +41,13 @@ class ContractPaymentController extends Controller
         $this->authorize('markPayment', $contract);
 
         return new ContractPaymentResource(
-            $this->payments->markPaidForContract($contract, $payment, $request->user())
+            $this->payments->markPaidForContract(
+                $contract,
+                $payment,
+                $request->user(),
+                (string) $request->validated('paid_amount'),
+                $request->file('file')
+            )
         );
     }
 }

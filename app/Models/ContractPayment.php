@@ -13,13 +13,16 @@ class ContractPayment extends Model
         'contract_id',
         'due_date',
         'amount',
+        'amount_paid',
         'status',
         'paid_at',
+        'proof_file_id',
     ];
 
     protected $casts = [
         'due_date' => 'date',
         'amount' => 'decimal:2',
+        'amount_paid' => 'decimal:2',
         'status' => ContractPaymentStatus::class,
         'paid_at' => 'datetime',
     ];
@@ -27,6 +30,11 @@ class ContractPayment extends Model
     public function contract(): BelongsTo
     {
         return $this->belongsTo(Contract::class);
+    }
+
+    public function proofFile(): BelongsTo
+    {
+        return $this->belongsTo(ContractFile::class, 'proof_file_id');
     }
 
     /** @param  Builder<ContractPayment>  $query */

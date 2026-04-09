@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ActivityFeedController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ContractApprovalController;
 use App\Http\Controllers\Api\ContractController;
@@ -70,6 +71,11 @@ Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
 
     Route::get('/users/lookup', [UserLookupController::class, 'index']);
     Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
+
+    Route::get('/activity-feed/unread-count', [ActivityFeedController::class, 'unreadCount']);
+    Route::post('/activity-feed/read-all', [ActivityFeedController::class, 'markAllRead']);
+    Route::patch('/activity-feed/{auditLog}/read', [ActivityFeedController::class, 'markRead']);
+    Route::get('/activity-feed', [ActivityFeedController::class, 'index']);
 
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markRead']);

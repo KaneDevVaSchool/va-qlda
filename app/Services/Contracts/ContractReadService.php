@@ -81,7 +81,7 @@ class ContractReadService
                     (string) $c->total_value,
                     $c->payment_cycle?->value,
                     $c->updated_at?->toIso8601String(),
-                    $c->creator?->name,
+                    $c->followedBy?->name,
                 ]);
             }
             fclose($out);

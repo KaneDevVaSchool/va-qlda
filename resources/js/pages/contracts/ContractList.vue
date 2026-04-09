@@ -213,9 +213,9 @@
                                     </button>
                                 </th>
                                 <th>
-                                    <button type="button" class="contract-list__th-btn" @click="toggleSort('created_by')">
+                                    <button type="button" class="contract-list__th-btn" @click="toggleSort('followed_by_id')">
                                         {{ t('contracts.tableFollower') }}
-                                        <span v-if="sortKey === 'created_by'" class="contract-list__sort-ind" aria-hidden="true">{{
+                                        <span v-if="sortKey === 'followed_by_id'" class="contract-list__sort-ind" aria-hidden="true">{{
                                             sortOrder === 'asc' ? '↑' : '↓'
                                         }}</span>
                                     </button>
@@ -280,7 +280,7 @@
                                         <span v-else class="contract-list__cell-muted">—</span>
                                     </td>
                                     <td class="contract-list__cell-muted contract-list__cell-nowrap">{{ formatUpdatedAt(row.updated_at) }}</td>
-                                    <td class="contract-list__cell-muted">{{ row.creator?.name || '—' }}</td>
+                                    <td class="contract-list__cell-muted">{{ row.followed_by?.name || '—' }}</td>
                                     <td @click.stop>
                                         <router-link :to="`/contracts/${row.id}`" class="ppms-btn-ghost ppms-btn-sm">{{ t('contracts.view') }}</router-link>
                                     </td>
@@ -406,6 +406,20 @@
                                             {{ t('contracts.departmentCreate') }}
                                         </button>
                                     </div>
+                                </div>
+                                <div class="contract-modal__field contract-modal__field--full">
+                                    <label>{{ t('contracts.fieldFollower') }}</label>
+                                    <p class="ppms-hint contract-modal__field-hint">{{ t('contracts.fieldFollowerHint') }}</p>
+                                    <O1UserLookupSelect
+                                        v-model="form.followed_by_id"
+                                        :base-users="[]"
+                                        :search-placeholder="t('projects.createUserSearchPlaceholder')"
+                                        :search-aria="t('contracts.followerSearchAria')"
+                                        :min-hint="t('projects.createUserSearchMinHint')"
+                                        :empty-text="t('projects.createUserSearchEmpty')"
+                                        :loading-text="t('common.loading')"
+                                        :clear-aria="t('contracts.followerClearAria')"
+                                    />
                                 </div>
                             </div>
                         </section>
@@ -558,6 +572,7 @@ import { useI18n } from 'vue-i18n';
 import { formatApiUserMessage } from '@/bootstrap';
 import { ppmsToastError, ppmsToastSuccess } from '@/ppmsUi';
 import { readVndAmountVietnamese } from '@/utils/vndReadWords';
+import O1UserLookupSelect from '@/pages/projects/components/detail/O1UserLookupSelect.vue';
 
 const { t, locale } = useI18n();
 const route = useRoute();
@@ -617,6 +632,7 @@ const form = reactive({
     end_date: '',
     total_value: '',
     payment_cycle: 'monthly',
+    followed_by_id: '',
 });
 
 /** Chỉ chữ số — dùng cho API; ô nhập format kiểu vi-VN qua computed */
@@ -683,7 +699,7 @@ const hasActiveFilters = computed(() => {
     );
 });
 
-const SORT_KEYS = ['id', 'code', 'end_date', 'start_date', 'total_value', 'status', 'updated_at', 'created_by'];
+const SORT_KEYS = ['id', 'code', 'end_date', 'start_date', 'total_value', 'status', 'updated_at', 'followed_by_id'];
 
 function clampPerPage(n) {
     return Math.min(100, Math.max(10, n));
@@ -1056,6 +1072,7 @@ function openCreate() {
     form.end_date = '';
     form.total_value = '';
     form.payment_cycle = 'monthly';
+    form.followed_by_id = '';
     deptCreateOpen.value = false;
     newDeptName.value = '';
     newDeptCode.value = '';
@@ -1066,7 +1083,7 @@ async function submitCreate() {
     formError.value = '';
     saving.value = true;
     try {
-        const { data: body } = await axios.post('/api/contracts', {
+        const createPayload = {
             vendor_name: form.vendor_name,
             product_name: form.product_name,
             department_id: form.department_id,
@@ -1075,7 +1092,11 @@ async function submitCreate() {
             end_date: form.end_date,
             total_value: form.total_value === '' ? 0 : Number(form.total_value),
             payment_cycle: form.payment_cycle,
-        });
+        };
+        if (form.followed_by_id) {
+            createPayload.followed_by_id = Number(form.followed_by_id);
+        }
+        const { data: body } = await axios.post('/api/contracts', createPayload);
         const contractId = body.data?.id ?? body.id;
         if (contractId == null) {
             formError.value = t('contracts.loadError');

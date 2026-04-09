@@ -45,14 +45,7 @@
                         EN
                     </button>
                 </div>
-                <router-link
-                    to="/notifications"
-                    class="ppms-header-notify"
-                    :aria-label="t('common.notifications')"
-                >
-                    <span class="ppms-icon-bell" aria-hidden="true" />
-                    <span v-if="unread > 0" class="ppms-header-badge">{{ unread > 9 ? '9+' : unread }}</span>
-                </router-link>
+                <NotificationDropdown :unread="unread" @refresh="refreshUnread" />
             </div>
         </header>
 
@@ -441,9 +434,8 @@ watch(
 
 async function refreshUnread() {
     try {
-        const { data } = await axios.get('/api/notifications');
-        const rows = data.data || data;
-        unread.value = Array.isArray(rows) ? rows.filter((r) => !r.read_at).length : 0;
+        const { data } = await axios.get('/api/activity-feed/unread-count');
+        unread.value = typeof data.unread === 'number' ? data.unread : 0;
     } catch {
         unread.value = 0;
     }

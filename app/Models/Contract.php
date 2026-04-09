@@ -24,6 +24,7 @@ class Contract extends Model
         'payment_cycle',
         'created_by',
         'approved_by',
+        'followed_by_id',
     ];
 
     protected $casts = [
@@ -57,6 +58,11 @@ class Contract extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function followedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'followed_by_id');
     }
 
     public function versions(): HasMany

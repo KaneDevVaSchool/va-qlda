@@ -29,6 +29,17 @@
                         <span class="cd-header__dates-label">{{ t('contracts.detailDurationLabel') }}</span>
                         {{ formatDateDisplay(contract.start_date) }} → {{ formatDateDisplay(contract.end_date) }}
                     </p>
+                    <p v-if="contract.status === 'pending_approval' && isCurrentApprover" class="cd-header__approval-nudge">
+                        <span class="cd-header__approval-nudge__txt">{{ t('contracts.approvalYourTurnNudge') }}</span>
+                        <button
+                            v-if="tab !== 'approvals'"
+                            type="button"
+                            class="ppms-btn-primary ppms-btn-sm"
+                            @click="tab = 'approvals'"
+                        >
+                            {{ t('contracts.approvalGoToStep') }}
+                        </button>
+                    </p>
                 </div>
                 <div class="ppms-contract-actions cd-header__actions">
                     <button type="button" class="ppms-btn-ghost" @click="exportSummaryPdf">{{ t('contracts.exportSummaryPdf') }}</button>
@@ -38,10 +49,6 @@
                     </template>
                     <template v-if="contract.status === 'draft' && canSubmit">
                         <button type="button" class="ppms-btn-primary" @click="submitOpen = true">{{ t('contracts.submitApproval') }}</button>
-                    </template>
-                    <template v-if="contract.status === 'pending_approval' && isCurrentApprover">
-                        <button type="button" class="ppms-btn-primary" @click="doApprove">{{ t('contracts.approve') }}</button>
-                        <button type="button" class="ppms-btn-ghost" @click="doReject">{{ t('contracts.reject') }}</button>
                     </template>
                     <template v-if="contract.status === 'active' && canTerminate">
                         <button type="button" class="ppms-btn-ghost ppms-btn-danger" @click="doTerminate">{{ t('contracts.terminate') }}</button>
@@ -122,6 +129,14 @@
                                 <dt>{{ t('contracts.fieldDepartment') }}</dt>
                                 <dd>{{ contract.department?.name || '—' }}</dd>
                             </div>
+                            <div>
+                                <dt>{{ t('contracts.fieldCreator') }}</dt>
+                                <dd>{{ contract.creator?.name || '—' }}</dd>
+                            </div>
+                            <div>
+                                <dt>{{ t('contracts.fieldFollower') }}</dt>
+                                <dd>{{ contract.followed_by?.name || '—' }}</dd>
+                            </div>
                         </dl>
                     </div>
                     <div class="cd-detail__card">
@@ -193,8 +208,11 @@
                         <thead>
                             <tr>
                                 <th>{{ t('contracts.paymentsDue') }}</th>
-                                <th class="cd-table__num">{{ t('contracts.paymentsAmount') }}</th>
+                                <th class="cd-table__num">{{ t('contracts.paymentsScheduled') }}</th>
+                                <th class="cd-table__num">{{ t('contracts.paymentsPaidCol') }}</th>
+                                <th class="cd-table__num">{{ t('contracts.paymentsRemainingCol') }}</th>
                                 <th>{{ t('contracts.paymentsStatus') }}</th>
+                                <th>{{ t('contracts.paymentsProofCol') }}</th>
                                 <th v-if="canMarkPaid" />
                             </tr>
                         </thead>
@@ -202,26 +220,40 @@
                             <tr v-for="p in contract.payments || []" :key="p.id">
                                 <td>{{ formatDateDisplay(p.due_date) }}</td>
                                 <td class="cd-table__num">{{ formatMoneyDisplay(p.amount) }}</td>
+                                <td class="cd-table__num">{{ formatMoneyDisplay(p.amount_paid ?? 0) }}</td>
+                                <td class="cd-table__num">{{ formatMoneyDisplay(paymentRemainingAmount(p)) }}</td>
                                 <td>
                                     <span class="cd-pill cd-pill--sm" :class="paymentPillClass(p.status)">{{
                                         paymentStatusLabel(p.status)
                                     }}</span>
                                 </td>
-                                <td v-if="canMarkPaid">
+                                <td>
                                     <button
-                                        v-if="p.status === 'pending' || p.status === 'overdue'"
+                                        v-if="p.proof_file?.id"
                                         type="button"
                                         class="ppms-btn-ghost ppms-btn-sm"
-                                        @click="markPaid(p.id)"
+                                        @click="downloadFile(p.proof_file.id)"
                                     >
-                                        {{ t('contracts.markPaid') }}
+                                        {{ p.proof_file.file_name }}
                                     </button>
+                                    <span v-else class="cd-table__muted">—</span>
+                                </td>
+                                <td v-if="canMarkPaid">
+                                    <button
+                                        v-if="canRecordPayment(p)"
+                                        type="button"
+                                        class="ppms-btn-ghost ppms-btn-sm"
+                                        @click="openPayModal(p.id)"
+                                    >
+                                        {{ t('contracts.recordPayment') }}
+                                    </button>
+                                    <span v-else class="cd-table__muted">—</span>
                                 </td>
                             </tr>
                         </tbody>
                         <tbody v-else>
                             <tr>
-                                <td :colspan="canMarkPaid ? 4 : 3" class="cd-empty">{{ t('contracts.emptyPayments') }}</td>
+                                <td :colspan="canMarkPaid ? 7 : 6" class="cd-empty">{{ t('contracts.emptyPayments') }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -326,22 +358,63 @@
                 </div>
             </section>
 
-            <section v-show="tab === 'approvals'" class="cd-panel ppms-card ppms-mt">
-                <p class="cd-panel__intro">{{ t('contracts.approvalsTabIntro') }}</p>
+            <section v-show="tab === 'approvals'" class="cd-panel ppms-card ppms-mt cd-approvals-panel">
+                <div class="cd-approvals-panel__head">
+                    <h3 class="cd-approvals-panel__title">{{ t('contracts.approvalTimelineTitle') }}</h3>
+                    <p class="cd-panel__intro cd-approvals-panel__intro">{{ t('contracts.approvalsTabIntro') }}</p>
+                </div>
+                <div
+                    v-if="contract.status === 'pending_approval' && isCurrentApprover"
+                    class="cd-approval-callout"
+                    role="status"
+                >
+                    <span class="cd-approval-callout__icon" aria-hidden="true">●</span>
+                    <div class="cd-approval-callout__text">
+                        <strong>{{ t('contracts.approvalYourTurnTitle') }}</strong>
+                        <span>{{ t('contracts.approvalYourTurnBody') }}</span>
+                    </div>
+                </div>
                 <ol v-if="sortedApprovals.length" class="cd-approval-timeline">
-                    <li v-for="(a, idx) in sortedApprovals" :key="a.id" class="cd-approval-timeline__item">
+                    <li
+                        v-for="(a, idx) in sortedApprovals"
+                        :key="a.id"
+                        class="cd-approval-timeline__item"
+                        :class="approvalItemClass(a.status)"
+                    >
                         <div class="cd-approval-timeline__track" aria-hidden="true">
-                            <span class="cd-approval-timeline__dot" />
+                            <span class="cd-approval-timeline__dot" :class="approvalDotClass(a.status)" />
                             <span v-if="idx < sortedApprovals.length - 1" class="cd-approval-timeline__line" />
                         </div>
                         <div class="cd-approval-timeline__body">
                             <div class="cd-approval-timeline__head">
-                                <span class="cd-approval-timeline__step">{{ t('contracts.approvalStep') }} {{ a.step }}</span>
-                                <span class="cd-pill cd-pill--sm" :class="approvalPillClass(a.status)">{{
-                                    approvalStatusLabel(a.status)
-                                }}</span>
+                                <div class="cd-approval-timeline__head-main">
+                                    <span class="cd-approval-timeline__step"
+                                        >{{ t('contracts.approvalStep') }} {{ a.step }}</span
+                                    >
+                                    <span class="cd-pill cd-pill--sm" :class="approvalPillClass(a.status)">{{
+                                        approvalStatusLabel(a.status)
+                                    }}</span>
+                                </div>
+                                <div v-if="showApprovalStepActions(a)" class="cd-approval-timeline__actions" @click.stop>
+                                    <button type="button" class="ppms-btn-primary ppms-btn-sm" @click="doApprove">
+                                        {{ t('contracts.approveShort') }}
+                                    </button>
+                                    <button type="button" class="ppms-btn-ghost ppms-btn-sm" @click="doReject">
+                                        {{ t('contracts.rejectShort') }}
+                                    </button>
+                                </div>
                             </div>
-                            <p class="cd-approval-timeline__who">{{ a.approver?.name || a.approver_id }}</p>
+                            <p class="cd-approval-timeline__role">{{ t('contracts.approvalApproverRole') }}</p>
+                            <p class="cd-approval-timeline__who">{{ a.approver?.name || '—' }}</p>
+                            <p v-if="a.status === 'approved' && a.approved_at" class="cd-approval-timeline__meta">
+                                {{ t('contracts.approvalDoneAt') }} {{ formatDateTimeDisplay(a.approved_at) }}
+                            </p>
+                            <p v-else-if="a.status === 'pending' && !isCurrentApprover" class="cd-approval-timeline__meta">
+                                {{ t('contracts.approvalWaitingFor', { name: a.approver?.name || '—' }) }}
+                            </p>
+                            <p v-else-if="a.status === 'queued'" class="cd-approval-timeline__meta">
+                                {{ t('contracts.approvalQueuedHint') }}
+                            </p>
                         </div>
                     </li>
                 </ol>
@@ -429,6 +502,79 @@
                     <div class="contract-modal__actions">
                         <button type="button" class="ppms-btn-ghost" @click="submitOpen = false">{{ t('common.cancel') }}</button>
                         <button type="button" class="ppms-btn-primary contract-modal__submit" @click="submitApproval">{{ t('common.send') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div
+            v-if="payModalOpen"
+            class="contract-modal__backdrop"
+            role="presentation"
+            @click.self="!paySubmitting && (payModalOpen = false)"
+        >
+            <div class="contract-modal cd-pay-modal ppms-card" role="dialog" aria-modal="true" aria-labelledby="cd-pay-title">
+                <div class="contract-modal__head">
+                    <div class="contract-modal__head-text">
+                        <h2 id="cd-pay-title" class="contract-modal__title">{{ t('contracts.paymentModalTitle') }}</h2>
+                        <p class="contract-modal__subtitle">{{ t('contracts.paymentModalHint') }}</p>
+                    </div>
+                    <button
+                        type="button"
+                        class="contract-modal__close"
+                        :disabled="paySubmitting"
+                        :aria-label="t('common.cancel')"
+                        @click="payModalOpen = false"
+                    >
+                        ×
+                    </button>
+                </div>
+                <div class="contract-modal__body">
+                    <div class="contract-modal__field">
+                        <label for="cd-pay-remaining">{{ t('contracts.paymentRemainingLabel') }}</label>
+                        <p id="cd-pay-remaining" class="cd-pay-modal__highlight">{{ formatMoneyDisplay(payRemaining) }}</p>
+                    </div>
+                    <div class="contract-modal__field">
+                        <label for="cd-pay-amount">{{ t('contracts.paymentAmountLabel') }}</label>
+                        <input
+                            id="cd-pay-amount"
+                            v-model="payAmountDisplay"
+                            type="text"
+                            class="ppms-input"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            :placeholder="t('contracts.paymentAmountPlaceholder')"
+                        />
+                        <p v-if="payAmountInWords" class="contract-modal__amount-words">{{ payAmountInWords }}</p>
+                    </div>
+                    <div class="contract-modal__field">
+                        <label for="cd-pay-proof">{{ t('contracts.paymentProofLabel') }}</label>
+                        <p class="ppms-hint">{{ t('contracts.paymentProofHint') }}</p>
+                        <input
+                            id="cd-pay-proof"
+                            ref="payProofInputRef"
+                            type="file"
+                            class="ppms-input cd-pay-modal__file"
+                            :accept="paymentProofAccept"
+                            @change="onPayProofPick"
+                        />
+                        <p v-if="payProofFile" class="cd-pay-modal__file-name">
+                            {{ payProofFile.name }}
+                            <button type="button" class="ppms-btn-ghost ppms-btn-sm" @click="clearPayProof">
+                                {{ t('contracts.paymentProofRemove') }}
+                            </button>
+                        </p>
+                    </div>
+                </div>
+                <div class="contract-modal__footer">
+                    <div class="contract-modal__actions">
+                        <button type="button" class="ppms-btn-ghost" :disabled="paySubmitting" @click="payModalOpen = false">
+                            {{ t('common.cancel') }}
+                        </button>
+                        <button type="button" class="ppms-btn-primary" :disabled="paySubmitting" @click="submitPayPayment">
+                            <span v-if="paySubmitting">{{ t('contracts.modalSaving') }}</span>
+                            <span v-else>{{ t('contracts.paymentSubmit') }}</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -526,6 +672,20 @@
                                         </button>
                                     </div>
                                 </div>
+                                <div class="contract-modal__field contract-modal__field--full">
+                                    <label>{{ t('contracts.fieldFollower') }}</label>
+                                    <p class="ppms-hint contract-modal__field-hint">{{ t('contracts.fieldFollowerHint') }}</p>
+                                    <O1UserLookupSelect
+                                        v-model="editForm.followed_by_id"
+                                        :base-users="[]"
+                                        :search-placeholder="t('projects.createUserSearchPlaceholder')"
+                                        :search-aria="t('contracts.followerSearchAria')"
+                                        :min-hint="t('projects.createUserSearchMinHint')"
+                                        :empty-text="t('projects.createUserSearchEmpty')"
+                                        :loading-text="t('common.loading')"
+                                        :clear-aria="t('contracts.followerClearAria')"
+                                    />
+                                </div>
                             </div>
                         </section>
                         <section class="contract-modal__section">
@@ -613,6 +773,7 @@ import { formatApiUserMessage } from '@/bootstrap';
 import { ppmsConfirm, ppmsToastError, ppmsToastSuccess } from '@/ppmsUi';
 import { readVndAmountVietnamese } from '@/utils/vndReadWords';
 import O1UserPicker from '@/pages/projects/components/detail/O1UserPicker.vue';
+import O1UserLookupSelect from '@/pages/projects/components/detail/O1UserLookupSelect.vue';
 
 const props = defineProps({
     id: { type: [String, Number], required: true },
@@ -642,6 +803,14 @@ const submitOpen = ref(false);
 const approverIds = ref([]);
 const submitErr = ref('');
 
+const payModalOpen = ref(false);
+const payPaymentId = ref(null);
+const payAmountDigits = ref('');
+const payProofFile = ref(null);
+const payProofInputRef = ref(null);
+const paySubmitting = ref(false);
+const paymentProofAccept = 'image/*,.pdf,.PDF,application/pdf';
+
 const editOpen = ref(false);
 const editErr = ref('');
 const editSaving = ref(false);
@@ -654,6 +823,7 @@ const editForm = reactive({
     end_date: '',
     total_value: '',
     payment_cycle: 'monthly',
+    followed_by_id: '',
 });
 
 const lookups = reactive({
@@ -760,6 +930,7 @@ function periodProgressPercent(row) {
 function paymentStatusLabel(s) {
     const map = {
         pending: 'contracts.payPending',
+        partial: 'contracts.payPartial',
         paid: 'contracts.payPaid',
         overdue: 'contracts.payOverdue',
     };
@@ -769,9 +940,32 @@ function paymentStatusLabel(s) {
 function paymentPillClass(s) {
     return {
         'cd-pill--pay-pending': s === 'pending',
+        'cd-pill--pay-partial': s === 'partial',
         'cd-pill--pay-paid': s === 'paid',
         'cd-pill--pay-overdue': s === 'overdue',
     };
+}
+
+function paymentRemainingAmount(p) {
+    const total = Number(p.amount);
+    const ap = Number(p.amount_paid ?? 0);
+    if (p.status === 'paid') {
+        return 0;
+    }
+    if (Number.isNaN(total)) {
+        return 0;
+    }
+    return Math.max(0, total - (Number.isNaN(ap) ? 0 : ap));
+}
+
+function canRecordPayment(p) {
+    if (!canMarkPaid.value) {
+        return false;
+    }
+    if (p.status === 'paid') {
+        return false;
+    }
+    return paymentRemainingAmount(p) > 0.0001;
 }
 
 function approvalStatusLabel(s) {
@@ -793,6 +987,24 @@ function approvalPillClass(s) {
     };
 }
 
+function approvalItemClass(status) {
+    return {
+        'cd-approval-timeline__item--current': status === 'pending',
+        'cd-approval-timeline__item--done': status === 'approved',
+        'cd-approval-timeline__item--rejected': status === 'rejected',
+        'cd-approval-timeline__item--queued': status === 'queued',
+    };
+}
+
+function approvalDotClass(status) {
+    return {
+        'cd-approval-timeline__dot--approved': status === 'approved',
+        'cd-approval-timeline__dot--rejected': status === 'rejected',
+        'cd-approval-timeline__dot--pending': status === 'pending',
+        'cd-approval-timeline__dot--queued': status === 'queued',
+    };
+}
+
 const editTotalValueInWords = computed(() => {
     if (!editForm.total_value) return '';
     const n = Number(editForm.total_value);
@@ -809,19 +1021,66 @@ const paymentTotals = computed(() => {
     let paid = 0;
     let outstanding = 0;
     for (const p of payments) {
-        const n = Number(p.amount);
-        if (Number.isNaN(n)) {
+        const total = Number(p.amount);
+        if (Number.isNaN(total)) {
             continue;
         }
-        scheduled += n;
-        if (p.status === 'paid') {
-            paid += n;
-        } else {
-            outstanding += n;
+        scheduled += total;
+        const ap = Number(p.amount_paid ?? 0);
+        paid += Number.isNaN(ap) ? 0 : ap;
+        const rem = paymentRemainingAmount(p);
+        if (rem > 0.0001) {
+            outstanding += rem;
         }
     }
     const pct = scheduled > 0 ? Math.min(100, Math.round((paid / scheduled) * 100)) : 0;
     return { scheduled, paid, outstanding, pct };
+});
+
+const payTargetPayment = computed(() => {
+    const id = payPaymentId.value;
+    if (!id || !contract.value?.payments) {
+        return null;
+    }
+    return contract.value.payments.find((p) => p.id === id) ?? null;
+});
+
+const payRemaining = computed(() => {
+    const p = payTargetPayment.value;
+    if (!p) {
+        return 0;
+    }
+    return paymentRemainingAmount(p);
+});
+
+const payAmountDisplay = computed({
+    get() {
+        if (!payAmountDigits.value) {
+            return '';
+        }
+        const n = Number(payAmountDigits.value);
+        if (!Number.isFinite(n)) {
+            return payAmountDigits.value;
+        }
+        return new Intl.NumberFormat('vi-VN').format(n);
+    },
+    set(raw) {
+        payAmountDigits.value = String(raw ?? '').replace(/\D/g, '');
+    },
+});
+
+const payAmountInWords = computed(() => {
+    if (!payAmountDigits.value) {
+        return '';
+    }
+    const n = Number(payAmountDigits.value);
+    if (!Number.isFinite(n) || n <= 0) {
+        return '';
+    }
+    if (locale.value === 'vi') {
+        return `${t('contracts.amountInWordsPrefix')}: ${readVndAmountVietnamese(n)}`;
+    }
+    return `${t('contracts.amountInWordsPrefix')}: ${formatMoneyDisplay(n)}`;
 });
 
 const sortedApprovals = computed(() => {
@@ -903,6 +1162,10 @@ const isCurrentApprover = computed(() => {
     const pending = (contract.value.approvals || []).find((a) => a.status === 'pending');
     return pending && pending.approver_id === me.value.id;
 });
+
+function showApprovalStepActions(a) {
+    return a.status === 'pending' && isCurrentApprover.value;
+}
 
 async function loadMe() {
     try {
@@ -1107,6 +1370,10 @@ function openEdit() {
     editForm.end_date = contract.value.end_date || '';
     editForm.total_value = String(contract.value.total_value ?? '').replace(/\D/g, '');
     editForm.payment_cycle = contract.value.payment_cycle || 'monthly';
+    editForm.followed_by_id =
+        contract.value.followed_by_id != null && contract.value.followed_by_id !== ''
+            ? String(contract.value.followed_by_id)
+            : '';
     deptCreateOpenEdit.value = false;
     newDeptNameEdit.value = '';
     newDeptCodeEdit.value = '';
@@ -1126,6 +1393,7 @@ async function saveEdit() {
             end_date: editForm.end_date,
             total_value: editForm.total_value === '' ? 0 : Number(editForm.total_value),
             payment_cycle: editForm.payment_cycle,
+            followed_by_id: editForm.followed_by_id ? Number(editForm.followed_by_id) : null,
         });
         ppmsToastSuccess(t('contracts.updated'));
         editOpen.value = false;
@@ -1218,13 +1486,58 @@ async function doTerminate() {
     }
 }
 
-async function markPaid(paymentId) {
+function openPayModal(paymentId) {
+    payPaymentId.value = paymentId;
+    const p = contract.value?.payments?.find((x) => x.id === paymentId);
+    const rem = p ? paymentRemainingAmount(p) : 0;
+    payAmountDigits.value = rem > 0 ? String(Math.round(rem)) : '';
+    payProofFile.value = null;
+    if (payProofInputRef.value) {
+        payProofInputRef.value.value = '';
+    }
+    payModalOpen.value = true;
+}
+
+async function submitPayPayment() {
+    const amt = Number(payAmountDigits.value);
+    if (!Number.isFinite(amt) || amt <= 0) {
+        ppmsToastError(t('contracts.paymentAmountInvalid'));
+        return;
+    }
+    const rem = payRemaining.value;
+    if (amt > rem + 0.0001) {
+        ppmsToastError(t('contracts.paymentAmountTooHigh'));
+        return;
+    }
+    if (!(await ppmsConfirm(t('contracts.paymentConfirm', { amount: formatMoneyDisplay(amt) })))) {
+        return;
+    }
+    paySubmitting.value = true;
     try {
-        await axios.post(`/api/contracts/${props.id}/payments/${paymentId}/mark-paid`);
+        const fd = new FormData();
+        fd.append('paid_amount', String(amt));
+        if (payProofFile.value) {
+            fd.append('file', payProofFile.value);
+        }
+        await axios.post(`/api/contracts/${props.id}/payments/${payPaymentId.value}/mark-paid`, fd);
         ppmsToastSuccess(t('contracts.markedPaid'));
+        payModalOpen.value = false;
         await loadContract();
     } catch (e) {
         ppmsToastError(formatApiUserMessage(e, t('contracts.loadError')));
+    } finally {
+        paySubmitting.value = false;
+    }
+}
+
+function onPayProofPick(e) {
+    payProofFile.value = e.target.files?.[0] || null;
+}
+
+function clearPayProof() {
+    payProofFile.value = null;
+    if (payProofInputRef.value) {
+        payProofInputRef.value.value = '';
     }
 }
 
@@ -1470,6 +1783,24 @@ onMounted(async () => {
     color: var(--ppms-fg, #334155);
     margin-right: 6px;
 }
+.cd-header__approval-nudge {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    margin: 12px 0 0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    border: 1px solid #c7d2fe;
+    font-size: 0.875rem;
+    color: #3730a3;
+}
+.cd-header__approval-nudge__txt {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.45;
+}
 
 .cd-pill {
     display: inline-block;
@@ -1514,6 +1845,27 @@ onMounted(async () => {
 .cd-pill--pay-overdue {
     background: #fee2e2;
     color: #b91c1c;
+}
+.cd-pill--pay-partial {
+    background: #fef9c3;
+    color: #854d0e;
+}
+.cd-pay-modal__highlight {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--ppms-fg, #0f172a);
+}
+.cd-pay-modal__file {
+    padding: 8px 0;
+}
+.cd-pay-modal__file-name {
+    margin: 8px 0 0;
+    font-size: 0.875rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
 }
 .cd-pill--appr-pending {
     background: #dbeafe;
@@ -1919,6 +2271,46 @@ onMounted(async () => {
     color: #334155;
 }
 
+.cd-approvals-panel__head {
+    margin-bottom: 4px;
+}
+.cd-approvals-panel__title {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--ppms-fg, #0f172a);
+}
+.cd-approvals-panel__intro {
+    margin-top: 0;
+}
+.cd-approval-callout {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #14532d;
+    font-size: 0.875rem;
+    line-height: 1.45;
+}
+.cd-approval-callout__icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: #16a34a;
+    font-size: 0.65rem;
+}
+.cd-approval-callout__text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.cd-approval-callout__text strong {
+    font-size: 0.9rem;
+}
+
 .cd-approval-timeline {
     margin: 0;
     padding: 0;
@@ -1926,35 +2318,74 @@ onMounted(async () => {
 }
 .cd-approval-timeline__item {
     display: flex;
-    gap: 12px;
+    gap: 14px;
     align-items: stretch;
-    min-height: 44px;
+    min-height: 48px;
+}
+.cd-approval-timeline__item--current .cd-approval-timeline__body {
+    margin-bottom: 8px;
+    padding: 12px 14px 14px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.cd-approval-timeline__item--done .cd-approval-timeline__body {
+    opacity: 0.98;
 }
 .cd-approval-timeline__track {
     position: relative;
-    padding-top: 4px;
-    margin-left: 6px;
+    padding-top: 6px;
+    margin-left: 4px;
+    flex-shrink: 0;
 }
 .cd-approval-timeline__dot {
     display: block;
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     border-radius: 999px;
     background: #e2e8f0;
     border: 2px solid #fff;
-    box-shadow: 0 0 0 2px #6366f1;
+    box-shadow: 0 0 0 2px #94a3b8;
+}
+.cd-approval-timeline__dot--approved {
+    background: #22c55e;
+    box-shadow: 0 0 0 2px #86efac;
+}
+.cd-approval-timeline__dot--pending {
+    background: #f59e0b;
+    box-shadow: 0 0 0 2px #fcd34d;
+    animation: cd-approval-pulse 2s ease-in-out infinite;
+}
+.cd-approval-timeline__dot--queued {
+    background: #e2e8f0;
+    box-shadow: 0 0 0 2px #cbd5e1;
+}
+.cd-approval-timeline__dot--rejected {
+    background: #ef4444;
+    box-shadow: 0 0 0 2px #fecaca;
+}
+@keyframes cd-approval-pulse {
+    0%,
+    100% {
+        box-shadow: 0 0 0 2px #fcd34d;
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(252, 211, 77, 0.45);
+    }
 }
 .cd-approval-timeline__line {
     position: absolute;
-    left: 5px;
-    top: 18px;
+    left: 6px;
+    top: 22px;
     width: 2px;
     border-radius: 1px;
-    bottom: -18px;
-    background: linear-gradient(180deg, #c7d2fe, #e2e8f0);
+    bottom: -12px;
+    background: linear-gradient(180deg, #cbd5e1, #e2e8f0);
 }
 .cd-approval-timeline__body {
     flex: 1;
+    min-width: 0;
     padding-bottom: 16px;
     border-bottom: 1px solid #f1f5f9;
     margin-bottom: 4px;
@@ -1965,18 +2396,46 @@ onMounted(async () => {
 .cd-approval-timeline__head {
     display: flex;
     flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px 12px;
+}
+.cd-approval-timeline__head-main {
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
+    min-width: 0;
+}
+.cd-approval-timeline__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex-shrink: 0;
 }
 .cd-approval-timeline__step {
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: var(--ppms-fg, #0f172a);
+}
+.cd-approval-timeline__role {
+    margin: 8px 0 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
 }
 .cd-approval-timeline__who {
     margin: 4px 0 0;
-    font-size: 0.875rem;
-    color: #475569;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+.cd-approval-timeline__meta {
+    margin: 8px 0 0;
+    font-size: 0.8rem;
+    color: #64748b;
 }
 .cd-empty--block {
     padding: 20px;

@@ -4,6 +4,7 @@ namespace App\Services\Contracts;
 
 use App\Models\Contract;
 use App\Models\ContractLog;
+use App\Services\AuditLogger;
 
 class ContractAuditService
 {
@@ -22,5 +23,7 @@ class ContractAuditService
             'user_id' => $userId,
             'created_at' => now(),
         ]);
+
+        AuditLogger::log($action, $contract, $oldData, $newData, $userId);
     }
 }

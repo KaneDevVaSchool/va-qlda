@@ -161,10 +161,13 @@ const routes = [
                 name: 'notifications',
                 component: () => import('../pages/Notifications.vue'),
                 meta: {
-                    title: 'Thông báo',
-                    pageTitle: 'Thông báo',
-                    pageDescription: 'Thông báo trong ứng dụng theo BR-NT.',
-                    breadcrumb: bc([{ label: 'Trang chủ', to: '/' }, { label: 'Thông báo' }]),
+                    titleKey: 'activityFeed.pageTitle',
+                    pageTitleKey: 'activityFeed.pageTitle',
+                    pageDescriptionKey: 'activityFeed.pageDescription',
+                    breadcrumb: bc([
+                        { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'layout.navNotifications' },
+                    ]),
                 },
             },
             {

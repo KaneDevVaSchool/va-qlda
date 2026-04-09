@@ -44,6 +44,7 @@ class ContractService
                 'payment_cycle' => PaymentCycle::from($data['payment_cycle']),
                 'created_by' => $creator->id,
                 'approved_by' => null,
+                'followed_by_id' => $data['followed_by_id'] ?? null,
             ]);
 
             $this->rebuildInstallmentSchedule($contract);
@@ -56,7 +57,7 @@ class ContractService
                 $creator->id
             );
 
-            return $contract->fresh(['vendor', 'product', 'department', 'payments']);
+            return $contract->fresh(['vendor', 'product', 'department', 'payments', 'followedBy']);
         });
     }
 
@@ -108,7 +109,7 @@ class ContractService
                 $user->id
             );
 
-            return $contract->fresh(['vendor', 'product', 'department', 'payments']);
+            return $contract->fresh(['vendor', 'product', 'department', 'payments', 'followedBy']);
         });
     }
 
