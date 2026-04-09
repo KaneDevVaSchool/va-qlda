@@ -35,6 +35,7 @@ use App\Http\Controllers\Api\VendorReviewController;
 use App\Http\Controllers\Api\VendorTimelineController;
 use App\Http\Controllers\Api\UserLookupController;
 use App\Http\Controllers\Api\UserProfileController;
+use App\Http\Controllers\Api\RbacRoleMatrixController;
 use App\Http\Controllers\Api\UserRbacController;
 use App\Http\Controllers\Api\UserRoleController;
 use App\Http\Controllers\Api\UserSecurityController;
@@ -70,6 +71,10 @@ Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
 
     Route::get('/me/rbac', [UserRbacController::class, 'show']);
     Route::patch('/me/rbac', [UserRbacController::class, 'update']);
+
+    Route::get('/admin/rbac/role-matrix', [RbacRoleMatrixController::class, 'show']);
+    Route::patch('/admin/rbac/roles/{role}', [RbacRoleMatrixController::class, 'update']);
+    Route::delete('/admin/rbac/roles/{role}', [RbacRoleMatrixController::class, 'destroy']);
 
     Route::get('/me/delegations', [UserDelegationController::class, 'index']);
     Route::post('/me/delegations', [UserDelegationController::class, 'store']);

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\RbacRolePermission;
 use App\Models\User;
 use App\Models\UserPermissionOverride;
 use Carbon\Carbon;
@@ -15,7 +16,7 @@ class UserRbacService
     {
         $keys = $this->allPermissionKeys();
         $role = (string) ($user->role ?? 'developer');
-        $roleMatrix = config('ppms_rbac.roles.'.$role, []);
+        $roleMatrix = $this->baseRoleMatrix($role);
 
         $out = [];
         foreach ($keys as $key) {
@@ -64,7 +65,7 @@ class UserRbacService
         $roles = array_keys(config('ppms_rbac.roles', []));
         $out = [];
         foreach ($roles as $role) {
-            $roleMatrix = config('ppms_rbac.roles.'.$role, []);
+            $roleMatrix = $this->baseRoleMatrix($role);
             $row = [];
             foreach ($keys as $key) {
                 $row[$key] = $this->roleAllows($roleMatrix, $key);
@@ -73,6 +74,86 @@ class UserRbacService
         }
 
         return $out;
+    }
+
+    /**
+     * Config fallback when no DB rows exist for this role.
+     *
+     * @return array<string, mixed>
+     */
+    public function baseRoleMatrix(string $role): array
+    {
+        $rows = RbacRolePermission::query()->where('role', $role)->get();
+        if ($rows->isEmpty()) {
+            return config('ppms_rbac.roles.'.$role, []);
+        }
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[$row->permission_key] = $row->granted;
+        }
+
+        if (($out['*'] ?? false) === true) {
+            return ['*' => true];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  array<string, bool>  $entries  permission_key => granted (full set from UI)
+     */
+    public function syncRoleMatrixFromUi(string $role, array $entries): void
+    {
+        RbacRolePermission::query()->where('role', $role)->delete();
+
+        $keys = $this->allPermissionKeys();
+
+        if ($role === 'admin') {
+            $allTrue = true;
+            foreach ($keys as $k) {
+                if (! ($entries[$k] ?? false)) {
+                    $allTrue = false;
+                    break;
+                }
+            }
+            if ($allTrue) {
+                RbacRolePermission::query()->create([
+                    'role' => 'admin',
+                    'permission_key' => '*',
+                    'granted' => true,
+                ]);
+
+                return;
+            }
+        }
+
+        foreach ($keys as $key) {
+            $granted = (bool) ($entries[$key] ?? false);
+            RbacRolePermission::query()->create([
+                'role' => $role,
+                'permission_key' => $key,
+                'granted' => $granted,
+            ]);
+        }
+    }
+
+    public function clearRoleMatrix(string $role): void
+    {
+        RbacRolePermission::query()->where('role', $role)->delete();
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function rolesWithCustomMatrix(): array
+    {
+        return RbacRolePermission::query()
+            ->distinct()
+            ->pluck('role')
+            ->map(fn ($r) => (string) $r)
+            ->values()
+            ->all();
     }
 
     /**

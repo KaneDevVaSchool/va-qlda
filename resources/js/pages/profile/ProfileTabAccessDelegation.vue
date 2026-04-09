@@ -63,11 +63,15 @@
             <ProfileTabPermissions :key="permKey" compact />
         </section>
 
+        <ProfileRbacAdmin v-if="canManageRbac && !rbacLoading" />
+
         <section class="ppms-profile-access-block" :aria-labelledby="'acc-del-' + uid">
             <h2 :id="'acc-del-' + uid" class="ppms-profile-access-h2">{{ t('profile.accessSectionDelegation') }}</h2>
-            <p class="ppms-profile-access-lead">{{ t('profile.delegationIntro') }}</p>
-            <p v-if="canManageOthers" class="ppms-profile-access-lead ppms-profile-access-lead--admin">
-                {{ t('profile.delegationIntroAdmin') }}
+            <p
+                class="ppms-profile-access-lead"
+                :class="{ 'ppms-profile-access-lead--admin': canManageOthers }"
+            >
+                {{ canManageOthers ? t('profile.delegationIntroAdmin') : t('profile.delegationIntro') }}
             </p>
 
             <div v-if="canManageOthers" class="ppms-profile-access-card ppms-profile-access-card--delegator">
@@ -279,6 +283,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { formatApiUserMessage } from '../../bootstrap';
 import { ppmsConfirm, ppmsToastError, ppmsToastSuccess } from '../../ppmsUi';
+import ProfileRbacAdmin from './ProfileRbacAdmin.vue';
 import ProfileTabPermissions from './ProfileTabPermissions.vue';
 
 const emit = defineEmits(['refresh']);
