@@ -65,27 +65,80 @@
                 </article>
             </div>
 
-            <div v-else class="ppms-team-forest ppms-mt">
-                <div v-for="team in teams" :key="team.id" class="ppms-team-tree-block">
+            <div v-else class="ppms-team-forest ppms-mt" role="region" :aria-label="t('teams.viewTree')">
+                <p class="ppms-team-tree-legend">{{ t('teams.treeLegend') }}</p>
+                <div
+                    v-for="team in teams"
+                    :key="team.id"
+                    class="ppms-team-tree-block"
+                    :class="{ 'ppms-team-tree-block--active': detail?.id === team.id }"
+                >
                     <div class="ppms-team-tree-block__head">
-                        <button type="button" class="ppms-team-tree-block__title" @click="openTeam(team.id)">
-                            {{ team.name }}
-                        </button>
-                        <span class="ppms-muted ppms-team-tree-block__count">{{ team.members_count ?? 0 }} {{ t('teams.membersShort') }}</span>
-                    </div>
-                    <div v-if="!team.members?.length" class="ppms-muted ppms-team-tree-block__empty">{{ t('teams.treeNoMembers') }}</div>
-                    <div v-else class="ppms-team-tree">
-                        <div v-for="node in treeLeaders(team)" :key="'l-' + node.id" class="ppms-team-tree__leader">
-                            <span class="ppms-team-tree__badge">{{ t('teams.roleLeader') }}</span>
-                            <span class="ppms-team-tree__name">{{ node.name }}</span>
-                            <span v-if="node.pivot?.position" class="ppms-team-tree__pos ppms-muted">— {{ node.pivot.position }}</span>
+                        <div class="ppms-team-tree-block__title-row">
+                            <span class="ppms-team-tree-block__folder" aria-hidden="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+                                </svg>
+                            </span>
+                            <div class="ppms-team-tree-block__title-wrap">
+                                <button type="button" class="ppms-team-tree-block__title" @click="openTeam(team.id)">
+                                    {{ team.name }}
+                                </button>
+                                <p v-if="team.description" class="ppms-team-tree-block__snippet">{{ team.description }}</p>
+                            </div>
                         </div>
-                        <ul v-if="treeMembers(team).length" class="ppms-team-tree__members">
-                            <li v-for="node in treeMembers(team)" :key="'m-' + node.id" class="ppms-team-tree__li">
-                                <span class="ppms-team-tree__name">{{ node.name }}</span>
-                                <span v-if="node.pivot?.position" class="ppms-team-tree__pos ppms-muted">— {{ node.pivot.position }}</span>
-                            </li>
-                        </ul>
+                        <span class="ppms-team-tree-block__pill">{{ team.members_count ?? 0 }} {{ t('teams.membersShort') }}</span>
+                    </div>
+
+                    <div v-if="!team.members?.length" class="ppms-team-tree-empty">
+                        <span class="ppms-team-tree-empty__icon" aria-hidden="true">◇</span>
+                        <p>{{ t('teams.treeNoMembers') }}</p>
+                    </div>
+
+                    <div v-else class="ppms-team-tree" :aria-label="team.name">
+                        <div class="ppms-team-tree__structure">
+                            <div class="ppms-team-tree__leaders">
+                                <div
+                                    v-for="node in treeLeaders(team)"
+                                    :key="'l-' + node.id"
+                                    class="ppms-team-tree-node ppms-team-tree-node--leader"
+                                >
+                                    <div class="ppms-team-tree-node__avatar ppms-team-tree-node__avatar--leader" :title="node.name">
+                                        {{ initials(node.name) }}
+                                    </div>
+                                    <div class="ppms-team-tree-node__body">
+                                        <div class="ppms-team-tree-node__row">
+                                            <span class="ppms-team-tree-node__badge">{{ t('teams.roleLeader') }}</span>
+                                            <span class="ppms-team-tree-node__name">{{ node.name }}</span>
+                                        </div>
+                                        <p v-if="node.pivot?.position" class="ppms-team-tree-node__meta">{{ node.pivot.position }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="treeMembers(team).length" class="ppms-team-tree__branch-wrap">
+                                <div class="ppms-team-tree__branch-label">
+                                    <span class="ppms-team-tree__branch-line" aria-hidden="true" />
+                                    <span>{{ t('teams.treeMembersLabel') }}</span>
+                                </div>
+                                <ul class="ppms-team-tree__members" role="list">
+                                    <li v-for="node in treeMembers(team)" :key="'m-' + node.id" class="ppms-team-tree__li" role="listitem">
+                                        <div class="ppms-team-tree-node ppms-team-tree-node--member">
+                                            <div class="ppms-team-tree-node__avatar" :title="node.name">
+                                                {{ initials(node.name) }}
+                                            </div>
+                                            <div class="ppms-team-tree-node__body">
+                                                <div class="ppms-team-tree-node__row">
+                                                    <span class="ppms-team-tree-node__badge ppms-team-tree-node__badge--member">{{ t('teams.roleMember') }}</span>
+                                                    <span class="ppms-team-tree-node__name">{{ node.name }}</span>
+                                                </div>
+                                                <p v-if="node.pivot?.position" class="ppms-team-tree-node__meta">{{ node.pivot.position }}</p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -123,7 +176,7 @@
                                     {{ t('teams.editMember') }}
                                 </button>
                                 <button
-                                    v-if="Number(m.id) !== Number(detail.created_by)"
+                                    v-if="Number(m.id) !== Number(detail.created_by) || me?.role === 'admin'"
                                     type="button"
                                     class="ppms-btn-ghost"
                                     @click="removeMember(m.id)"
@@ -166,24 +219,83 @@
             role="presentation"
             @click.self="closeCreateModal"
         >
-            <div class="ppms-modal ppms-modal--wide" role="dialog" aria-modal="true" aria-labelledby="teams-create-title" @click.stop>
-                <h2 id="teams-create-title" class="ppms-modal-title">{{ t('teams.createSection') }}</h2>
-                <form class="ppms-stack ppms-mt" @submit.prevent="createTeam">
-                    <label class="ppms-field">
-                        <span>{{ t('teams.name') }} *</span>
-                        <input v-model="createForm.name" type="text" required maxlength="255" />
-                    </label>
-                    <label class="ppms-field">
-                        <span>{{ t('teams.description') }}</span>
-                        <textarea v-model="createForm.description" rows="3" maxlength="5000" />
-                    </label>
-                    <p v-if="createErr" class="ppms-error">{{ createErr }}</p>
-                    <div class="ppms-modal-actions">
-                        <button type="button" class="ppms-btn-ghost ppms-modal-btn" @click="closeCreateModal">
+            <div
+                class="ppms-modal ppms-modal--wide ppms-team-create-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="teams-create-title"
+                aria-describedby="teams-create-desc"
+                @click.stop
+            >
+                <button type="button" class="ppms-team-create-close" :aria-label="t('common.close')" @click="closeCreateModal">
+                    <span aria-hidden="true">×</span>
+                </button>
+                <div class="ppms-team-create-hero">
+                    <div class="ppms-team-create-icon" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 id="teams-create-title" class="ppms-modal-title ppms-team-create-title">{{ t('teams.createSection') }}</h2>
+                        <p id="teams-create-desc" class="ppms-team-create-sub">{{ t('teams.createModalSubtitle') }}</p>
+                    </div>
+                </div>
+
+                <form class="ppms-team-create-form" @submit.prevent="createTeam">
+                    <div class="ppms-team-create-fields">
+                        <label class="ppms-field ppms-team-create-field">
+                            <span class="ppms-team-create-label">{{ t('teams.name') }} <abbr class="ppms-team-create-req" :title="t('teams.fieldRequired')">*</abbr></span>
+                            <input
+                                v-model="createForm.name"
+                                type="text"
+                                required
+                                maxlength="255"
+                                autocomplete="organization"
+                                :placeholder="t('teams.namePlaceholder')"
+                                :disabled="creating"
+                                :aria-invalid="!!createErrDetail"
+                                aria-describedby="teams-create-err"
+                            />
+                        </label>
+                        <label class="ppms-field ppms-team-create-field">
+                            <span class="ppms-team-create-label">{{ t('teams.description') }}</span>
+                            <textarea
+                                v-model="createForm.description"
+                                rows="4"
+                                maxlength="5000"
+                                :placeholder="t('teams.descriptionPlaceholder')"
+                                :disabled="creating"
+                            />
+                        </label>
+                    </div>
+
+                    <div
+                        v-if="createErrDetail"
+                        id="teams-create-err"
+                        class="ppms-team-create-alert ppms-team-create-alert--err"
+                        role="alert"
+                        aria-live="assertive"
+                    >
+                        <span class="ppms-team-create-alert-icon" aria-hidden="true">!</span>
+                        <div class="ppms-team-create-alert-body">
+                            <p v-if="createErrSummary" class="ppms-team-create-alert-lead">
+                                <strong>{{ createErrSummary }}</strong>
+                            </p>
+                            <p class="ppms-team-create-alert-msg">{{ createErrDetail }}</p>
+                        </div>
+                    </div>
+
+                    <div class="ppms-modal-actions ppms-team-create-actions">
+                        <button type="button" class="ppms-btn-ghost ppms-modal-btn" :disabled="creating" @click="closeCreateModal">
                             {{ t('common.cancel') }}
                         </button>
-                        <button type="submit" class="ppms-btn-primary ppms-modal-btn" :disabled="creating">
-                            {{ t('teams.createBtn') }}
+                        <button type="submit" class="ppms-btn-primary ppms-modal-btn" :disabled="creating || !createForm.name.trim()">
+                            <span v-if="creating" class="ppms-team-create-spinner" aria-hidden="true" />
+                            {{ creating ? t('teams.creating') : t('teams.createBtn') }}
                         </button>
                     </div>
                 </form>
@@ -250,7 +362,8 @@ const me = ref(null);
 const detail = ref(null);
 const viewMode = ref('cards');
 const creating = ref(false);
-const createErr = ref('');
+const createErrSummary = ref('');
+const createErrDetail = ref('');
 const createForm = reactive({ name: '', description: '' });
 const showCreateModal = ref(false);
 const showMemberModal = ref(false);
@@ -270,6 +383,20 @@ function treeLeaders(team) {
 
 function treeMembers(team) {
     return (team.members || []).filter((m) => m.pivot?.role !== 'leader');
+}
+
+function initials(name) {
+    if (!name || typeof name !== 'string') {
+        return '?';
+    }
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) {
+        return '?';
+    }
+    if (parts.length === 1) {
+        return parts[0].slice(0, 2).toUpperCase();
+    }
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 function permLabel(key) {
@@ -292,13 +419,43 @@ function formatPermissionsShort(m) {
     return perms.map((k) => permLabel(k)).join(', ');
 }
 
+function clearCreateErrors() {
+    createErrSummary.value = '';
+    createErrDetail.value = '';
+}
+
+function parseCreateTeamError(e) {
+    const data = e.response?.data;
+    if (!e.response) {
+        return { summary: '', detail: t('teams.createErrorNetwork') };
+    }
+    if (data?.errors && typeof data.errors === 'object') {
+        const lines = [];
+        for (const msgs of Object.values(data.errors)) {
+            if (Array.isArray(msgs)) {
+                lines.push(...msgs);
+            } else if (typeof msgs === 'string') {
+                lines.push(msgs);
+            }
+        }
+        if (lines.length) {
+            return { summary: t('teams.createErrorValidation'), detail: lines.join(' ') };
+        }
+    }
+    if (typeof data?.message === 'string' && data.message.trim()) {
+        return { summary: '', detail: data.message.trim() };
+    }
+    return { summary: '', detail: t('teams.createError') };
+}
+
 function openCreateModal() {
-    createErr.value = '';
+    clearCreateErrors();
     showCreateModal.value = true;
 }
 
 function closeCreateModal() {
     showCreateModal.value = false;
+    clearCreateErrors();
 }
 
 function openMemberModal(m) {
@@ -369,23 +526,32 @@ async function openTeam(id) {
 }
 
 async function createTeam() {
-    createErr.value = '';
+    clearCreateErrors();
+    const nameTrim = createForm.name.trim();
+    if (!nameTrim) {
+        createErrSummary.value = t('teams.createErrorValidation');
+        createErrDetail.value = t('teams.nameRequired');
+        return;
+    }
     creating.value = true;
     try {
         const { data: created } = await axios.post('/api/teams', {
-            name: createForm.name.trim(),
+            name: nameTrim,
             description: createForm.description?.trim() || null,
         });
+        const displayName = created?.name || nameTrim;
+        ppmsToastSuccess(t('teams.createdWithName', { name: displayName }));
         createForm.name = '';
         createForm.description = '';
-        ppmsToastSuccess(t('teams.created'));
         closeCreateModal();
         await load();
         if (created?.id) {
             await openTeam(created.id);
         }
     } catch (e) {
-        createErr.value = e.response?.data?.message || t('teams.createError');
+        const parsed = parseCreateTeamError(e);
+        createErrSummary.value = parsed.summary;
+        createErrDetail.value = parsed.detail;
     } finally {
         creating.value = false;
     }
@@ -446,7 +612,7 @@ async function removeMember(userId) {
     if (!detail.value) {
         return;
     }
-    if (!(await ppmsConfirm(t('teams.removeConfirm')))) {
+    if (me.value?.role !== 'admin' && !(await ppmsConfirm(t('teams.removeConfirm')))) {
         return;
     }
     try {
@@ -589,78 +755,288 @@ onUnmounted(() => {
 .ppms-team-forest {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.25rem;
+}
+.ppms-team-tree-legend {
+    margin: 0 0 0.25rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--ppms-muted, #64748b);
+    padding: 0.65rem 0.85rem;
+    border-radius: 10px;
+    background: rgba(37, 99, 235, 0.06);
+    border: 1px solid rgba(37, 99, 235, 0.12);
 }
 .ppms-team-tree-block {
-    border: 1px solid var(--ppms-border, #e5e5e5);
-    border-radius: 10px;
-    padding: 1rem 1rem 1rem 1.25rem;
-    background: rgba(0, 0, 0, 0.02);
+    --ppms-tree-line: rgba(37, 99, 235, 0.28);
+    --ppms-tree-line-soft: rgba(37, 99, 235, 0.12);
+    border: 1px solid var(--ppms-border, #e2e8f0);
+    border-radius: 16px;
+    padding: 0;
+    background: var(--ppms-surface, #fff);
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.04),
+        0 4px 16px -4px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+    transition:
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+.ppms-team-tree-block:hover {
+    border-color: rgba(37, 99, 235, 0.22);
+    box-shadow:
+        0 2px 4px rgba(15, 23, 42, 0.06),
+        0 8px 24px -6px rgba(37, 99, 235, 0.12);
+}
+.ppms-team-tree-block--active {
+    border-color: var(--ppms-accent, #2563eb);
+    box-shadow:
+        0 0 0 2px rgba(37, 99, 235, 0.2),
+        0 8px 28px -8px rgba(37, 99, 235, 0.25);
 }
 .ppms-team-tree-block__head {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.5rem 1rem;
-    margin-bottom: 0.75rem;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    padding: 1rem 1.15rem;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.07) 0%, rgba(255, 255, 255, 0) 55%);
+    border-bottom: 1px solid var(--ppms-border, #f1f5f9);
+}
+.ppms-team-tree-block__title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    min-width: 0;
+    flex: 1;
+}
+.ppms-team-tree-block__folder {
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ppms-accent, #2563eb);
+    background: rgba(37, 99, 235, 0.12);
+}
+.ppms-team-tree-block__title-wrap {
+    min-width: 0;
 }
 .ppms-team-tree-block__title {
     border: none;
     background: none;
     padding: 0;
+    margin: 0;
     font: inherit;
-    font-weight: 600;
-    font-size: 1.05rem;
+    font-weight: 700;
+    font-size: 1.08rem;
+    line-height: 1.3;
     cursor: pointer;
+    color: var(--ppms-text, #0f172a);
+    text-align: left;
+    text-decoration: none;
+    border-radius: 6px;
+    display: inline;
+    box-decoration-break: clone;
+    transition: color 0.15s ease;
+}
+.ppms-team-tree-block__title:hover {
+    color: var(--ppms-accent, #2563eb);
     text-decoration: underline;
-    text-underline-offset: 2px;
-    color: inherit;
+    text-underline-offset: 3px;
 }
-.ppms-team-tree-block__count {
-    font-size: 0.85rem;
+.ppms-team-tree-block__title:focus-visible {
+    outline: 2px solid var(--ppms-accent, #2563eb);
+    outline-offset: 3px;
 }
-.ppms-team-tree-block__empty {
+.ppms-team-tree-block__snippet {
+    margin: 0.35rem 0 0;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: var(--ppms-muted, #64748b);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.ppms-team-tree-block__pill {
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.06);
+    color: var(--ppms-muted, #475569);
+    white-space: nowrap;
+}
+.ppms-team-tree-empty {
+    padding: 1.75rem 1.15rem;
+    text-align: center;
+    color: var(--ppms-muted, #94a3b8);
     font-size: 0.9rem;
 }
-.ppms-team-tree__leader {
+.ppms-team-tree-empty__icon {
+    display: block;
+    font-size: 1.5rem;
+    margin-bottom: 0.35rem;
+    opacity: 0.5;
+}
+.ppms-team-tree-empty p {
+    margin: 0;
+}
+.ppms-team-tree {
+    padding: 0 1rem 1.15rem 1.15rem;
+}
+.ppms-team-tree__structure {
+    padding-top: 0.35rem;
+}
+.ppms-team-tree__leaders {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+.ppms-team-tree-node {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-width: 0;
+}
+.ppms-team-tree-node--leader {
+    padding: 0.75rem 0.85rem;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(37, 99, 235, 0.08) 0%, rgba(37, 99, 235, 0.02) 100%);
+    border: 1px solid var(--ppms-tree-line-soft);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.ppms-team-tree-node--member {
+    padding: 0.55rem 0.65rem;
+    border-radius: 10px;
+    background: rgba(248, 250, 252, 0.9);
+    border: 1px solid var(--ppms-border, #e2e8f0);
+    flex: 1;
+    min-width: 0;
+}
+.ppms-team-tree-node__avatar {
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: #475569;
+    background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+}
+.ppms-team-tree-node__avatar--leader {
+    color: #fff;
+    background: linear-gradient(145deg, #3b82f6, #2563eb);
+    border-color: rgba(37, 99, 235, 0.5);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+}
+.ppms-team-tree-node__body {
+    min-width: 0;
+    flex: 1;
+}
+.ppms-team-tree-node__row {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.35rem 0.5rem;
-    padding: 0.5rem 0.65rem;
-    margin-bottom: 0.5rem;
-    background: rgba(0, 0, 0, 0.04);
-    border-radius: 8px;
-    border-left: 3px solid var(--ppms-accent, #2563eb);
+    gap: 0.35rem 0.6rem;
 }
-.ppms-team-tree__badge {
-    font-size: 0.7rem;
-    font-weight: 700;
+.ppms-team-tree-node__badge {
+    font-size: 0.65rem;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
     color: var(--ppms-accent, #2563eb);
+    background: rgba(37, 99, 235, 0.12);
+    padding: 0.2rem 0.45rem;
+    border-radius: 6px;
+    line-height: 1.2;
+}
+.ppms-team-tree-node__badge--member {
+    color: #64748b;
+    background: rgba(100, 116, 139, 0.12);
+}
+.ppms-team-tree-node__name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--ppms-text, #0f172a);
+    word-break: break-word;
+}
+.ppms-team-tree-node__meta {
+    margin: 0.35rem 0 0;
+    font-size: 0.8rem;
+    line-height: 1.35;
+    color: var(--ppms-muted, #64748b);
+}
+.ppms-team-tree__branch-wrap {
+    margin-top: 1rem;
+    padding-left: 0.15rem;
+}
+.ppms-team-tree__branch-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+}
+.ppms-team-tree__branch-line {
+    flex: 1;
+    max-width: 2rem;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--ppms-tree-line), transparent);
 }
 .ppms-team-tree__members {
     list-style: none;
-    margin: 0;
-    padding: 0 0 0 1rem;
-    border-left: 2px solid var(--ppms-border, #ddd);
+    margin: 0.25rem 0 0;
+    padding: 0 0 0 1.15rem;
+    border-left: 2px solid var(--ppms-tree-line-soft);
 }
 .ppms-team-tree__li {
-    padding: 0.35rem 0;
     position: relative;
+    padding: 0 0 0.65rem 0;
+}
+.ppms-team-tree__li:last-child {
+    padding-bottom: 0;
 }
 .ppms-team-tree__li::before {
     content: '';
     position: absolute;
-    left: -1rem;
-    top: 50%;
-    width: 0.65rem;
-    height: 1px;
-    background: var(--ppms-border, #ddd);
+    left: -1.15rem;
+    top: 1.35rem;
+    width: 0.75rem;
+    height: 2px;
+    background: var(--ppms-tree-line);
+    border-radius: 0 2px 2px 0;
+    opacity: 0.85;
 }
-.ppms-team-tree__name {
-    font-weight: 500;
+@media (max-width: 520px) {
+    .ppms-team-tree-block__head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .ppms-team-tree-block__pill {
+        align-self: flex-start;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ppms-team-tree-block {
+        transition: none;
+    }
 }
 .ppms-team-perm-cell {
     font-size: 0.85rem;
@@ -733,5 +1109,175 @@ onUnmounted(() => {
 }
 .ppms-teams-detail-head .ppms-h3 {
     margin-bottom: 0;
+}
+
+/* Modal tạo nhóm */
+.ppms-team-create-modal {
+    position: relative;
+    max-width: 480px;
+    width: 100%;
+    border-radius: 14px;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.08),
+        0 12px 28px -8px rgba(0, 0, 0, 0.18);
+    padding: 1.5rem 1.5rem 1.25rem;
+    background: linear-gradient(180deg, rgba(37, 99, 235, 0.06) 0%, transparent 42%), var(--ppms-surface, #fff);
+    border: 1px solid var(--ppms-border, #e5e7eb);
+}
+.ppms-team-create-close {
+    position: absolute;
+    top: 0.65rem;
+    right: 0.65rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--ppms-muted, #6b7280);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ppms-team-create-close:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: inherit;
+}
+.ppms-team-create-hero {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding-right: 2rem;
+    margin-bottom: 1.25rem;
+}
+.ppms-team-create-icon {
+    flex-shrink: 0;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ppms-accent, #2563eb);
+    background: rgba(37, 99, 235, 0.12);
+}
+.ppms-team-create-title {
+    margin: 0 0 0.35rem;
+    font-size: 1.25rem;
+    line-height: 1.25;
+}
+.ppms-team-create-sub {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--ppms-muted, #6b7280);
+}
+.ppms-team-create-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.ppms-team-create-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.ppms-team-create-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+.ppms-team-create-req {
+    color: var(--ppms-danger, #b91c1c);
+    text-decoration: none;
+    font-weight: 700;
+    cursor: help;
+}
+.ppms-team-create-field input,
+.ppms-team-create-field textarea {
+    border-radius: 8px;
+    border: 1px solid var(--ppms-border, #d1d5db);
+    padding: 0.55rem 0.75rem;
+    font: inherit;
+    width: 100%;
+    box-sizing: border-box;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+.ppms-team-create-field textarea {
+    resize: vertical;
+    min-height: 5.5rem;
+    line-height: 1.45;
+}
+.ppms-team-create-field input:focus,
+.ppms-team-create-field textarea:focus {
+    outline: none;
+    border-color: var(--ppms-accent, #2563eb);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+.ppms-team-create-field input:disabled,
+.ppms-team-create-field textarea:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+.ppms-team-create-alert {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.75rem 0.85rem;
+    border-radius: 10px;
+    border: 1px solid rgba(185, 28, 28, 0.35);
+    background: rgba(254, 242, 242, 0.95);
+    color: #7f1d1d;
+}
+.ppms-team-create-alert-icon {
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: rgba(185, 28, 28, 0.15);
+    color: #b91c1c;
+    font-weight: 800;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+.ppms-team-create-alert-body {
+    min-width: 0;
+    flex: 1;
+}
+.ppms-team-create-alert-lead {
+    margin: 0 0 0.25rem;
+    font-size: 0.9rem;
+}
+.ppms-team-create-alert-msg {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.45;
+}
+.ppms-team-create-actions {
+    margin-top: 0.25rem;
+    padding-top: 0.25rem;
+    border-top: 1px solid var(--ppms-border, #eee);
+}
+.ppms-team-create-spinner {
+    display: inline-block;
+    width: 0.95em;
+    height: 0.95em;
+    margin-right: 0.4rem;
+    vertical-align: -0.12em;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: ppms-team-create-spin 0.7s linear infinite;
+}
+@keyframes ppms-team-create-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 </style>

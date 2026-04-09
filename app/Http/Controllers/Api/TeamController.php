@@ -64,9 +64,12 @@ class TeamController extends Controller
             'created_by' => $user->id,
         ]);
 
-        $team->members()->syncWithoutDetaching([
-            $user->id => ['role' => 'leader'],
-        ]);
+        // Admin tạo nhóm hộ: không tự gán bản thân vào danh sách thành viên / trưởng nhóm.
+        if ($user->role !== 'admin') {
+            $team->members()->syncWithoutDetaching([
+                $user->id => ['role' => 'leader'],
+            ]);
+        }
 
         $team->load(['creator:id,name,email'])->loadCount('members');
         $team->setAttribute('can_manage', $this->userCanManageTeam($user, $team));
@@ -155,7 +158,7 @@ class TeamController extends Controller
     {
         $this->assertUserCanManageTeam($request->user(), $team);
 
-        if ((int) $userId === (int) $team->created_by) {
+        if ((int) $userId === (int) $team->created_by && $request->user()->role !== 'admin') {
             abort(422, 'Không gỡ người tạo team khỏi thành viên.');
         }
 
