@@ -1545,6 +1545,12 @@
         "openSubject": "Open record",
         "detailModalCloseLabel": "Close detail dialog",
         "diffSectionTitle": "Field changes",
+        "perPage": "Per page",
+        "perPageAll": "All",
+        "paginationRange": "{from}–{to} of {total}",
+        "paginationPrev": "Previous page",
+        "paginationNext": "Next page",
+        "paginationPage": "Page {page} / {total}",
         "source": {
             "api": "API",
             "web": "Web"

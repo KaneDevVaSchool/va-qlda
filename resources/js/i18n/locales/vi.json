@@ -1546,6 +1546,12 @@
         "openSubject": "Mở bản ghi",
         "detailModalCloseLabel": "Đóng hộp thoại chi tiết",
         "diffSectionTitle": "Chi tiết thay đổi",
+        "perPage": "Mỗi trang",
+        "perPageAll": "Tất cả",
+        "paginationRange": "{from}–{to} / {total}",
+        "paginationPrev": "Trang trước",
+        "paginationNext": "Trang sau",
+        "paginationPage": "Trang {page} / {total}",
         "source": {
             "api": "API",
             "web": "Web"

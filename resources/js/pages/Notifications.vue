@@ -146,12 +146,45 @@
                 <p class="ppms-activity-empty-title">{{ t('activityFeed.empty') }}</p>
             </div>
 
-            <div ref="sentinel" class="ppms-activity-sentinel" />
-            <div v-if="loadingMore" class="ppms-activity-load-more">
+            <div v-if="!initialLoading && total > 0" class="ppms-activity-pager">
+                <label class="ppms-activity-per-page">
+                    <span class="ppms-muted">{{ t('activityFeed.perPage') }}</span>
+                    <select v-model.number="pageSize" class="ppms-input ppms-activity-pager-select" @change="onPageSizeChange">
+                        <option v-for="n in pageSizeOptions" :key="n" :value="n">
+                            {{ n === 0 ? t('activityFeed.perPageAll') : n }}
+                        </option>
+                    </select>
+                </label>
+                <div v-if="pageSize > 0" class="ppms-activity-pager-controls">
+                    <button
+                        type="button"
+                        class="ppms-btn-ghost ppms-btn-sm ppms-activity-pager-btn"
+                        :disabled="currentPage <= 1 || listLoading"
+                        :aria-label="t('activityFeed.paginationPrev')"
+                        @click="goPrevPage"
+                    >
+                        ‹
+                    </button>
+                    <span class="ppms-activity-pager-info">{{ pageRangeText }}</span>
+                    <span class="ppms-activity-pager-page">{{ pageOfText }}</span>
+                    <button
+                        type="button"
+                        class="ppms-btn-ghost ppms-btn-sm ppms-activity-pager-btn"
+                        :disabled="currentPage >= lastPage || listLoading"
+                        :aria-label="t('activityFeed.paginationNext')"
+                        @click="goNextPage"
+                    >
+                        ›
+                    </button>
+                </div>
+                <div v-else class="ppms-activity-pager-controls ppms-activity-pager-controls--all">
+                    <span class="ppms-activity-pager-info">{{ pageRangeText }}</span>
+                </div>
+            </div>
+            <div v-if="listLoading && items.length > 0" class="ppms-activity-load-more">
                 <span class="ppms-activity-spinner" aria-hidden="true" />
                 <span>{{ t('activityFeed.loadingMore') }}</span>
             </div>
-            <div v-if="!hasMore && items.length > 0 && !loadingMore" class="ppms-activity-end">{{ t('activityFeed.endOfFeed') }}</div>
         </div>
 
         <Teleport to="body">
@@ -297,15 +330,16 @@ const filters = ref({
 const searchQ = ref('');
 
 const items = ref([]);
-/** First page in flight (empty list) — show skeleton, not full-page blocking text */
+/** First load with empty list — skeleton */
 const initialLoading = ref(true);
-const loadingMore = ref(false);
+const listLoading = ref(false);
 const loadError = ref('');
-const hasMore = ref(true);
-const cursor = ref(null);
 
-const sentinel = ref(null);
-let observer;
+const pageSizeOptions = [5, 10, 15, 20, 0];
+const pageSize = ref(10);
+const currentPage = ref(1);
+const total = ref(0);
+const lastPage = ref(1);
 
 const detailModalTitleId = 'ppms-activity-detail-modal-title';
 const detailModalItem = ref(null);
@@ -453,11 +487,34 @@ const grouped = computed(() => {
     return [...map.entries()].map(([day, groupItems]) => ({ day, items: groupItems }));
 });
 
-function buildParams(forCursor) {
-    const p = { per_page: 25 };
-    if (forCursor) {
-        p.before_id = forCursor;
+const pageRangeText = computed(() => {
+    if (total.value === 0) {
+        return '';
     }
+    if (pageSize.value === 0) {
+        return t('activityFeed.paginationRange', {
+            from: 1,
+            to: items.value.length,
+            total: total.value,
+        });
+    }
+    const from = (currentPage.value - 1) * pageSize.value + 1;
+    const to = Math.min(currentPage.value * pageSize.value, total.value);
+    return t('activityFeed.paginationRange', { from, to, total: total.value });
+});
+
+const pageOfText = computed(() => {
+    if (pageSize.value === 0 || total.value === 0) {
+        return '';
+    }
+    return t('activityFeed.paginationPage', { page: currentPage.value, total: lastPage.value });
+});
+
+function buildListParams() {
+    const p = {
+        page: currentPage.value,
+        per_page: pageSize.value,
+    };
     if (filters.value.subject_type) {
         p.subject_type = filters.value.subject_type;
     }
@@ -479,81 +536,78 @@ function buildParams(forCursor) {
     return p;
 }
 
-function detachSentinel() {
-    if (observer && sentinel.value) {
-        try {
-            observer.unobserve(sentinel.value);
-        } catch {
-            /* ignore */
-        }
-    }
-}
-
-function attachSentinel() {
-    if (!observer || !sentinel.value) {
+async function fetchFeed() {
+    if (listLoading.value) {
         return;
     }
-    try {
-        observer.observe(sentinel.value);
-    } catch {
-        /* ignore */
-    }
-}
-
-async function loadMore() {
-    if (loadingMore.value) {
-        return;
-    }
-
-    const append = cursor.value !== null;
-    if (append && (!hasMore.value || cursor.value === null)) {
-        return;
-    }
-    if (!append && !hasMore.value && items.value.length > 0) {
-        return;
-    }
-    if (append) {
-        loadingMore.value = true;
-        detachSentinel();
-    } else {
+    const emptyBefore = items.value.length === 0;
+    if (emptyBefore) {
         initialLoading.value = true;
-        loadError.value = '';
+    } else {
+        listLoading.value = true;
     }
+    loadError.value = '';
 
     try {
         const { data } = await axios.get('/api/activity-feed', {
-            params: buildParams(cursor.value),
+            params: buildListParams(),
         });
-        const rows = data.data || [];
-        if (append) {
-            items.value = items.value.concat(rows);
+        items.value = data.data || [];
+        const m = data.meta;
+        if (m) {
+            total.value = m.total ?? 0;
+            lastPage.value = m.last_page ?? 1;
+            if (m.current_page != null) {
+                currentPage.value = m.current_page;
+            }
         } else {
-            items.value = rows;
+            total.value = items.value.length;
+            lastPage.value = 1;
         }
-        hasMore.value = !!data.has_more;
-        cursor.value = data.next_cursor ?? null;
     } catch (e) {
         loadError.value = formatApiUserMessage(e, t('activityFeed.loadError'));
-        if (!append) {
-            items.value = [];
-            hasMore.value = false;
-        }
+        items.value = [];
+        total.value = 0;
+        lastPage.value = 1;
     } finally {
         initialLoading.value = false;
-        loadingMore.value = false;
+        listLoading.value = false;
         await nextTick();
-        if (hasMore.value) {
-            attachSentinel();
+        scrollToFocus();
+        if (!route.query.focus) {
+            const mainEl = document.getElementById('ppms-main');
+            if (mainEl) {
+                mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
     }
 }
 
 function resetAndLoad() {
-    items.value = [];
-    cursor.value = null;
-    hasMore.value = true;
+    currentPage.value = 1;
     loadError.value = '';
-    loadMore();
+    fetchFeed();
+}
+
+function onPageSizeChange() {
+    currentPage.value = 1;
+    fetchFeed();
+}
+
+function goPrevPage() {
+    if (currentPage.value <= 1) {
+        return;
+    }
+    currentPage.value -= 1;
+    fetchFeed();
+}
+
+function goNextPage() {
+    if (currentPage.value >= lastPage.value) {
+        return;
+    }
+    currentPage.value += 1;
+    fetchFeed();
 }
 
 function applySearch() {
@@ -626,34 +680,7 @@ async function scrollToFocus() {
 }
 
 onMounted(async () => {
-    observer = new IntersectionObserver(
-        (entries) => {
-            const e = entries[0];
-            if (!e?.isIntersecting || initialLoading.value || loadingMore.value) {
-                return;
-            }
-            if (!hasMore.value || cursor.value === null) {
-                return;
-            }
-            loadMore();
-        },
-        {
-            root: null,
-            rootMargin: '0px 0px 320px 0px',
-            threshold: 0,
-        },
-    );
-
-    await loadMore();
-    await nextTick();
-    attachSentinel();
-    scrollToFocus();
-});
-
-watch(sentinel, (el) => {
-    if (observer && el && hasMore.value && !initialLoading.value) {
-        attachSentinel();
-    }
+    await fetchFeed();
 });
 
 watch(
@@ -675,8 +702,6 @@ watch(detailModalItem, (v) => {
 });
 
 onUnmounted(() => {
-    observer?.disconnect();
-    observer = undefined;
     window.removeEventListener('keydown', onDetailEscape);
     if (typeof document !== 'undefined') {
         document.body.classList.remove('ppms-modal-open');
@@ -1449,5 +1474,61 @@ onUnmounted(() => {
     padding: 0.75rem 1rem 1.25rem;
     font-size: 0.85rem;
     color: var(--ppms-muted, #94a3b8);
+}
+
+.ppms-activity-pager {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    margin-top: 1rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--ppms-border, #e5e7eb);
+    border-radius: 10px;
+    background: var(--ppms-surface, #fff);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.ppms-activity-per-page {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    min-width: 0;
+}
+
+.ppms-activity-pager-select {
+    max-width: 10rem;
+}
+
+.ppms-activity-pager-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    margin-left: auto;
+}
+
+.ppms-activity-pager-controls--all {
+    margin-left: auto;
+}
+
+.ppms-activity-pager-btn {
+    min-width: 2.25rem;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0.35rem 0.5rem;
+}
+
+.ppms-activity-pager-info {
+    font-size: 0.85rem;
+    color: var(--ppms-text, #334155);
+}
+
+.ppms-activity-pager-page {
+    font-size: 0.8rem;
+    color: var(--ppms-muted, #64748b);
+    font-weight: 600;
 }
 </style>

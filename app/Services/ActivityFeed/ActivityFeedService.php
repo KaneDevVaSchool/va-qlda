@@ -74,6 +74,53 @@ class ActivityFeedService
         ];
     }
 
+    public const PAGE_ALL_CAP = 2000;
+
+    /**
+     * Offset pagination for the activity feed UI (page + per_page).
+     *
+     * @param  array{subject_type?: string, activity_kind?: string, user_id?: int, from?: string, to?: string, q?: string}  $filters
+     * @return array{data: Collection<int, AuditLog>, total: int, per_page: int, current_page: int, last_page: int}
+     */
+    public function paginatePage(User $user, array $filters, int $page, int $perPage): array
+    {
+        $total = $this->applyFilters($user, $filters)->count();
+
+        $q = $this->applyFilters($user, $filters)
+            ->with('user:id,name,email');
+
+        if ($perPage === 0) {
+            $rows = $q->orderByDesc('id')->limit(self::PAGE_ALL_CAP)->get();
+            $effectivePerPage = $rows->count();
+            $currentPage = 1;
+            $lastPage = 1;
+        } else {
+            $lastPage = max(1, (int) ceil($total / $perPage));
+            $currentPage = min(max(1, $page), $lastPage);
+            $rows = $q->orderByDesc('id')->forPage($currentPage, $perPage)->get();
+            $effectivePerPage = $perPage;
+        }
+
+        if ($rows->isNotEmpty()) {
+            $readSet = array_flip(UserAuditLogRead::query()
+                ->where('user_id', $user->id)
+                ->whereIn('audit_log_id', $rows->pluck('id'))
+                ->pluck('audit_log_id')
+                ->all());
+            foreach ($rows as $row) {
+                $row->setAttribute('read_by_user', isset($readSet[$row->id]));
+            }
+        }
+
+        return [
+            'data' => $rows,
+            'total' => $total,
+            'per_page' => $perPage === 0 ? $effectivePerPage : $perPage,
+            'current_page' => $currentPage,
+            'last_page' => $lastPage,
+        ];
+    }
+
     /**
      * @param  array{subject_type?: string, activity_kind?: string, user_id?: int, from?: string, to?: string, q?: string}  $filters
      */

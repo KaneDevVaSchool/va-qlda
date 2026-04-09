@@ -21,9 +21,35 @@ class ActivityFeedController extends Controller
             'from' => 'nullable|date',
             'to' => 'nullable|date',
             'q' => 'nullable|string|max:200',
-            'per_page' => 'nullable|integer|min:5|max:100',
+            'per_page' => 'nullable|integer',
             'before_id' => 'nullable|integer',
+            'page' => 'nullable|integer|min:1',
         ]);
+
+        $page = isset($filters['page']) ? (int) $filters['page'] : null;
+        unset($filters['page']);
+
+        if ($page !== null) {
+            $request->validate([
+                'per_page' => 'required|integer|in:0,5,10,15,20',
+            ]);
+            unset($filters['per_page'], $filters['before_id']);
+
+            $perPage = (int) $request->input('per_page');
+            $pageNum = $perPage === 0 ? 1 : $page;
+
+            $result = $feed->paginatePage($request->user(), $filters, $pageNum, $perPage);
+
+            return response()->json([
+                'data' => ActivityFeedItemResource::collection($result['data']),
+                'meta' => [
+                    'total' => $result['total'],
+                    'per_page' => $result['per_page'],
+                    'current_page' => $result['current_page'],
+                    'last_page' => $result['last_page'],
+                ],
+            ]);
+        }
 
         $perPage = min(100, max(5, (int) ($filters['per_page'] ?? 25)));
         $beforeId = isset($filters['before_id']) ? (int) $filters['before_id'] : null;
