@@ -1374,6 +1374,7 @@
         "tablePeriod": "Period",
         "tablePeriodProgress": "Progress",
         "vendorGroupCount": "{n} contract(s)",
+        "vendorGroupToggle": "Collapse or expand vendor group {name}",
         "amountInWordsPrefix": "In words",
         "tableValue": "Total value",
         "tableExpiresIn": "Time left",

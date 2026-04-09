@@ -4,8 +4,11 @@ namespace App\Services\ActivityFeed;
 
 use App\Models\AuditLog;
 use App\Models\Contract;
+use App\Models\Department;
+use App\Models\Product;
 use App\Models\Project;
 use App\Models\User;
+use App\Models\Vendor;
 use App\Models\UserAuditLogRead;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -252,21 +255,118 @@ class ActivityFeedService
 
         $labels = ActivityFieldLabels::forSubject($log->auditable_type);
         $keys = array_unique(array_merge(array_keys($old), array_keys($new)));
+
+        $contractRelationMaps = [];
+        if ($log->auditable_type === Contract::class) {
+            $contractRelationMaps = $this->resolveContractRelationMaps($old, $new);
+        }
+
         $out = [];
         foreach ($keys as $k) {
             $ov = $old[$k] ?? null;
             $nv = $new[$k] ?? null;
             if ($ov != $nv) {
+                $ov = $this->normalizeValue($ov);
+                $nv = $this->normalizeValue($nv);
+                if ($log->auditable_type === Contract::class) {
+                    $ov = $this->mapContractRelationDisplay($k, $ov, $contractRelationMaps);
+                    $nv = $this->mapContractRelationDisplay($k, $nv, $contractRelationMaps);
+                }
                 $out[] = [
                     'field' => $k,
                     'label_key' => $labels[$k] ?? 'field.'.$k,
-                    'old' => $this->normalizeValue($ov),
-                    'new' => $this->normalizeValue($nv),
+                    'old' => $ov,
+                    'new' => $nv,
                 ];
             }
         }
 
         return $out;
+    }
+
+    /**
+     * Resolve foreign keys on contract audit payloads to human-readable labels (vendor, product, department, users).
+     *
+     * @return array{vendors: array<int, string>, products: array<int, string>, departments: array<int, string>, users: array<int, string>}
+     */
+    private function resolveContractRelationMaps(array $old, array $new): array
+    {
+        $vendorIds = $this->collectNumericIdsForKeys($old, $new, ['vendor_id']);
+        $productIds = $this->collectNumericIdsForKeys($old, $new, ['product_id']);
+        $departmentIds = $this->collectNumericIdsForKeys($old, $new, ['department_id']);
+        $userIds = $this->collectNumericIdsForKeys($old, $new, ['followed_by_id', 'approved_by', 'approver_id']);
+
+        $vendors = $vendorIds !== []
+            ? Vendor::query()->whereIn('id', $vendorIds)->pluck('name', 'id')->all()
+            : [];
+        $products = $productIds !== []
+            ? Product::query()->whereIn('id', $productIds)->pluck('name', 'id')->all()
+            : [];
+        $departments = $departmentIds !== []
+            ? Department::query()->whereIn('id', $departmentIds)->pluck('name', 'id')->all()
+            : [];
+        $users = $userIds !== []
+            ? User::query()->whereIn('id', $userIds)->pluck('name', 'id')->all()
+            : [];
+
+        return [
+            'vendors' => $vendors,
+            'products' => $products,
+            'departments' => $departments,
+            'users' => $users,
+        ];
+    }
+
+    /**
+     * @param  list<string>  $keys
+     * @return list<int>
+     */
+    private function collectNumericIdsForKeys(array $old, array $new, array $keys): array
+    {
+        $ids = [];
+        foreach ($keys as $key) {
+            foreach ([$old[$key] ?? null, $new[$key] ?? null] as $v) {
+                if ($v === null || $v === '') {
+                    continue;
+                }
+                if (is_numeric($v)) {
+                    $ids[] = (int) $v;
+                }
+            }
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
+     * @param  array{vendors: array<int, string>, products: array<int, string>, departments: array<int, string>, users: array<int, string>}  $maps
+     */
+    private function mapContractRelationDisplay(string $field, mixed $value, array $maps): mixed
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $bucket = match ($field) {
+            'vendor_id' => 'vendors',
+            'product_id' => 'products',
+            'department_id' => 'departments',
+            'followed_by_id', 'approved_by', 'approver_id' => 'users',
+            default => null,
+        };
+
+        if ($bucket === null) {
+            return $value;
+        }
+
+        if (! is_numeric($value)) {
+            return $value;
+        }
+
+        $id = (int) $value;
+        $label = $maps[$bucket][$id] ?? null;
+
+        return ($label !== null && $label !== '') ? $label : $value;
     }
 
     private function normalizeValue(mixed $v): mixed

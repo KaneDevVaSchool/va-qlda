@@ -1375,6 +1375,7 @@
         "tablePeriod": "Thời hạn",
         "tablePeriodProgress": "Tiến độ",
         "vendorGroupCount": "{n} hợp đồng",
+        "vendorGroupToggle": "Thu gọn hoặc mở rộng nhóm nhà cung cấp {name}",
         "amountInWordsPrefix": "Bằng chữ",
         "tableValue": "Giá trị",
         "tableExpiresIn": "Còn lại",

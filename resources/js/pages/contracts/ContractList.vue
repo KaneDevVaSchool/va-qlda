@@ -258,20 +258,31 @@
                             <template v-for="g in vendorGroups" :key="g.key">
                                 <tr class="contract-list__vendor-group">
                                     <td colspan="10">
-                                        <button
-                                            type="button"
-                                            class="contract-list__group-toggle"
-                                            :aria-expanded="!isVendorGroupCollapsed(g.key)"
-                                            @click.stop="toggleVendorGroup(g.key)"
-                                        >
-                                            <span
-                                                class="contract-list__group-chevron"
-                                                :class="{ 'contract-list__group-chevron--collapsed': isVendorGroupCollapsed(g.key) }"
-                                                aria-hidden="true"
-                                            >▼</span>
-                                            <strong>{{ g.vendorName }}</strong>
+                                        <div class="contract-list__vendor-group-inner">
+                                            <button
+                                                type="button"
+                                                class="contract-list__group-toggle"
+                                                :aria-expanded="!isVendorGroupCollapsed(g.key)"
+                                                :aria-label="t('contracts.vendorGroupToggle', { name: g.vendorName })"
+                                                @click.stop="toggleVendorGroup(g.key)"
+                                            >
+                                                <span
+                                                    class="contract-list__group-chevron"
+                                                    :class="{ 'contract-list__group-chevron--collapsed': isVendorGroupCollapsed(g.key) }"
+                                                    aria-hidden="true"
+                                                >▼</span>
+                                            </button>
+                                            <router-link
+                                                v-if="g.vendorId"
+                                                :to="{ name: 'vendor-detail', params: { id: String(g.vendorId) } }"
+                                                class="contract-list__vendor-group-link"
+                                                @click.stop
+                                            >
+                                                <strong>{{ g.vendorName }}</strong>
+                                            </router-link>
+                                            <strong v-else class="contract-list__vendor-group-name">{{ g.vendorName }}</strong>
                                             <span class="contract-list__group-count">{{ t('contracts.vendorGroupCount', { n: g.items.length }) }}</span>
-                                        </button>
+                                        </div>
                                     </td>
                                 </tr>
                                 <tr
@@ -737,6 +748,7 @@ const vendorGroups = computed(() => {
             map.set(key, {
                 key,
                 vendorName: row.vendor?.name || '—',
+                vendorId: row.vendor_id != null ? Number(row.vendor_id) : null,
                 items: [],
             });
         }
@@ -1700,6 +1712,12 @@ onMounted(async () => {
     background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
     border-bottom: 1px solid var(--ppms-border, #e2e8f0);
 }
+.contract-list__vendor-group-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+}
 .contract-list__group-toggle {
     display: inline-flex;
     align-items: center;
@@ -1715,6 +1733,23 @@ onMounted(async () => {
 }
 .contract-list__group-toggle:hover {
     color: var(--ppms-accent, #4f46e5);
+}
+.contract-list__vendor-group-link {
+    color: var(--ppms-fg, #0f172a);
+    text-decoration: none;
+}
+.contract-list__vendor-group-link:hover {
+    color: var(--ppms-accent, #4f46e5);
+    text-decoration: underline;
+}
+.contract-list__vendor-group-link:focus-visible {
+    outline: 2px solid var(--ppms-accent, #4f46e5);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+.contract-list__vendor-group-name {
+    font-weight: 700;
+    color: var(--ppms-fg, #0f172a);
 }
 .contract-list__group-chevron {
     display: inline-block;
