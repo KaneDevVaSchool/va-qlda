@@ -1,39 +1,44 @@
 <template>
-    <div>
-        <div v-if="loading" class="ppms-profile-skel" role="status">
-            <div class="ppms-profile-skel-line" style="width: 55%" />
-            <div class="ppms-profile-skel-line" style="width: 70%" />
+    <div class="ppms-profile-perm">
+        <div v-if="loading" class="ppms-profile-skel" role="status" :aria-label="t('common.loading')">
+            <div class="ppms-profile-skel-line ppms-profile-perm-skel-a" />
+            <div class="ppms-profile-skel-line ppms-profile-perm-skel-b" />
         </div>
-        <template v-else-if="err">{{ err }}</template>
+        <template v-else-if="err">
+            <p class="ppms-profile-perm-err">{{ err }}</p>
+        </template>
         <template v-else>
-            <p style="font-size: 0.9rem; color: var(--ppms-pf-muted); margin-top: 0">{{ t('profile.permissionsMatrix') }}</p>
-            <p v-if="!canManage" style="font-size: 0.85rem">{{ t('profile.canManageHint') }}</p>
+            <p v-if="!compact" class="ppms-profile-perm-lead">{{ t('profile.permissionsMatrix') }}</p>
+            <p v-if="!canManage" class="ppms-profile-perm-hint">{{ t('profile.canManageHint') }}</p>
 
-            <p style="margin: 0.75rem 0">
+            <div class="ppms-profile-perm-search">
                 <input
                     v-model="search"
                     type="search"
+                    class="ppms-profile-perm-input"
                     :placeholder="t('profile.searchPermission')"
-                    style="width: 100%; max-width: 320px; padding: 0.45rem 0.5rem"
+                    :aria-label="t('profile.searchPermission')"
                 />
-            </p>
+            </div>
 
-            <div class="ppms-profile-table-wrap">
+            <div class="ppms-profile-table-wrap ppms-profile-perm-table-wrap">
                 <table class="ppms-profile-table ppms-profile-matrix">
                     <thead>
                         <tr>
-                            <th class="ppms-profile-matrix-corner">{{ t('common.search') }}</th>
-                            <th v-for="a in actions" :key="a">{{ a }}</th>
+                            <th class="ppms-profile-matrix-corner" scope="col">{{ t('profile.matrixModule') }}</th>
+                            <th v-for="a in actions" :key="a" scope="col">{{ actionLabel(a) }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="mod in filteredModules" :key="mod.key">
                             <th scope="row">{{ mod.label }}</th>
-                            <td v-for="a in actions" :key="mod.key + a" style="text-align: center">
+                            <td v-for="a in actions" :key="mod.key + a" class="ppms-profile-perm-cell">
                                 <input
                                     type="checkbox"
+                                    class="ppms-profile-perm-cb"
                                     :checked="desired[keyFor(mod.key, a)]"
                                     :disabled="!canManage"
+                                    :aria-label="checkboxAria(mod, a)"
                                     @change="toggle(mod.key, a, $event.target.checked)"
                                 />
                             </td>
@@ -42,8 +47,14 @@
                 </table>
             </div>
 
-            <div v-if="canManage" style="margin-top: 1rem">
-                <button type="button" class="ppms-pf-btn ppms-pf-btn--primary" :disabled="saving" @click="save">
+            <div v-if="canManage" class="ppms-profile-perm-actions">
+                <button
+                    type="button"
+                    class="ppms-pf-btn ppms-pf-btn--primary"
+                    :disabled="saving"
+                    :aria-busy="saving"
+                    @click="save"
+                >
                     {{ t('profile.save') }}
                 </button>
             </div>
@@ -56,7 +67,14 @@ import axios from 'axios';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { formatApiUserMessage } from '../../bootstrap';
-import { ppmsToastSuccess } from '../../ppmsUi';
+import { ppmsToastError, ppmsToastSuccess } from '../../ppmsUi';
+
+defineProps({
+    compact: {
+        type: Boolean,
+        default: false,
+    },
+});
 
 const { t } = useI18n();
 
@@ -71,6 +89,16 @@ const matrix = ref({});
 const effective = ref({});
 const desired = ref({});
 const canManage = ref(false);
+
+function actionLabel(action) {
+    const key = `profile.permissionActions.${action}`;
+    const tr = t(key);
+    return tr === key ? action : tr;
+}
+
+function checkboxAria(mod, action) {
+    return `${mod.label} — ${actionLabel(action)}`;
+}
 
 const moduleRows = computed(() =>
     Object.entries(modules.value || {}).map(([key, v]) => ({
@@ -142,14 +170,70 @@ async function save() {
     saving.value = true;
     try {
         await axios.patch('/api/me/rbac', { overrides: buildOverrides() });
-        ppmsToastSuccess('OK');
+        ppmsToastSuccess(t('profile.permissionsSaved'));
         const { data } = await axios.get('/api/me/rbac');
         effective.value = data.effective || {};
         desired.value = { ...data.effective };
     } catch (e) {
-        window.alert(formatApiUserMessage(e, 'Error'));
+        ppmsToastError(formatApiUserMessage(e, t('profile.saveError')));
     } finally {
         saving.value = false;
     }
 }
 </script>
+
+<style scoped>
+.ppms-profile-perm-err {
+    color: #b91c1c;
+    margin: 0;
+}
+.ppms-profile-perm-lead {
+    font-size: 0.9rem;
+    color: var(--ppms-pf-muted);
+    margin: 0 0 0.5rem;
+}
+.ppms-profile-perm-hint {
+    font-size: 0.85rem;
+    color: var(--ppms-pf-muted);
+    margin: 0 0 0.75rem;
+}
+.ppms-profile-perm-search {
+    margin: 0.75rem 0;
+}
+.ppms-profile-perm-input {
+    width: 100%;
+    max-width: 320px;
+    padding: 0.45rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    background: var(--ppms-pf-input-bg, #fff);
+    color: inherit;
+}
+.ppms-profile-perm-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.ppms-profile-perm-cell {
+    text-align: center;
+    vertical-align: middle;
+}
+.ppms-profile-perm-cb {
+    width: 1.1rem;
+    height: 1.1rem;
+    cursor: pointer;
+    accent-color: #2563eb;
+}
+.ppms-profile-perm-cb:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+.ppms-profile-perm-actions {
+    margin-top: 1rem;
+}
+.ppms-profile-perm-skel-a {
+    width: 55%;
+}
+.ppms-profile-perm-skel-b {
+    width: 70%;
+}
+</style>

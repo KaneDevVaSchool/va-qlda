@@ -93,6 +93,7 @@ const routes = [
                     pageDescriptionKey: 'contracts.pageDescription',
                     breadcrumb: bc([
                         { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'layout.navModuleSupplier' },
                         { labelKey: 'contracts.breadcrumb' },
                     ]),
                 },
@@ -107,6 +108,7 @@ const routes = [
                     hideLayoutTitle: true,
                     breadcrumb: bc([
                         { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'layout.navModuleSupplier' },
                         { labelKey: 'contracts.breadcrumb', to: '/contracts' },
                         { labelKey: 'contracts.detailTitle' },
                     ]),

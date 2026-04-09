@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TaskDependencyController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\UserActivityLogController;
+use App\Http\Controllers\Api\UserDelegationController;
 use App\Http\Controllers\Api\UserLookupController;
 use App\Http\Controllers\Api\UserProfileController;
 use App\Http\Controllers\Api\UserRbacController;
@@ -65,6 +66,10 @@ Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
 
     Route::get('/me/rbac', [UserRbacController::class, 'show']);
     Route::patch('/me/rbac', [UserRbacController::class, 'update']);
+
+    Route::get('/me/delegations', [UserDelegationController::class, 'index']);
+    Route::post('/me/delegations', [UserDelegationController::class, 'store']);
+    Route::delete('/me/delegations/{delegation}', [UserDelegationController::class, 'destroy']);
 
     Route::get('/me/activity', [UserActivityLogController::class, 'index']);
     Route::get('/me/activity/export.csv', [UserActivityLogController::class, 'exportCsv']);

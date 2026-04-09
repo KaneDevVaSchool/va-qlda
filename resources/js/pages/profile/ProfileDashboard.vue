@@ -78,11 +78,13 @@ const header = ref({
 });
 const darkMode = ref(false);
 
+const TAB_ALIAS = { permissions: 'access' };
+
 const tabs = computed(() => [
     { id: 'profile', label: t('profile.navProfile') },
     { id: 'security', label: t('profile.navSecurity') },
     { id: 'devices', label: t('profile.navDevices') },
-    { id: 'permissions', label: t('profile.navPermissions') },
+    { id: 'access', label: t('profile.navAccessDelegation') },
     { id: 'activity', label: t('profile.navActivity') },
 ]);
 
@@ -92,7 +94,7 @@ const tabLoaders = {
     profile: () => import('./ProfileTabProfile.vue'),
     security: () => import('./ProfileTabSecurity.vue'),
     devices: () => import('./ProfileTabDevices.vue'),
-    permissions: () => import('./ProfileTabPermissions.vue'),
+    access: () => import('./ProfileTabAccessDelegation.vue'),
     activity: () => import('./ProfileTabActivity.vue'),
 };
 
@@ -162,7 +164,8 @@ async function loadHeader() {
 watch(
     () => route.query.tab,
     (tab) => {
-        const id = typeof tab === 'string' ? tab : '';
+        const raw = typeof tab === 'string' ? tab : '';
+        const id = TAB_ALIAS[raw] || raw;
         if (id && tabLoaders[id]) {
             activeTab.value = id;
             tabComponent.value = defineAsyncComponent({

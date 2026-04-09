@@ -34,6 +34,12 @@
                             </div>
                         </div>
                         <div class="va-site-footer-module">
+                            <div class="va-site-footer-module-title">{{ t('layout.footerColSupplier') }}</div>
+                            <div class="va-site-footer-module-links">
+                                <router-link to="/contracts">{{ t('layout.navContracts') }}</router-link>
+                            </div>
+                        </div>
+                        <div class="va-site-footer-module">
                             <div class="va-site-footer-module-title">{{ t('layout.footerColInnovation') }}</div>
                             <div class="va-site-footer-module-links">
                                 <router-link to="/kaizens">{{ t('layout.navKaizen') }}</router-link>

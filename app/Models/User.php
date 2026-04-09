@@ -141,6 +141,11 @@ class User extends Authenticatable
         return $this->hasMany(UserPermissionOverride::class);
     }
 
+    public function delegationsOutgoing(): HasMany
+    {
+        return $this->hasMany(UserDelegation::class, 'delegator_id');
+    }
+
     public function isLocked(): bool
     {
         if ($this->locked_until === null) {
