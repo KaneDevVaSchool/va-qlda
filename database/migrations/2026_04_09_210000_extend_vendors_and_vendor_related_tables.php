@@ -61,6 +61,7 @@ return new class extends Migration
             Schema::create('vendor_department', function (Blueprint $table) {
                 $table->foreignId('vendor_id')->constrained('vendors')->cascadeOnDelete();
                 $table->foreignId('department_id')->constrained('departments')->cascadeOnDelete();
+                $table->timestamps();
                 $table->primary(['vendor_id', 'department_id']);
             });
         }
