@@ -115,7 +115,7 @@ class ContractService
 
     public function delete(Contract $contract, User $user): void
     {
-        if ($contract->status !== ContractStatus::Draft) {
+        if ($user->role !== 'admin' && $contract->status !== ContractStatus::Draft) {
             abort(422, 'Only draft contracts can be deleted.');
         }
 

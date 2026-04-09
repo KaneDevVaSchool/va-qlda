@@ -344,6 +344,14 @@
                                         <router-link v-else :to="`/contracts/${row.id}`" class="ppms-btn-ghost ppms-btn-sm">{{
                                             t('contracts.view')
                                         }}</router-link>
+                                        <button
+                                            v-if="isAdmin"
+                                            type="button"
+                                            class="ppms-btn-ghost ppms-btn-sm contract-list__btn-danger"
+                                            @click="deleteContractRow(row)"
+                                        >
+                                            {{ t('common.delete') }}
+                                        </button>
                                     </td>
                                 </tr>
                             </template>
@@ -1016,6 +1024,21 @@ async function forceDeleteRow(row) {
     try {
         await axios.delete(`/api/contracts/${row.id}/force`);
         ppmsToastSuccess(t('contracts.trashForceDeleted'));
+        await load();
+    } catch (e) {
+        ppmsToastError(formatApiUserMessage(e, t('contracts.loadError')));
+    }
+}
+
+async function deleteContractRow(row) {
+    const key =
+        row.status && row.status !== 'draft' ? 'contracts.deleteConfirmAdmin' : 'contracts.deleteConfirm';
+    if (!(await ppmsConfirm(t(key)))) {
+        return;
+    }
+    try {
+        await axios.delete(`/api/contracts/${row.id}`);
+        ppmsToastSuccess(t('contracts.deletedToTrash'));
         await load();
     } catch (e) {
         ppmsToastError(formatApiUserMessage(e, t('contracts.loadError')));

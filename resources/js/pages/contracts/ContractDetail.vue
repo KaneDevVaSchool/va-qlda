@@ -45,6 +45,8 @@
                     <button type="button" class="ppms-btn-ghost" @click="exportSummaryPdf">{{ t('contracts.exportSummaryPdf') }}</button>
                     <template v-if="contract.status === 'draft' && canEdit">
                         <button type="button" class="ppms-btn-ghost" @click="openEdit">{{ t('common.edit') }}</button>
+                    </template>
+                    <template v-if="(contract.status === 'draft' && canEdit) || isAdmin">
                         <button type="button" class="ppms-btn-ghost ppms-btn-danger" @click="removeDraft">{{ t('common.delete') }}</button>
                     </template>
                     <template v-if="contract.status === 'draft' && canSubmit">
@@ -1153,6 +1155,8 @@ const canSubmit = computed(() => {
 
 const canTerminate = computed(() => canManage.value);
 
+const isAdmin = computed(() => me.value?.role === 'admin');
+
 const canMarkPaid = computed(() => canManage.value && contract.value?.status === 'active');
 
 const isCurrentApprover = computed(() => {
@@ -1406,7 +1410,9 @@ async function saveEdit() {
 }
 
 async function removeDraft() {
-    if (!(await ppmsConfirm(t('contracts.deleteConfirm')))) {
+    const confirmKey =
+        isAdmin.value && contract.value?.status !== 'draft' ? 'contracts.deleteConfirmAdmin' : 'contracts.deleteConfirm';
+    if (!(await ppmsConfirm(t(confirmKey)))) {
         return;
     }
     try {

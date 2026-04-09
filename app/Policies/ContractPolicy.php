@@ -45,6 +45,14 @@ class ContractPolicy
 
     public function delete(User $user, Contract $contract): bool
     {
+        if ($user->role === 'admin') {
+            return $this->canBrowse($user);
+        }
+
+        if ($contract->status !== ContractStatus::Draft) {
+            return false;
+        }
+
         return $this->canManage($user) || $contract->created_by === $user->id;
     }
 

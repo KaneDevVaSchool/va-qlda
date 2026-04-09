@@ -1481,6 +1481,7 @@
         "approvalApprover": "Người phê duyệt",
         "approvalState": "Trạng thái",
         "deleteConfirm": "Xóa hợp đồng nháp này?",
+        "deleteConfirmAdmin": "Chuyển hợp đồng này vào thùng rác (mọi trạng thái)? Có thể khôi phục từ Thùng rác nếu cần.",
         "submitConfirm": "Gửi hợp đồng này để phê duyệt với danh sách người phê duyệt đã nhập?",
         "terminateConfirm": "Chấm dứt hợp đồng đang hiệu lực?"
     },
@@ -1530,6 +1531,7 @@
         "markedRead": "Đã đánh dấu đã đọc.",
         "markedAll": "Đã đánh dấu đã đọc các mục khớp bộ lọc.",
         "noFieldDiff": "Không có chi tiết thay đổi từng trường cho bản ghi này.",
+        "loadError": "Không tải được nhật ký hoạt động. Vui lòng thử lại sau.",
         "loadingMore": "Đang tải thêm…",
         "endOfFeed": "Đã xem hết danh sách.",
         "fields": {

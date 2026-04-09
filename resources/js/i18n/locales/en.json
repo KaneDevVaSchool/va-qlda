@@ -1480,6 +1480,7 @@
         "approvalApprover": "Approver",
         "approvalState": "State",
         "deleteConfirm": "Delete this draft contract?",
+        "deleteConfirmAdmin": "Move this contract to trash (any status)? You can restore it from Trash if needed.",
         "submitConfirm": "Submit this contract for approval with the listed approvers?",
         "terminateConfirm": "Terminate this active contract?"
     },
@@ -1529,6 +1530,7 @@
         "markedRead": "Marked as read.",
         "markedAll": "All matching items marked as read.",
         "noFieldDiff": "No field-level diff captured for this entry.",
+        "loadError": "Could not load activity. Try again in a moment.",
         "loadingMore": "Loading more…",
         "endOfFeed": "You have reached the end.",
         "fields": {
