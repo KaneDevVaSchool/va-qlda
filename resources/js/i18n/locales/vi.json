@@ -1534,7 +1534,24 @@
         "loadError": "Không tải được nhật ký hoạt động. Vui lòng thử lại sau.",
         "loadingMore": "Đang tải thêm…",
         "endOfFeed": "Đã xem hết danh sách.",
+        "valueEmpty": "—",
+        "ipPrefix": "IP",
+        "sourceHint": "Nguồn thực hiện thao tác",
+        "diffArrow": "Giá trị mới",
+        "source": {
+            "api": "API",
+            "web": "Web"
+        },
         "fields": {
+            "field": {
+                "id": "Mã số",
+                "code": "Mã",
+                "name": "Tên",
+                "created_at": "Tạo lúc",
+                "updated_at": "Cập nhật lúc",
+                "deleted_at": "Xóa lúc",
+                "created_by": "Người tạo"
+            },
             "project": {
                 "name": "Tên",
                 "code": "Mã",

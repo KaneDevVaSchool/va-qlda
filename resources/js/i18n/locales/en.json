@@ -1533,7 +1533,24 @@
         "loadError": "Could not load activity. Try again in a moment.",
         "loadingMore": "Loading more…",
         "endOfFeed": "You have reached the end.",
+        "valueEmpty": "—",
+        "ipPrefix": "IP",
+        "sourceHint": "Where this action was performed",
+        "diffArrow": "New value",
+        "source": {
+            "api": "API",
+            "web": "Web"
+        },
         "fields": {
+            "field": {
+                "id": "ID",
+                "code": "Code",
+                "name": "Name",
+                "created_at": "Created at",
+                "updated_at": "Updated at",
+                "deleted_at": "Deleted at",
+                "created_by": "Created by"
+            },
             "project": {
                 "name": "Name",
                 "code": "Code",

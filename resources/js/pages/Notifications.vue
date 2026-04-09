@@ -96,21 +96,35 @@
                                 </div>
                                 <div class="ppms-activity-head-text">
                                     <p class="ppms-activity-actor-line">
-                                        <strong>{{ item.actor?.name || t('activityFeed.systemUser') }}</strong>
-                                        <span class="ppms-activity-verb">{{ kindVerb(item.activity_kind) }}</span>
-                                        <span>{{ t(`activityFeed.subject.${item.subject_type}`) }}</span>
-                                        <router-link v-if="item.link" :to="item.link" class="ppms-activity-subject-link">
-                                            {{ item.subject_label || '—' }}
-                                        </router-link>
-                                        <span v-else class="ppms-activity-subject">{{ item.subject_label || '—' }}</span>
+                                        <span class="ppms-activity-actor-seg">
+                                            <strong>{{ item.actor?.name || t('activityFeed.systemUser') }}</strong>
+                                        </span>
+                                        <span class="ppms-activity-actor-seg ppms-activity-verb">{{
+                                            kindVerb(item.activity_kind)
+                                        }}</span>
+                                        <span class="ppms-activity-actor-seg">{{ t(`activityFeed.subject.${item.subject_type}`) }}</span>
+                                        <span class="ppms-activity-actor-seg">
+                                            <router-link v-if="item.link" :to="item.link" class="ppms-activity-subject-link">
+                                                {{ item.subject_label || t('activityFeed.valueEmpty') }}
+                                            </router-link>
+                                            <span v-else class="ppms-activity-subject">{{ item.subject_label || t('activityFeed.valueEmpty') }}</span>
+                                        </span>
                                     </p>
                                     <div class="ppms-activity-meta">
                                         <span class="ppms-activity-badge" :class="'ppms-activity-badge--' + (item.kind_color || 'yellow')">
                                             {{ t(`activityFeed.kind.${item.activity_kind || 'updated'}`) }}
                                         </span>
                                         <span class="ppms-muted ppms-activity-time">{{ item.created_at_vn }}</span>
-                                        <span v-if="item.metadata?.ip" class="ppms-muted ppms-activity-meta-ip">IP {{ item.metadata.ip }}</span>
-                                        <span v-if="item.metadata?.source" class="ppms-muted">{{ item.metadata.source }}</span>
+                                        <span v-if="item.metadata?.ip" class="ppms-muted ppms-activity-meta-ip">
+                                            {{ t('activityFeed.ipPrefix') }} {{ item.metadata.ip }}
+                                        </span>
+                                        <span
+                                            v-if="item.metadata?.source"
+                                            class="ppms-activity-source"
+                                            :title="t('activityFeed.sourceHint')"
+                                        >
+                                            {{ sourceLabel(item.metadata.source) }}
+                                        </span>
                                     </div>
                                 </div>
                                 <button
@@ -127,7 +141,7 @@
                                     <span class="ppms-activity-change-field">{{ fieldLabel(ch.label_key) }}</span>
                                     <span class="ppms-activity-diff">
                                         <span class="ppms-activity-old">{{ fmt(ch.old) }}</span>
-                                        <span class="ppms-activity-arrow" aria-hidden="true">→</span>
+                                        <span class="ppms-activity-arrow" aria-hidden="true" :title="t('activityFeed.diffArrow')">→</span>
                                         <span class="ppms-activity-new">{{ fmt(ch.new) }}</span>
                                     </span>
                                 </li>
@@ -198,19 +212,54 @@ function kindVerb(kind) {
 }
 
 function fieldLabel(labelKey) {
+    if (!labelKey) {
+        return t('activityFeed.valueEmpty');
+    }
     const path = `activityFeed.fields.${labelKey}`;
     const tr = t(path);
-    return tr === path ? labelKey : tr;
+    if (tr !== path) {
+        return tr;
+    }
+    const tail = labelKey.includes('.') ? labelKey.slice(labelKey.lastIndexOf('.') + 1) : labelKey;
+    return tail.replace(/_/g, ' ');
+}
+
+function sourceLabel(src) {
+    const key = `activityFeed.source.${src}`;
+    const tr = t(key);
+    return tr === key ? String(src) : tr;
 }
 
 function fmt(v) {
     if (v === null || v === undefined) {
-        return '—';
+        return t('activityFeed.valueEmpty');
     }
     if (typeof v === 'object') {
         return JSON.stringify(v);
     }
-    return String(v);
+    const s = String(v);
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s) || /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(s)) {
+        const d = new Date(s);
+        if (!Number.isNaN(d.getTime())) {
+            return d.toLocaleString(locale.value === 'en' ? 'en-GB' : 'vi-VN', {
+                dateStyle: 'short',
+                timeStyle: 'short',
+                timeZone: 'Asia/Ho_Chi_Minh',
+            });
+        }
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+        const [y, mo, day] = s.split('-').map((x) => parseInt(x, 10));
+        const d = new Date(y, mo - 1, day);
+        if (!Number.isNaN(d.getTime())) {
+            return d.toLocaleDateString(locale.value === 'en' ? 'en-GB' : 'vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+            });
+        }
+    }
+    return s;
 }
 
 function todayYmd() {
@@ -773,20 +822,29 @@ onUnmounted(() => {
 }
 
 .ppms-activity-actor-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 0.5rem;
     margin: 0 0 0.35rem;
     font-size: clamp(0.88rem, 2.8vw, 0.95rem);
     line-height: 1.45;
     word-break: break-word;
 }
 
+.ppms-activity-actor-seg {
+    display: inline-flex;
+    align-items: baseline;
+    max-width: 100%;
+    min-width: 0;
+}
+
 .ppms-activity-verb {
     font-weight: 600;
-    margin: 0 0.2rem;
 }
 
 .ppms-activity-subject-link {
     font-weight: 600;
-    margin-left: 0.15rem;
     word-break: break-word;
 }
 
@@ -806,6 +864,21 @@ onUnmounted(() => {
     .ppms-activity-meta-ip {
         display: inline;
     }
+}
+
+.ppms-activity-source {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-family: ui-monospace, 'Cascadia Code', 'Segoe UI', system-ui, sans-serif;
+    color: var(--ppms-muted, #64748b);
+    background: rgba(100, 116, 139, 0.1);
+    border: 1px solid rgba(100, 116, 139, 0.2);
 }
 
 .ppms-activity-mark-read {
@@ -878,6 +951,7 @@ onUnmounted(() => {
     border-radius: 6px;
     background: rgba(248, 250, 252, 0.85);
     border: 1px solid rgba(226, 232, 240, 0.9);
+    border-left: 2px solid rgba(79, 70, 229, 0.35);
     min-width: 0;
 }
 
@@ -901,6 +975,14 @@ onUnmounted(() => {
     gap: 0.25rem 0.35rem;
     align-items: baseline;
     min-width: 0;
+    font-family: ui-monospace, 'Cascadia Code', 'Segoe UI', system-ui, sans-serif;
+    font-size: 0.92em;
+    font-variant-numeric: tabular-nums;
+}
+
+.ppms-activity-arrow {
+    color: var(--ppms-muted, #64748b);
+    flex-shrink: 0;
 }
 
 .ppms-activity-old {
