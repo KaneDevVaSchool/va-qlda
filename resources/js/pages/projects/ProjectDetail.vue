@@ -108,6 +108,7 @@
                 :meta-form="metaForm"
                 :meta-err="metaErr"
                 :can-manage-project="canManageProject"
+                :team-options="teamOptions"
                 @save="saveMeta"
                 @add-supplier="addMetaSupplier"
                 @remove-supplier="removeMetaSupplier"
@@ -290,6 +291,7 @@ const metaErr = ref('');
 const metaForm = reactive({
     name: '',
     owner_id: '',
+    team_id: '',
     executor_user_ids: [],
     follower_user_ids: [],
     customer_name: '',
@@ -348,6 +350,8 @@ const canPdf = computed(() => ['admin', 'pm', 'tl'].includes(me.value?.role));
 const canCsv = computed(() => ['admin', 'pm', 'hr'].includes(me.value?.role));
 
 const canManageDocuments = computed(() => ['admin', 'pm', 'tl'].includes(me.value?.role));
+
+const teamOptions = ref([]);
 
 const docAddNeedsUrl = computed(() => docAddMode.value === 'link');
 
@@ -476,6 +480,7 @@ function openMetaEdit() {
     metaErr.value = '';
     metaForm.name = p.name || '';
     metaForm.owner_id = p.owner_id != null ? String(p.owner_id) : '';
+    metaForm.team_id = p.team_id != null ? String(p.team_id) : '';
     metaForm.executor_user_ids = (p.executor_users || []).map((u) => String(u.id));
     metaForm.follower_user_ids = (p.follower_users || []).map((u) => String(u.id));
     metaForm.customer_name = p.customer_name || '';
@@ -555,6 +560,7 @@ async function saveMeta() {
         const folIds = (metaForm.follower_user_ids || []).map((id) => Number(id)).filter((n) => n > 0);
         payload.executor_user_ids = execIds;
         payload.follower_user_ids = folIds;
+        payload.team_id = metaForm.team_id !== '' && metaForm.team_id != null ? Number(metaForm.team_id) : null;
     }
     try {
         await axios.patch(`/api/projects/${props.id}`, payload);
@@ -830,10 +836,15 @@ watch(focusTask, async (row) => {
 
 onMounted(async () => {
     try {
-        const { data } = await axios.get('/api/user');
-        me.value = data;
+        const [u, teams] = await Promise.all([
+            axios.get('/api/user'),
+            axios.get('/api/teams').catch(() => ({ data: [] })),
+        ]);
+        me.value = u.data;
+        teamOptions.value = Array.isArray(teams.data) ? teams.data : [];
     } catch {
         me.value = null;
+        teamOptions.value = [];
     }
 });
 

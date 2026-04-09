@@ -239,6 +239,18 @@
                         <h3 id="ppms-pc-card-team" class="ppms-pc-card__title">{{ t('projects.createSectionTeam') }}</h3>
                         <p class="ppms-pc-section-lead">{{ t('projects.createSectionTeamLead') }}</p>
                         <div class="ppms-pc-row">
+                            <label class="ppms-field ppms-pc-col ppms-pc-col--12">
+                                <div class="ppms-pc-label-row">
+                                    <span>{{ t('projects.fieldTeam') }}</span>
+                                </div>
+                                <select v-model="form.team_id" class="ppms-pc-select" name="team_id">
+                                    <option value="">{{ t('projects.fieldTeamNone') }}</option>
+                                    <option v-for="tm in teamOptions" :key="'tm-' + tm.id" :value="String(tm.id)">{{ tm.name }}</option>
+                                </select>
+                                <p class="ppms-pc-field-hint">{{ t('projects.fieldTeamHint') }}</p>
+                            </label>
+                        </div>
+                        <div class="ppms-pc-row">
                             <div class="ppms-field ppms-pc-col ppms-pc-col--12">
                                 <div class="ppms-pc-label-row">
                                     <span>{{ t('projects.fieldOwner') }}</span>
@@ -570,6 +582,7 @@ const { t, locale } = useI18n();
 const props = defineProps({
     form: { type: Object, required: true },
     formError: { type: String, default: '' },
+    teamOptions: { type: Array, default: () => [] },
 });
 
 defineEmits(['submit']);

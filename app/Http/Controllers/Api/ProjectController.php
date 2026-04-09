@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskAttachment;
 use App\Models\TaskParticipant;
+use App\Models\Team;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\ProjectListQueryService;
@@ -219,6 +220,7 @@ class ProjectController extends Controller
             'follower_user_ids.*' => ['integer', Rule::exists(User::class, 'id')],
             'permission_preset' => 'nullable|in:org_default,members_only,owner_only',
             'estimated_value' => 'nullable|numeric|min:0',
+            'team_id' => ['nullable', 'integer', Rule::exists(Team::class, 'id')],
         ]);
 
         if (array_key_exists('labels', $data)) {
@@ -244,7 +246,7 @@ class ProjectController extends Controller
 
         AuditLogger::log('project.created', $project, null, $project->only(array_keys($data)));
 
-        $project->load('owner:id,name,email');
+        $project->load(['owner:id,name,email', 'team:id,name']);
         $this->projectListQuery->hydrateParticipantUsersForProjects(collect([$project]));
 
         return response()->json($project, 201);
@@ -256,6 +258,7 @@ class ProjectController extends Controller
 
         $project->load([
             'owner:id,name,email',
+            'team:id,name',
             'phases',
             'supplies',
             'tasks.assignee:id,name,email,role',
@@ -475,6 +478,7 @@ class ProjectController extends Controller
             'follower_user_ids' => 'nullable|array|max:40',
             'follower_user_ids.*' => ['integer', Rule::exists(User::class, 'id')],
             'permission_preset' => 'nullable|in:org_default,members_only,owner_only',
+            'team_id' => ['nullable', 'integer', Rule::exists(Team::class, 'id')],
         ]);
 
         if (array_key_exists('labels', $data)) {
@@ -495,7 +499,7 @@ class ProjectController extends Controller
 
         AuditLogger::log('project.updated', $project, $before, $project->getAttributes());
 
-        $fresh = $project->fresh()->load('owner:id,name,email');
+        $fresh = $project->fresh()->load(['owner:id,name,email', 'team:id,name']);
         $this->projectListQuery->hydrateParticipantUsersForProjects(collect([$fresh]));
 
         return $fresh;

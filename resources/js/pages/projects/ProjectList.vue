@@ -7,6 +7,18 @@
 
         <ProjectListSavedViews :saved-views="savedViews" @apply="applySavedView($event)" @remove="removeSavedView" />
 
+        <section class="ppms-card ppms-mt ppms-pl-team-filter" :aria-label="t('projects.filterTeamSection')">
+            <div class="ppms-pl-team-filter-row">
+                <label class="ppms-field ppms-field--inline ppms-pl-team-filter-field">
+                    <span>{{ t('projects.filterTeam') }}</span>
+                    <select v-model="filters.team_id" class="ppms-select ppms-pl-team-select" @change="onFilterChange">
+                        <option value="">{{ t('projects.filterTeamAll') }}</option>
+                        <option v-for="tm in teamOptions" :key="'tf-' + tm.id" :value="String(tm.id)">{{ tm.name }}</option>
+                    </select>
+                </label>
+            </div>
+        </section>
+
         <ProjectListToolbar
             ref="toolbarRef"
             v-model:menu-open="toolbarMenuOpen"
@@ -69,6 +81,7 @@
                             <th v-if="colVis('admin')" class="ppms-th-admin">{{ t('projects.colAdmin') }}</th>
                             <th v-if="colVis('code')" class="ppms-th-code">{{ t('projects.colCode') }}</th>
                             <th v-if="colVis('name')" class="ppms-th-name">{{ t('projects.colName') }}</th>
+                            <th v-if="colVis('team')" class="ppms-th-team">{{ t('projects.colTeam') }}</th>
                             <th v-if="colVis('participants')" class="ppms-th-participants">{{ t('projects.colParticipants') }}</th>
                             <th v-if="colVis('progress')" class="ppms-th-process">{{ t('projects.colProgress') }}</th>
                             <th v-if="colVis('tasks')" class="ppms-th-num ppms-th-tasks">{{ t('projects.colTasks') }}</th>
@@ -104,9 +117,7 @@
                                 </td>
                                 <td v-if="colVis('code')" class="ppms-td-code ppms-muted">{{ projectCode(p) }}</td>
                                 <td v-if="colVis('name')" class="ppms-td-name">
-                                    <router-link class="ppms-pl-name-link" :to="'/projects/' + p.id">{{
-                                        p.name
-                                    }}</router-link>
+                                    <router-link class="ppms-pl-name-link" :to="'/projects/' + p.id">{{ p.name }}</router-link>
                                     <div class="ppms-pl-name-labels-row">
                                         <div v-if="projectLabelList(p).length" class="ppms-pl-name-labels">
                                             <span
@@ -146,6 +157,10 @@
                                             </button>
                                         </template>
                                     </div>
+                                </td>
+                                <td v-if="colVis('team')" class="ppms-td-team">
+                                    <span v-if="p.team?.name" class="ppms-pl-team-pill" :title="p.team.name">{{ p.team.name }}</span>
+                                    <span v-else class="ppms-muted">—</span>
                                 </td>
                                 <td v-if="colVis('participants')" class="ppms-td-participants">
                                     <div class="ppms-pl-participants">
@@ -363,6 +378,9 @@
                                             t(`projects.status.${p.status}`)
                                         }}</span>
                                     </div>
+                                    <div v-if="p.team?.name" class="ppms-pl-kanban-team-row">
+                                        <span class="ppms-pl-team-pill ppms-pl-team-pill--kanban">{{ p.team.name }}</span>
+                                    </div>
                                     <div class="ppms-pl-kanban-card-progress">
                                         <div
                                             class="ppms-progress-track ppms-progress-track--staging ppms-progress-track--kanban"
@@ -467,6 +485,7 @@
             v-model:open="showForm"
             :form="form"
             :form-error="formError"
+            :team-options="teamOptions"
             @submit="submitProject"
         />
 
@@ -538,6 +557,8 @@ const perPage = ref(50);
 const currentUser = ref(null);
 const selectedProjectIds = ref([]);
 
+const teamOptions = ref([]);
+
 const filters = reactive({
     search: '',
     type: '',
@@ -548,6 +569,7 @@ const filters = reactive({
     progress_max: null,
     sort: 'type_asc',
     owner_id: '',
+    team_id: '',
     archived: false,
     activePhase: false,
 });
@@ -572,6 +594,7 @@ const form = reactive({
     project_code: '',
     progress_pct: '',
     estimated_value: '',
+    team_id: '',
     editingId: null,
 });
 
@@ -595,6 +618,7 @@ function resetCreateForm() {
     form.project_code = '';
     form.progress_pct = '';
     form.estimated_value = '';
+    form.team_id = '';
     form.editingId = null;
 }
 
@@ -641,6 +665,7 @@ function fillProjectFormFromRow(project) {
     form.phase = project.phase || 'planning';
     form.status = project.status || 'on_track';
     form.owner_id = project.owner_id != null ? String(project.owner_id) : '';
+    form.team_id = project.team_id != null ? String(project.team_id) : '';
     form.deadline = dateToInputValue(project.deadline);
     form.start_date = dateToInputValue(project.start_date);
     form.progress_calc = project.progress_calc || 'weighted_tasks';
@@ -1284,6 +1309,8 @@ function hydrateFromRouteQuery(q) {
     filters.sort = typeof q.sort === 'string' && q.sort ? q.sort : 'type_asc';
     const oid = q.owner_id;
     filters.owner_id = oid !== undefined && oid !== '' ? String(oid) : '';
+    const tid = q.team_id;
+    filters.team_id = tid !== undefined && tid !== '' && tid !== null ? String(tid) : '';
     filters.archived = q.archived === '1' || q.archived === 1 || q.archived === true || q.archived === 'true';
     const pg = q.page;
     page.value = pg ? parseInt(String(pg), 10) || 1 : 1;
@@ -1325,6 +1352,9 @@ function serializeUrlQuery() {
     if (filters.owner_id !== '' && !Number.isNaN(Number(filters.owner_id))) {
         q.owner_id = String(filters.owner_id);
     }
+    if (filters.team_id !== '' && !Number.isNaN(Number(filters.team_id))) {
+        q.team_id = String(filters.team_id);
+    }
     if (filters.archived) {
         q.archived = '1';
     }
@@ -1355,6 +1385,7 @@ function isDefaultProjectListQuery(q) {
         q.progress_max !== undefined ||
         (q.sort && q.sort !== 'type_asc') ||
         q.owner_id ||
+        q.team_id ||
         q.archived === '1' ||
         q.active_phase === '1' ||
         (q.page && String(q.page) !== '1') ||
@@ -1378,6 +1409,7 @@ function saveProjectListFiltersToStorage() {
                 progress_max: filters.progress_max,
                 sort: filters.sort,
                 owner_id: filters.owner_id,
+                team_id: filters.team_id,
                 archived: filters.archived,
                 activePhase: filters.activePhase,
                 viewMode: viewMode.value,
@@ -1428,6 +1460,9 @@ function applySavedProjectListFilters() {
         }
         if (typeof o.owner_id === 'string') {
             filters.owner_id = o.owner_id;
+        }
+        if (typeof o.team_id === 'string') {
+            filters.team_id = o.team_id;
         }
         if (typeof o.archived === 'boolean') {
             filters.archived = o.archived;
@@ -1506,6 +1541,9 @@ function buildQueryParams() {
     }
     if (filters.owner_id !== '' && !Number.isNaN(Number(filters.owner_id))) {
         params.owner_id = Number(filters.owner_id);
+    }
+    if (filters.team_id !== '' && !Number.isNaN(Number(filters.team_id))) {
+        params.team_id = Number(filters.team_id);
     }
     if (filters.archived) {
         params.archived = 1;
@@ -1924,6 +1962,15 @@ async function loadCurrentUser() {
     }
 }
 
+async function loadTeams() {
+    try {
+        const { data } = await axios.get('/api/teams');
+        teamOptions.value = Array.isArray(data) ? data : [];
+    } catch {
+        teamOptions.value = [];
+    }
+}
+
 function parseSuppliersPayload() {
     const lines = form.suppliers_text
         .split('\n')
@@ -1958,6 +2005,7 @@ async function submitProject() {
             phase: form.phase,
             status: form.status,
             owner_id: Number(form.owner_id),
+            team_id: form.team_id !== '' && form.team_id != null ? Number(form.team_id) : null,
             deadline: form.deadline || null,
             start_date: form.start_date || null,
             description: form.description || null,
@@ -2028,7 +2076,7 @@ onMounted(async () => {
         viewMode.value = readStoredViewMode();
     }
     loadSavedViews();
-    await Promise.all([loadCurrentUser(), fetchLabelSuggestions()]);
+    await Promise.all([loadCurrentUser(), fetchLabelSuggestions(), loadTeams()]);
     await load();
 });
 

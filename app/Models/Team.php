@@ -6,6 +6,7 @@ use App\Models\Pivots\TeamUserPivot;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Team extends Model
 {
@@ -40,5 +41,10 @@ class Team extends Model
             ->using(TeamUserPivot::class)
             ->withPivot(['role', 'position', 'permissions'])
             ->withTimestamps();
+    }
+
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class, 'team_id');
     }
 }

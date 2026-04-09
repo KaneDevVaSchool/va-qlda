@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class Project extends Model
 {
     protected $fillable = [
-        'name', 'code', 'type', 'phase', 'status', 'owner_id', 'deadline', 'start_date', 'actual_start_date',
+        'name', 'code', 'type', 'phase', 'status', 'owner_id', 'team_id', 'deadline', 'start_date', 'actual_start_date',
         'description', 'estimated_value', 'progress', 'progress_calc', 'archived_at',
         'customer_name', 'customer_email', 'suppliers', 'process_timeline',
         'stakeholder_emails', 'csat_invites_sent', 'csat_survey_sent_at',
@@ -72,6 +72,11 @@ class Project extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class, 'team_id');
     }
 
     public function tasks(): HasMany

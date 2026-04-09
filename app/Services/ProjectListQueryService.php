@@ -18,7 +18,7 @@ class ProjectListQueryService
     {
         $q = Project::query();
         if ($withOwner) {
-            $q->with('owner:id,name,email');
+            $q->with(['owner:id,name,email', 'team:id,name']);
         }
 
         $q->withCount('tasks');
@@ -54,6 +54,13 @@ class ProjectListQueryService
 
         if ($request->filled('owner_id')) {
             $q->where('owner_id', (int) $request->query('owner_id'));
+        }
+
+        if ($request->filled('team_id')) {
+            $tid = (int) $request->query('team_id');
+            if ($tid > 0) {
+                $q->where('team_id', $tid);
+            }
         }
 
         if ($search = trim((string) $request->query('search', ''))) {
