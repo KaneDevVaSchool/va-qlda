@@ -84,6 +84,37 @@ const routes = [
                 },
             },
             {
+                path: 'vendors',
+                name: 'vendors',
+                component: () => import('../pages/vendors/VendorList.vue'),
+                meta: {
+                    titleKey: 'vendors.pageTitle',
+                    pageTitleKey: 'vendors.pageTitle',
+                    pageDescriptionKey: 'vendors.pageDescription',
+                    breadcrumb: bc([
+                        { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'layout.navModuleSupplier', to: '/contracts' },
+                        { labelKey: 'vendors.breadcrumb' },
+                    ]),
+                },
+            },
+            {
+                path: 'vendors/:id',
+                name: 'vendor-detail',
+                component: () => import('../pages/vendors/VendorDetail.vue'),
+                props: true,
+                meta: {
+                    titleKey: 'vendors.detailTitle',
+                    hideLayoutTitle: true,
+                    breadcrumb: bc([
+                        { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'layout.navModuleSupplier', to: '/contracts' },
+                        { labelKey: 'vendors.breadcrumb', to: '/vendors' },
+                        { labelKey: 'vendors.detailTitle' },
+                    ]),
+                },
+            },
+            {
                 path: 'contracts',
                 name: 'contracts',
                 component: () => import('../pages/contracts/ContractList.vue'),

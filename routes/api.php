@@ -30,6 +30,9 @@ use App\Http\Controllers\Api\TaskDependencyController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\UserActivityLogController;
 use App\Http\Controllers\Api\UserDelegationController;
+use App\Http\Controllers\Api\VendorController;
+use App\Http\Controllers\Api\VendorReviewController;
+use App\Http\Controllers\Api\VendorTimelineController;
 use App\Http\Controllers\Api\UserLookupController;
 use App\Http\Controllers\Api\UserProfileController;
 use App\Http\Controllers\Api\UserRbacController;
@@ -183,6 +186,18 @@ Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
     Route::delete('evaluation-peers/{peer}', [EvaluationPeerController::class, 'destroy']);
 
     Route::get('contract-lookups', ContractLookupController::class);
+
+    Route::get('vendors', [VendorController::class, 'index']);
+    Route::post('vendors', [VendorController::class, 'store']);
+    Route::get('vendors/{vendor}', [VendorController::class, 'show']);
+    Route::patch('vendors/{vendor}', [VendorController::class, 'update']);
+    Route::delete('vendors/{vendor}', [VendorController::class, 'destroy']);
+    Route::get('vendors/{vendor}/timeline', [VendorTimelineController::class, 'index']);
+    Route::post('vendors/{vendor}/timeline', [VendorTimelineController::class, 'store']);
+    Route::patch('vendor-timelines/{timeline}', [VendorTimelineController::class, 'update'])->whereNumber('timeline');
+    Route::delete('vendor-timelines/{timeline}', [VendorTimelineController::class, 'destroy'])->whereNumber('timeline');
+    Route::post('vendors/{vendor}/reviews', [VendorReviewController::class, 'store']);
+    Route::delete('vendor-reviews/{review}', [VendorReviewController::class, 'destroy'])->whereNumber('review');
     Route::post('departments', [DepartmentController::class, 'store']);
     Route::get('contracts/upcoming-payments', [ContractPaymentController::class, 'upcoming']);
     Route::get('contracts/export.csv', [ContractController::class, 'exportCsv']);

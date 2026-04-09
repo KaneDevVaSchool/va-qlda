@@ -121,6 +121,17 @@
                     </div>
                     <div class="ppms-nav-group">
                         <div class="ppms-nav-label">{{ t('layout.navModuleSupplier') }}</div>
+                        <router-link to="/vendors" :title="t('layout.navVendors')">
+                            <span class="ppms-nav-ico-wrap" aria-hidden="true">
+                                <svg class="ppms-nav-ico-svg" viewBox="0 0 24 24">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                    <circle cx="9" cy="7" r="4" />
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                </svg>
+                            </span>
+                            <span class="ppms-nav-text">{{ t('layout.navVendors') }}</span>
+                        </router-link>
                         <router-link to="/contracts" :title="t('layout.navContracts')">
                             <span class="ppms-nav-ico-wrap" aria-hidden="true">
                                 <svg class="ppms-nav-ico-svg" viewBox="0 0 24 24">

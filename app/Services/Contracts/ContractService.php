@@ -4,6 +4,8 @@ namespace App\Services\Contracts;
 
 use App\Enums\ContractStatus;
 use App\Enums\PaymentCycle;
+use App\Enums\VendorActiveStatus;
+use App\Enums\VendorKind;
 use App\Models\Contract;
 use App\Models\Product;
 use App\Models\User;
@@ -19,13 +21,28 @@ class ContractService
         protected ContractAuditService $audit
     ) {}
 
+    private function resolveVendorByName(string $name): Vendor
+    {
+        $existing = Vendor::withTrashed()->where('name', $name)->first();
+        if ($existing) {
+            if ($existing->trashed()) {
+                $existing->restore();
+            }
+
+            return $existing;
+        }
+
+        return Vendor::query()->create([
+            'name' => $name,
+            'kind' => VendorKind::Active,
+            'status' => VendorActiveStatus::Active->value,
+        ]);
+    }
+
     public function create(array $data, User $creator): Contract
     {
         return DB::transaction(function () use ($data, $creator) {
-            $vendor = Vendor::query()->firstOrCreate(
-                ['name' => trim($data['vendor_name'])],
-                []
-            );
+            $vendor = $this->resolveVendorByName(trim($data['vendor_name']));
             $product = Product::query()->firstOrCreate(
                 ['name' => trim($data['product_name'])],
                 []
@@ -73,10 +90,7 @@ class ContractService
             $vendorId = $contract->vendor_id;
             $productId = $contract->product_id;
             if (array_key_exists('vendor_name', $data) && $data['vendor_name'] !== null && trim((string) $data['vendor_name']) !== '') {
-                $vendorId = Vendor::query()->firstOrCreate(
-                    ['name' => trim($data['vendor_name'])],
-                    []
-                )->id;
+                $vendorId = $this->resolveVendorByName(trim($data['vendor_name']))->id;
             }
             if (array_key_exists('product_name', $data) && $data['product_name'] !== null && trim((string) $data['product_name']) !== '') {
                 $productId = Product::query()->firstOrCreate(

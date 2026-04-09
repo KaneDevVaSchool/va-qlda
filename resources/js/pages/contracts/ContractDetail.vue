@@ -12,7 +12,13 @@
                     <p class="cd-header__summary">
                         <span class="cd-header__summary-item"
                             ><span class="cd-header__summary-key">{{ t('contracts.fieldVendor') }}</span>
-                            {{ contract.vendor?.name || '—' }}</span
+                            <router-link
+                                v-if="contract.vendor_id"
+                                :to="{ name: 'vendor-detail', params: { id: String(contract.vendor_id) } }"
+                                class="cd-header__vendor-link"
+                                >{{ contract.vendor?.name || '—' }}</router-link
+                            >
+                            <template v-else>{{ contract.vendor?.name || '—' }}</template></span
                         >
                         <span class="cd-header__sep" aria-hidden="true">·</span>
                         <span class="cd-header__summary-item"
@@ -121,7 +127,15 @@
                         <dl class="cd-detail__dl">
                             <div>
                                 <dt>{{ t('contracts.fieldVendor') }}</dt>
-                                <dd>{{ contract.vendor?.name || '—' }}</dd>
+                                <dd>
+                                    <router-link
+                                        v-if="contract.vendor_id"
+                                        :to="{ name: 'vendor-detail', params: { id: String(contract.vendor_id) } }"
+                                        class="cd-header__vendor-link"
+                                        >{{ contract.vendor?.name || '—' }}</router-link
+                                    >
+                                    <template v-else>{{ contract.vendor?.name || '—' }}</template>
+                                </dd>
                             </div>
                             <div>
                                 <dt>{{ t('contracts.fieldProduct') }}</dt>
@@ -1774,6 +1788,14 @@ onMounted(async () => {
     letter-spacing: 0.06em;
     color: var(--ppms-muted, #64748b);
     margin-bottom: 2px;
+}
+.cd-header__vendor-link {
+    color: #1d4ed8;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.cd-header__vendor-link:hover {
+    color: #1e40af;
 }
 .cd-header__sep {
     color: #cbd5e1;
