@@ -6,100 +6,153 @@
         </header>
 
         <section class="ppms-card contract-list__card">
-            <div class="contract-list__toolbar">
-                <div class="contract-list__toolbar-grid">
-                    <div class="contract-list__field">
-                        <label class="contract-list__label" for="cl-filter-status">{{ t('contracts.filterStatus') }}</label>
-                        <select
-                            id="cl-filter-status"
-                            v-model="filters.status"
-                            class="ppms-input contract-list__input"
-                            @change="onFilterCommit"
-                        >
-                            <option value="">{{ t('contracts.allStatuses') }}</option>
-                            <option value="draft">{{ t('contracts.statusDraft') }}</option>
-                            <option value="pending_approval">{{ t('contracts.statusPending') }}</option>
-                            <option value="active">{{ t('contracts.statusActive') }}</option>
-                            <option value="expired">{{ t('contracts.statusExpired') }}</option>
-                            <option value="terminated">{{ t('contracts.statusTerminated') }}</option>
-                        </select>
+            <div class="contract-list__toolbar" role="region" :aria-label="t('contracts.filterBarTitle')">
+                <div class="contract-list__toolbar-head">
+                    <div class="contract-list__toolbar-intro">
+                        <h2 class="contract-list__filter-heading">{{ t('contracts.filterBarTitle') }}</h2>
+                        <p class="contract-list__filter-sub">{{ t('contracts.filterBarSubtitle') }}</p>
                     </div>
-                    <div class="contract-list__field">
-                        <label class="contract-list__label" for="cl-filter-vendor">{{ t('contracts.filterVendor') }}</label>
-                        <select
-                            id="cl-filter-vendor"
-                            v-model.number="filters.vendor_id"
-                            class="ppms-input contract-list__input"
-                            @change="onFilterCommit"
-                        >
-                            <option :value="0">{{ t('contracts.allVendors') }}</option>
-                            <option v-for="v in lookups.vendors" :key="v.id" :value="v.id">{{ v.name }}</option>
-                        </select>
-                    </div>
-                    <div class="contract-list__field">
-                        <label class="contract-list__label" for="cl-filter-dept">{{ t('contracts.filterDepartment') }}</label>
-                        <select
-                            id="cl-filter-dept"
-                            v-model.number="filters.department_id"
-                            class="ppms-input contract-list__input"
-                            @change="onFilterCommit"
-                        >
-                            <option :value="0">{{ t('contracts.allDepartments') }}</option>
-                            <option v-for="d in lookups.departments" :key="d.id" :value="d.id">{{ d.name }}</option>
-                        </select>
-                    </div>
-                    <div class="contract-list__field">
-                        <label class="contract-list__label" for="cl-filter-end-from">{{ t('contracts.filterEndFrom') }}</label>
-                        <input
-                            id="cl-filter-end-from"
-                            v-model="filters.end_from"
-                            type="date"
-                            class="ppms-input contract-list__input"
-                            @change="onFilterCommit"
-                        />
-                    </div>
-                    <div class="contract-list__field">
-                        <label class="contract-list__label" for="cl-filter-end-to">{{ t('contracts.filterEndTo') }}</label>
-                        <input
-                            id="cl-filter-end-to"
-                            v-model="filters.end_to"
-                            type="date"
-                            class="ppms-input contract-list__input"
-                            @change="onFilterCommit"
-                        />
-                    </div>
-                    <div class="contract-list__field">
-                        <label class="contract-list__label" for="cl-per-page">{{ t('contracts.perPage') }}</label>
-                        <select
-                            id="cl-per-page"
-                            v-model.number="perPage"
-                            class="ppms-input contract-list__input"
-                            @change="onPerPageChange"
-                        >
-                            <option :value="10">10</option>
-                            <option :value="25">25</option>
-                            <option :value="50">50</option>
-                            <option :value="100">100</option>
-                        </select>
+                    <div class="contract-list__toolbar-actions" role="group" :aria-label="t('contracts.toolbarActionsLabel')">
+                        <div class="contract-list__toolbar-actions-secondary">
+                            <button
+                                type="button"
+                                class="ppms-btn-ghost contract-list__action-btn"
+                                :disabled="loading"
+                                @click="resetFilters"
+                            >
+                                {{ t('contracts.resetFilters') }}
+                            </button>
+                            <button
+                                type="button"
+                                class="ppms-btn-ghost contract-list__action-btn"
+                                :disabled="loading"
+                                @click="refresh"
+                            >
+                                {{ t('contracts.refresh') }}
+                            </button>
+                            <button
+                                type="button"
+                                class="ppms-btn-ghost contract-list__action-btn"
+                                :disabled="loading"
+                                :title="t('contracts.exportCsvHint')"
+                                @click="downloadCsv"
+                            >
+                                {{ t('contracts.exportCsv') }}
+                            </button>
+                        </div>
+                        <button type="button" class="ppms-btn-primary contract-list__action-primary" @click="openCreate">
+                            {{ t('contracts.create') }}
+                        </button>
                     </div>
                 </div>
-                <div class="contract-list__toolbar-actions">
-                    <button type="button" class="ppms-btn-ghost" :disabled="loading" @click="resetFilters">
-                        {{ t('contracts.resetFilters') }}
-                    </button>
-                    <button type="button" class="ppms-btn-ghost" :disabled="loading" @click="refresh">
-                        {{ t('contracts.refresh') }}
-                    </button>
-                    <button
-                        type="button"
-                        class="ppms-btn-ghost"
-                        :disabled="loading"
-                        :title="t('contracts.exportCsvHint')"
-                        @click="downloadCsv"
+
+                <div class="contract-list__filter-groups" role="search">
+                    <div
+                        class="contract-list__filter-card"
+                        role="group"
+                        :aria-labelledby="'cl-filter-legend-entities'"
                     >
-                        {{ t('contracts.exportCsv') }}
-                    </button>
-                    <button type="button" class="ppms-btn-primary" @click="openCreate">{{ t('contracts.create') }}</button>
+                        <div id="cl-filter-legend-entities" class="contract-list__filter-card-title">{{ t('contracts.filterGroupEntities') }}</div>
+                        <div class="contract-list__filter-card-grid contract-list__filter-card-grid--3">
+                            <div class="contract-list__field">
+                                <label class="contract-list__label" for="cl-filter-status">{{ t('contracts.filterStatus') }}</label>
+                                <select
+                                    id="cl-filter-status"
+                                    v-model="filters.status"
+                                    class="ppms-input contract-list__input"
+                                    @change="onFilterCommit"
+                                >
+                                    <option value="">{{ t('contracts.allStatuses') }}</option>
+                                    <option value="draft">{{ t('contracts.statusDraft') }}</option>
+                                    <option value="pending_approval">{{ t('contracts.statusPending') }}</option>
+                                    <option value="active">{{ t('contracts.statusActive') }}</option>
+                                    <option value="expired">{{ t('contracts.statusExpired') }}</option>
+                                    <option value="terminated">{{ t('contracts.statusTerminated') }}</option>
+                                </select>
+                            </div>
+                            <div class="contract-list__field">
+                                <label class="contract-list__label" for="cl-filter-vendor">{{ t('contracts.filterVendor') }}</label>
+                                <select
+                                    id="cl-filter-vendor"
+                                    v-model.number="filters.vendor_id"
+                                    class="ppms-input contract-list__input"
+                                    :aria-describedby="vendorsEmpty ? 'cl-vendor-filter-hint' : undefined"
+                                    @change="onFilterCommit"
+                                >
+                                    <option :value="0">{{ t('contracts.allVendors') }}</option>
+                                    <option v-for="v in lookups.vendors" :key="v.id" :value="v.id">{{ v.name }}</option>
+                                </select>
+                                <p v-if="vendorsEmpty" id="cl-vendor-filter-hint" class="contract-list__field-hint">
+                                    {{ t('contracts.vendorFilterHint') }}
+                                </p>
+                            </div>
+                            <div class="contract-list__field">
+                                <label class="contract-list__label" for="cl-filter-dept">{{ t('contracts.filterDepartment') }}</label>
+                                <select
+                                    id="cl-filter-dept"
+                                    v-model.number="filters.department_id"
+                                    class="ppms-input contract-list__input"
+                                    @change="onFilterCommit"
+                                >
+                                    <option :value="0">{{ t('contracts.allDepartments') }}</option>
+                                    <option v-for="d in lookups.departments" :key="d.id" :value="d.id">{{ d.name }}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="contract-list__filter-card"
+                        role="group"
+                        :aria-labelledby="'cl-filter-legend-dates'"
+                    >
+                        <div id="cl-filter-legend-dates" class="contract-list__filter-card-title">{{ t('contracts.filterGroupEndDate') }}</div>
+                        <div class="contract-list__date-range">
+                            <div class="contract-list__field contract-list__field--date">
+                                <label class="contract-list__label" for="cl-filter-end-from">{{ t('contracts.filterEndFrom') }}</label>
+                                <input
+                                    id="cl-filter-end-from"
+                                    v-model="filters.end_from"
+                                    type="date"
+                                    class="ppms-input contract-list__input"
+                                    @change="onFilterCommit"
+                                />
+                            </div>
+                            <span class="contract-list__date-sep" aria-hidden="true">{{ t('contracts.dateRangeSeparator') }}</span>
+                            <div class="contract-list__field contract-list__field--date">
+                                <label class="contract-list__label" for="cl-filter-end-to">{{ t('contracts.filterEndTo') }}</label>
+                                <input
+                                    id="cl-filter-end-to"
+                                    v-model="filters.end_to"
+                                    type="date"
+                                    class="ppms-input contract-list__input"
+                                    @change="onFilterCommit"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="contract-list__filter-card contract-list__filter-card--compact"
+                        role="group"
+                        :aria-labelledby="'cl-filter-legend-view'"
+                    >
+                        <div id="cl-filter-legend-view" class="contract-list__filter-card-title">{{ t('contracts.filterGroupView') }}</div>
+                        <div class="contract-list__field">
+                            <label class="contract-list__label" for="cl-per-page">{{ t('contracts.perPage') }}</label>
+                            <select
+                                id="cl-per-page"
+                                v-model.number="perPage"
+                                class="ppms-input contract-list__input"
+                                @change="onPerPageChange"
+                            >
+                                <option :value="10">10</option>
+                                <option :value="25">25</option>
+                                <option :value="50">50</option>
+                                <option :value="100">100</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -348,6 +401,8 @@ const form = reactive({
 });
 
 const lookupWarning = computed(() => lookups.departments.length === 0);
+
+const vendorsEmpty = computed(() => lookups.vendors.length === 0);
 
 const hasActiveFilters = computed(() => {
     return !!(
@@ -660,22 +715,180 @@ onMounted(async () => {
 
 /* —— Toolbar & filters —— */
 .contract-list__toolbar {
+    padding: 0;
+    border-bottom: 1px solid var(--ppms-border, #e2e8f0);
+    background: linear-gradient(165deg, #f8fafc 0%, #f1f5f9 48%, #fff 100%);
+}
+
+.contract-list__toolbar-head {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
-    align-items: flex-end;
+    align-items: flex-start;
     justify-content: space-between;
+    gap: 16px 20px;
     padding: 20px 20px 16px;
-    border-bottom: 1px solid var(--ppms-border, #e2e8f0);
-    background: linear-gradient(180deg, rgba(248, 250, 252, 0.9) 0%, transparent 100%);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.85);
 }
-.contract-list__toolbar-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 12px 14px;
+
+.contract-list__toolbar-intro {
     flex: 1;
+    min-width: min(100%, 240px);
+    max-width: 36rem;
+}
+
+.contract-list__filter-heading {
+    margin: 0 0 4px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ppms-fg, #0f172a);
+}
+
+.contract-list__filter-sub {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: var(--ppms-muted, #64748b);
+}
+
+.contract-list__toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.contract-list__toolbar-actions-secondary {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding-right: 4px;
+    margin-right: 2px;
+    border-right: 1px solid var(--ppms-border, #e2e8f0);
+}
+
+.contract-list__action-btn {
+    min-height: 40px;
+}
+
+.contract-list__action-primary {
+    min-height: 40px;
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.contract-list__filter-groups {
+    display: grid;
+    grid-template-columns: minmax(0, 2.1fr) minmax(0, 1.4fr) minmax(0, 0.85fr);
+    gap: 14px;
+    padding: 16px 20px 20px;
+    align-items: stretch;
+}
+
+@media (max-width: 1100px) {
+    .contract-list__filter-groups {
+        grid-template-columns: 1fr 1fr;
+    }
+    .contract-list__filter-card--compact {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 720px) {
+    .contract-list__toolbar-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .contract-list__toolbar-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .contract-list__toolbar-actions-secondary {
+        border-right: none;
+        padding-right: 0;
+        margin-right: 0;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--ppms-border, #e2e8f0);
+        justify-content: stretch;
+    }
+    .contract-list__toolbar-actions-secondary .contract-list__action-btn {
+        flex: 1;
+        justify-content: center;
+    }
+    .contract-list__filter-groups {
+        grid-template-columns: 1fr;
+        padding: 12px 16px 18px;
+    }
+}
+
+.contract-list__filter-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 14px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--ppms-border, #e2e8f0);
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     min-width: 0;
 }
+
+.contract-list__filter-card-title {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--ppms-muted, #64748b);
+    margin: 0;
+    padding-bottom: 2px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.contract-list__filter-card-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.contract-list__filter-card-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 600px) {
+    .contract-list__filter-card-grid--3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.contract-list__date-range {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px 12px;
+}
+
+.contract-list__field--date {
+    flex: 1;
+    min-width: min(100%, 160px);
+}
+
+.contract-list__date-sep {
+    flex-shrink: 0;
+    padding-bottom: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ppms-muted, #94a3b8);
+    text-transform: lowercase;
+}
+
+.contract-list__field-hint {
+    margin: 6px 0 0;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--ppms-muted, #64748b);
+}
+
 .contract-list__label {
     display: block;
     font-size: 0.75rem;
@@ -685,16 +898,16 @@ onMounted(async () => {
     color: var(--ppms-muted, #64748b);
     margin-bottom: 6px;
 }
+
 .contract-list__input {
     width: 100%;
     min-height: 40px;
 }
-.contract-list__toolbar-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    justify-content: flex-end;
+
+.contract-list__input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(79, 70, 229, 0.35);
+    border-color: rgba(79, 70, 229, 0.45);
 }
 
 .contract-list__hint {
