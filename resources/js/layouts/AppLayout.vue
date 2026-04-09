@@ -263,7 +263,12 @@
                     </template>
                 </div>
 
-                <main id="ppms-main" class="ppms-main" tabindex="-1">
+                <main
+                    id="ppms-main"
+                    class="ppms-main"
+                    :class="{ 'ppms-main--flush': route.meta.flushContent }"
+                    tabindex="-1"
+                >
                     <router-view />
                 </main>
             </div>

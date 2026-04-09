@@ -958,6 +958,14 @@
     padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
 }
 
+/* Trang Tài khoản: nội dung full width, không padding ngang trong vùng main */
+.ppms-main.ppms-main--flush {
+    padding-left: max(0px, env(safe-area-inset-left, 0px));
+    padding-right: max(0px, env(safe-area-inset-right, 0px));
+    padding-top: 0;
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
+}
+
 .ppms-topbar {
     display: none !important;
 }
@@ -1192,6 +1200,13 @@
         padding-bottom: calc(1rem + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
     }
 
+    .ppms-main.ppms-main--flush {
+        padding-left: max(0px, env(safe-area-inset-left, 0px));
+        padding-right: max(0px, env(safe-area-inset-right, 0px));
+        padding-top: 0;
+        padding-bottom: calc(0px + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
+    }
+
     .va-site-footer {
         padding-bottom: calc(1.15rem + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
     }
@@ -1209,6 +1224,13 @@
     .ppms-main {
         padding: 1.15rem 1.25rem;
         padding-bottom: calc(1.65rem + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .ppms-main.ppms-main--flush {
+        padding-left: max(0px, env(safe-area-inset-left, 0px));
+        padding-right: max(0px, env(safe-area-inset-right, 0px));
+        padding-top: 0;
+        padding-bottom: calc(0px + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
     }
 
     .ppms-content-header {
@@ -1246,6 +1268,13 @@
     .ppms-main {
         padding: 0.85rem 0.75rem;
         padding-bottom: calc(1.1rem + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .ppms-main.ppms-main--flush {
+        padding-left: max(0px, env(safe-area-inset-left, 0px));
+        padding-right: max(0px, env(safe-area-inset-right, 0px));
+        padding-top: 0;
+        padding-bottom: calc(0px + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
     }
 
     .ppms-content-header {

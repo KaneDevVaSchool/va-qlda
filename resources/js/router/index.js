@@ -180,6 +180,7 @@ const routes = [
                     titleKey: 'profile.pageTitle',
                     pageTitleKey: 'profile.pageTitle',
                     pageDescriptionKey: 'profile.pageDescription',
+                    flushContent: true,
                     breadcrumb: bc([
                         { labelKey: 'common.home', to: '/' },
                         { labelKey: 'profile.breadcrumb' },

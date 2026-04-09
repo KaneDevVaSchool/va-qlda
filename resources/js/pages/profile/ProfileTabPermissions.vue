@@ -202,7 +202,7 @@ async function save() {
 }
 .ppms-profile-perm-input {
     width: 100%;
-    max-width: 320px;
+    max-width: 100%;
     padding: 0.45rem 0.5rem;
     border-radius: 6px;
     border: 1px solid rgba(148, 163, 184, 0.5);

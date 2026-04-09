@@ -474,7 +474,7 @@ onUnmounted(() => {
     font-size: 0.9rem;
     color: var(--ppms-pf-muted);
     margin: 0 0 1rem;
-    max-width: 44rem;
+    max-width: none;
     line-height: 1.45;
 }
 .ppms-profile-access-lead--admin {
@@ -592,7 +592,7 @@ onUnmounted(() => {
 }
 .ppms-profile-access-input {
     width: 100%;
-    max-width: 360px;
+    max-width: 100%;
     padding: 0.45rem 0.5rem;
     border-radius: 6px;
     border: 1px solid rgba(148, 163, 184, 0.5);
@@ -601,7 +601,7 @@ onUnmounted(() => {
 }
 .ppms-profile-access-lookup {
     position: relative;
-    max-width: 360px;
+    max-width: 100%;
 }
 .ppms-profile-access-pick {
     list-style: none;
