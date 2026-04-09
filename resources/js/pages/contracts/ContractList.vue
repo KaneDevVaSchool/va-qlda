@@ -1153,23 +1153,68 @@ onMounted(async () => {
 
 .contract-list__label {
     display: block;
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.72rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--ppms-muted, #64748b);
-    margin-bottom: 6px;
+    letter-spacing: 0.06em;
+    color: #475569;
+    margin-bottom: 8px;
 }
 
 .contract-list__input {
     width: 100%;
-    min-height: 40px;
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    color: #0f172a;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.contract-list__input::placeholder {
+    color: #94a3b8;
+}
+
+.contract-list__input:hover:not(:disabled) {
+    border-color: #cbd5e1;
 }
 
 .contract-list__input:focus {
     outline: none;
-    box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(79, 70, 229, 0.35);
-    border-color: rgba(79, 70, 229, 0.45);
+    border-color: rgba(79, 70, 229, 0.55);
+    box-shadow:
+        0 0 0 1px rgba(79, 70, 229, 0.2),
+        0 0 0 4px rgba(79, 70, 229, 0.12);
+}
+
+.contract-list__input:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    background: #f8fafc;
+}
+
+.contract-list__field select.contract-list__input {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding: 10px 2.5rem 10px 14px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 1.1rem;
+    cursor: pointer;
+}
+
+.contract-list__field input[type='date'].contract-list__input {
+    color-scheme: light;
+    min-height: 44px;
 }
 
 .contract-list__hint {
@@ -1484,18 +1529,81 @@ onMounted(async () => {
 }
 .contract-modal__field label {
     display: block;
-    font-size: 0.82rem;
+    font-size: 0.8125rem;
     font-weight: 600;
-    margin-bottom: 6px;
-    color: var(--ppms-fg, #0f172a);
+    letter-spacing: 0.01em;
+    margin-bottom: 8px;
+    color: #334155;
 }
+
 .contract-modal__field--full {
     grid-column: 1 / -1;
 }
+
+/* Inputs trong modal: đồng bộ với bộ lọc, nền sáng, focus rõ */
+.contract-modal .ppms-input {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    color: #0f172a;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.contract-modal .ppms-input::placeholder {
+    color: #94a3b8;
+}
+
+.contract-modal .ppms-input:hover:not(:disabled) {
+    border-color: #cbd5e1;
+}
+
+.contract-modal .ppms-input:focus {
+    outline: none;
+    border-color: rgba(79, 70, 229, 0.55);
+    box-shadow:
+        0 0 0 1px rgba(79, 70, 229, 0.2),
+        0 0 0 4px rgba(79, 70, 229, 0.12);
+}
+
+.contract-modal select.ppms-input {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding: 10px 2.5rem 10px 14px;
+    cursor: pointer;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 1.1rem;
+}
+
+.contract-modal input[type='date'].ppms-input {
+    color-scheme: light;
+    min-height: 44px;
+}
+
+.contract-modal textarea.ppms-input {
+    min-height: 88px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    line-height: 1.5;
+}
+
 .contract-modal__textarea {
     resize: vertical;
-    min-height: 72px;
-    max-height: 160px;
+    min-height: 88px;
+    max-height: 200px;
 }
 
 .contract-modal__dropzone {
