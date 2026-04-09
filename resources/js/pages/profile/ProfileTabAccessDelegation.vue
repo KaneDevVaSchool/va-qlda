@@ -1,8 +1,68 @@
 <template>
     <div class="ppms-profile-access">
+        <header class="ppms-profile-access-hero">
+            <h2 class="ppms-profile-access-page-title">{{ t('profile.accessTabTitle') }}</h2>
+            <p class="ppms-profile-access-lead ppms-profile-access-lead--hero">{{ t('profile.accessTabLead') }}</p>
+            <ol class="ppms-profile-access-steps">
+                <li>{{ t('profile.accessStep1') }}</li>
+                <li>{{ t('profile.accessStep2') }}</li>
+                <li>{{ t('profile.accessStep3') }}</li>
+            </ol>
+        </header>
+
+        <section class="ppms-profile-access-block" :aria-labelledby="'acc-role-' + uid">
+            <h2 :id="'acc-role-' + uid" class="ppms-profile-access-h2">{{ t('profile.accessRoleTitle') }}</h2>
+            <p class="ppms-profile-access-lead">{{ t('profile.accessRoleLead') }}</p>
+            <div v-if="rbacLoading" class="ppms-profile-skel" role="status" :aria-label="t('common.loading')">
+                <div class="ppms-profile-skel-line ppms-profile-access-skel-a" />
+                <div class="ppms-profile-skel-line ppms-profile-access-skel-b" />
+            </div>
+            <div v-else class="ppms-profile-access-card">
+                <div class="ppms-profile-access-role-row">
+                    <span class="ppms-profile-role-badge" :class="roleBadgeClass(myRbacRole)">{{ roleLabel(myRbacRole) }}</span>
+                </div>
+                <p class="ppms-profile-access-note">{{ t('profile.accessRoleNoteDefault') }}</p>
+                <p v-if="canManageRbac" class="ppms-profile-access-note ppms-profile-access-note--admin">
+                    {{ t('profile.accessRoleAdminHint') }}
+                </p>
+                <div v-if="canManageRbac && roleOptions.length" class="ppms-profile-access-row">
+                    <label class="ppms-profile-access-label" for="self-role">{{ t('profile.accessRoleChange') }}</label>
+                    <select
+                        id="self-role"
+                        v-model="selfRoleDraft"
+                        class="ppms-profile-access-input"
+                        :disabled="roleSaving"
+                        @change="saveSelfRole"
+                    >
+                        <option v-for="r in roleOptions" :key="r" :value="r">{{ roleLabel(r) }}</option>
+                    </select>
+                </div>
+                <p v-else class="ppms-profile-access-note">{{ t('profile.accessRoleUserHint') }}</p>
+
+                <template v-if="canManageOthers && delegatorContext && delegatorRoleReady">
+                    <hr class="ppms-profile-access-hr" />
+                    <p class="ppms-profile-access-subtitle">{{ t('profile.accessDelegatorRoleTitle', { name: delegatorContext.name }) }}</p>
+                    <p class="ppms-profile-access-note">{{ t('profile.accessDelegatorRoleLead') }}</p>
+                    <div v-if="canManageRbac && roleOptions.length" class="ppms-profile-access-row">
+                        <label class="ppms-profile-access-label" for="delegator-role">{{ t('profile.accessRoleChange') }}</label>
+                        <select
+                            id="delegator-role"
+                            v-model="delegatorRoleDraft"
+                            class="ppms-profile-access-input"
+                            :disabled="roleSaving"
+                            @change="saveDelegatorRole"
+                        >
+                            <option v-for="r in roleOptions" :key="'d-' + r" :value="r">{{ roleLabel(r) }}</option>
+                        </select>
+                    </div>
+                </template>
+            </div>
+        </section>
+
         <section class="ppms-profile-access-block ppms-profile-access-block--perm" :aria-labelledby="'acc-perm-' + uid">
             <h2 :id="'acc-perm-' + uid" class="ppms-profile-access-h2">{{ t('profile.accessSectionPermissions') }}</h2>
-            <ProfileTabPermissions compact />
+            <p class="ppms-profile-access-lead ppms-profile-access-lead--section">{{ t('profile.accessSectionPermHint') }}</p>
+            <ProfileTabPermissions :key="permKey" compact />
         </section>
 
         <section class="ppms-profile-access-block" :aria-labelledby="'acc-del-' + uid">
@@ -102,9 +162,7 @@
                                 <td>
                                     <div class="ppms-profile-access-user">{{ row.delegatee?.name || '—' }}</div>
                                     <div class="ppms-profile-access-email">{{ row.delegatee?.email }}</div>
-                                    <span v-if="row.delegatee?.role" class="ppms-profile-access-role">
-                                        {{ roleLabel(row.delegatee.role) }}
-                                    </span>
+                                    <span class="ppms-profile-access-role">{{ roleLabel(row.delegatee?.role) }}</span>
                                 </td>
                                 <td>{{ scopeLabel(row.scope) }}</td>
                                 <td>{{ formatExpires(row.expires_at) }}</td>
@@ -205,9 +263,21 @@ import { formatApiUserMessage } from '../../bootstrap';
 import { ppmsConfirm, ppmsToastError, ppmsToastSuccess } from '../../ppmsUi';
 import ProfileTabPermissions from './ProfileTabPermissions.vue';
 
+const emit = defineEmits(['refresh']);
+
 const { t, locale } = useI18n();
 
 const uid = `u${Math.random().toString(36).slice(2, 9)}`;
+
+const rbacLoading = ref(true);
+const myRbacRole = ref('');
+const roleOptions = ref([]);
+const canManageRbac = ref(false);
+const selfRoleDraft = ref('');
+const delegatorRoleDraft = ref('');
+const delegatorRoleReady = ref(false);
+const roleSaving = ref(false);
+const permKey = ref(0);
 
 const listLoading = ref(true);
 const delErr = ref('');
@@ -233,13 +303,91 @@ const delegLookupEl = ref(null);
 let searchTimer;
 let delegSearchTimer;
 
+async function loadRbac() {
+    rbacLoading.value = true;
+    try {
+        const { data } = await axios.get('/api/me/rbac');
+        myRbacRole.value = data.role || '';
+        roleOptions.value = Array.isArray(data.role_options) ? data.role_options : [];
+        canManageRbac.value = !!data.can_manage;
+        selfRoleDraft.value = myRbacRole.value || roleOptions.value[0] || '';
+    } catch (e) {
+        ppmsToastError(formatApiUserMessage(e, t('common.loading')));
+    } finally {
+        rbacLoading.value = false;
+    }
+}
+
+async function saveSelfRole() {
+    if (!currentUserId.value) {
+        return;
+    }
+    roleSaving.value = true;
+    try {
+        await axios.patch(`/api/users/${currentUserId.value}/role`, { role: selfRoleDraft.value });
+        myRbacRole.value = selfRoleDraft.value;
+        ppmsToastSuccess(t('profile.accessRoleSaved'));
+        emit('refresh');
+        permKey.value += 1;
+        await loadRbac();
+    } catch (e) {
+        ppmsToastError(formatApiUserMessage(e, t('profile.saveError')));
+        selfRoleDraft.value = myRbacRole.value || selfRoleDraft.value;
+    } finally {
+        roleSaving.value = false;
+    }
+}
+
+async function loadDelegatorRoleDetail() {
+    delegatorRoleReady.value = false;
+    if (!delegatorContext.value?.id) {
+        return;
+    }
+    try {
+        const { data } = await axios.get('/api/users/lookup', { params: { ids: delegatorContext.value.id } });
+        const row = Array.isArray(data) && data[0];
+        delegatorRoleDraft.value = (row && row.role) || roleOptions.value[0] || '';
+        delegatorRoleReady.value = true;
+    } catch {
+        delegatorRoleReady.value = false;
+    }
+}
+
+async function saveDelegatorRole() {
+    if (!delegatorContext.value?.id) {
+        return;
+    }
+    roleSaving.value = true;
+    try {
+        await axios.patch(`/api/users/${delegatorContext.value.id}/role`, { role: delegatorRoleDraft.value });
+        ppmsToastSuccess(t('profile.accessRoleSaved'));
+        emit('refresh');
+        permKey.value += 1;
+        await loadDelegatorRoleDetail();
+        await loadDelegations();
+    } catch (e) {
+        ppmsToastError(formatApiUserMessage(e, t('profile.saveError')));
+        await loadDelegatorRoleDetail();
+    } finally {
+        roleSaving.value = false;
+    }
+}
+
 function effectiveDelegatorId() {
     return delegatorContext.value?.id ?? currentUserId.value;
 }
 
+function roleBadgeClass(role) {
+    const r = (role || '').toLowerCase();
+    if (!r) {
+        return 'ppms-profile-role-badge--unassigned';
+    }
+    return `ppms-profile-role-badge--${r}`;
+}
+
 function roleLabel(role) {
     if (!role) {
-        return '—';
+        return t('layout.role.unassigned');
     }
     const key = `layout.role.${role}`;
     const tr = t(key);
@@ -350,7 +498,7 @@ function onDocClick(e) {
     closeDelegPick();
 }
 
-function selectDelegatorUser(u) {
+async function selectDelegatorUser(u) {
     if (currentUserId.value != null && u.id === currentUserId.value) {
         delegatorContext.value = null;
     } else {
@@ -358,14 +506,18 @@ function selectDelegatorUser(u) {
     }
     delegSearchQ.value = '';
     delegPickCandidates.value = [];
-    loadDelegations();
+    await loadDelegations();
+    if (delegatorContext.value) {
+        await loadDelegatorRoleDetail();
+    }
 }
 
-function clearDelegatorContext() {
+async function clearDelegatorContext() {
     delegatorContext.value = null;
     delegSearchQ.value = '';
     delegPickCandidates.value = [];
-    loadDelegations();
+    delegatorRoleReady.value = false;
+    await loadDelegations();
 }
 
 function selectUser(u) {
@@ -436,7 +588,7 @@ onMounted(async () => {
         currentUserId.value = null;
     }
     document.addEventListener('click', onDocClick, true);
-    await loadDelegations();
+    await Promise.all([loadRbac(), loadDelegations()]);
 });
 
 onUnmounted(() => {
@@ -451,6 +603,59 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     gap: 2rem;
+}
+.ppms-profile-access-hero {
+    margin-bottom: 0.25rem;
+}
+.ppms-profile-access-page-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.02em;
+    color: var(--ppms-pf-fg, inherit);
+}
+.ppms-profile-access-lead--hero {
+    margin-bottom: 0.75rem;
+}
+.ppms-profile-access-steps {
+    margin: 0;
+    padding-left: 1.25rem;
+    font-size: 0.88rem;
+    color: var(--ppms-pf-muted);
+    line-height: 1.55;
+}
+.ppms-profile-access-steps li {
+    margin-bottom: 0.35rem;
+}
+.ppms-profile-access-note {
+    font-size: 0.85rem;
+    color: var(--ppms-pf-muted);
+    line-height: 1.45;
+    margin: 0 0 0.75rem;
+}
+.ppms-profile-access-note--admin {
+    padding: 0.45rem 0.6rem;
+    border-radius: 8px;
+    background: rgba(59, 130, 246, 0.06);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    color: #1e40af;
+}
+.ppms-profile-access-role-row {
+    margin-bottom: 0.35rem;
+}
+.ppms-profile-access-hr {
+    border: none;
+    border-top: 1px solid rgba(148, 163, 184, 0.35);
+    margin: 1rem 0;
+}
+.ppms-profile-access-subtitle {
+    font-weight: 600;
+    margin: 0 0 0.35rem;
+    font-size: 0.95rem;
+    color: var(--ppms-pf-fg, inherit);
+}
+.ppms-profile-access-lead--section {
+    margin-top: -0.25rem;
 }
 .ppms-profile-access-block {
     min-width: 0;

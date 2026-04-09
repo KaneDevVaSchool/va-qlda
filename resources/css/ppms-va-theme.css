@@ -958,11 +958,11 @@
     padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
 }
 
-/* Trang Tài khoản: nội dung full width, không padding ngang trong vùng main */
+/* Trang Tài khoản: gần full width, padding nhẹ để không cắt chữ */
 .ppms-main.ppms-main--flush {
-    padding-left: max(0px, env(safe-area-inset-left, 0px));
-    padding-right: max(0px, env(safe-area-inset-right, 0px));
-    padding-top: 0;
+    padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+    padding-top: 0.5rem;
     padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
 }
 
@@ -1201,10 +1201,10 @@
     }
 
     .ppms-main.ppms-main--flush {
-        padding-left: max(0px, env(safe-area-inset-left, 0px));
-        padding-right: max(0px, env(safe-area-inset-right, 0px));
-        padding-top: 0;
-        padding-bottom: calc(0px + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
+        padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+        padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+        padding-top: 0.5rem;
+        padding-bottom: calc(0.5rem + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
     }
 
     .va-site-footer {
@@ -1227,10 +1227,10 @@
     }
 
     .ppms-main.ppms-main--flush {
-        padding-left: max(0px, env(safe-area-inset-left, 0px));
-        padding-right: max(0px, env(safe-area-inset-right, 0px));
-        padding-top: 0;
-        padding-bottom: calc(0px + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
+        padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+        padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+        padding-top: 0.5rem;
+        padding-bottom: calc(0.5rem + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
     }
 
     .ppms-content-header {
@@ -1271,10 +1271,10 @@
     }
 
     .ppms-main.ppms-main--flush {
-        padding-left: max(0px, env(safe-area-inset-left, 0px));
-        padding-right: max(0px, env(safe-area-inset-right, 0px));
-        padding-top: 0;
-        padding-bottom: calc(0px + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
+        padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+        padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+        padding-top: 0.5rem;
+        padding-bottom: calc(0.5rem + var(--ppms-mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
     }
 
     .ppms-content-header {

@@ -62,7 +62,8 @@
             "pm": "PM",
             "tl": "Team Lead",
             "hr": "HR",
-            "developer": "Developer"
+            "developer": "Developer",
+            "unassigned": "No role assigned"
         }
     },
     "dashboard": {
@@ -1203,6 +1204,21 @@
         },
         "permissionsSaved": "Permissions saved.",
         "saveError": "Something went wrong. Please try again.",
+        "accessTabTitle": "Access & delegation",
+        "accessTabLead": "Manage your role in the system, fine-grained permissions, and who may act on your behalf.",
+        "accessStep1": "Role — your primary access profile (PM, developer, etc.).",
+        "accessStep2": "Permission matrix — view or override module actions (admins).",
+        "accessStep3": "Delegation — let a colleague act for you within a scope.",
+        "accessRoleTitle": "Your role in PPMS",
+        "accessRoleLead": "Your role sets the baseline for what you can do. New accounts often default to Developer until an admin assigns another role.",
+        "accessRoleNoteDefault": "New accounts and Google sign-in often get the Developer role in the database by default — that is a technical default, not a display bug.",
+        "accessRoleChange": "Change role",
+        "accessRoleUserHint": "Only permission administrators can change roles. Contact your admin if this is wrong.",
+        "accessRoleAdminHint": "You can assign a PPMS role to users (yourself or others).",
+        "accessRoleSaved": "Role updated.",
+        "accessDelegatorRoleTitle": "Role of {name} (delegation context)",
+        "accessDelegatorRoleLead": "Change this user’s role while you manage their delegations.",
+        "accessSectionPermHint": "Fine-grained checks per module. Overrides apply on top of your role (admins only).",
         "accessSectionPermissions": "Access permissions",
         "accessSectionDelegation": "Delegation",
         "delegationIntro": "Grant another user limited authority to act on your behalf. You can revoke delegation at any time.",
@@ -1238,7 +1254,6 @@
             "all": "All modules (broad)"
         },
         "statusOnline": "Active",
-        "darkMode": "Dark mode",
         "loading": "Loading…",
         "empty": "No data yet.",
         "save": "Save",

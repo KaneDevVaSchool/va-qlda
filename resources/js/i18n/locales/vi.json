@@ -62,7 +62,8 @@
             "pm": "PM",
             "tl": "Trưởng nhóm",
             "hr": "Nhân sự",
-            "developer": "Lập trình viên"
+            "developer": "Lập trình viên",
+            "unassigned": "Chưa gán vai trò"
         }
     },
     "dashboard": {
@@ -1204,6 +1205,21 @@
         },
         "permissionsSaved": "Đã lưu quyền.",
         "saveError": "Có lỗi xảy ra. Vui lòng thử lại.",
+        "accessTabTitle": "Quyền truy cập & ủy quyền",
+        "accessTabLead": "Quản lý vai trò trong hệ thống, ma trận quyền chi tiết, và người được phép thay mặt bạn.",
+        "accessStep1": "Vai trò — nhóm quyền gốc (PM, lập trình viên, …).",
+        "accessStep2": "Ma trận quyền — xem / ghi đè quyền theo module (quản trị).",
+        "accessStep3": "Ủy quyền — cho phép đồng nghiệp thao tác thay bạn trong phạm vi đã chọn.",
+        "accessRoleTitle": "Vai trò của bạn trong PPMS",
+        "accessRoleLead": "Vai trò quyết định phạm vi thao tác mặc định. Tài khoản mới thường được gán «Lập trình viên» cho đến khi quản trị đổi.",
+        "accessRoleNoteDefault": "Tài khoản mới hoặc đăng nhập Google thường được gán sẵn «Lập trình viên» trong cơ sở dữ liệu — đây là mặc định kỹ thuật, không phải lỗi hiển thị.",
+        "accessRoleChange": "Đổi vai trò",
+        "accessRoleUserHint": "Chỉ quản trị viên quyền mới đổi được vai trò. Liên hệ quản trị nếu cần điều chỉnh.",
+        "accessRoleAdminHint": "Bạn có thể gán vai trò PPMS cho người dùng (kể cả bản thân hoặc người khác).",
+        "accessRoleSaved": "Đã cập nhật vai trò.",
+        "accessDelegatorRoleTitle": "Vai trò của {name} (ngữ cảnh ủy quyền)",
+        "accessDelegatorRoleLead": "Đổi vai trò người dùng này khi bạn đang thiết lập ủy quyền thay cho họ.",
+        "accessSectionPermHint": "Quyền chi tiết theo từng phân hệ. Ghi đè chồng lên vai trò (chỉ quản trị).",
         "accessSectionPermissions": "Quyền truy cập",
         "accessSectionDelegation": "Ủy quyền",
         "delegationIntro": "Cho phép người dùng khác thay mặt bạn trong phạm vi đã chọn. Bạn có thể thu hồi ủy quyền bất cứ lúc nào.",
@@ -1239,7 +1255,6 @@
             "all": "Toàn bộ phân hệ (rộng)"
         },
         "statusOnline": "Hoạt động",
-        "darkMode": "Giao diện tối",
         "loading": "Đang tải…",
         "empty": "Chưa có dữ liệu.",
         "save": "Lưu",

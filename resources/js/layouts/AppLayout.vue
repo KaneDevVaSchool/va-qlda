@@ -379,7 +379,7 @@ const userInitial = computed(() => {
 
 function roleLabel(role) {
     if (!role) {
-        return '—';
+        return t('layout.role.unassigned');
     }
     const key = `layout.role.${role}`;
     const translated = t(key);

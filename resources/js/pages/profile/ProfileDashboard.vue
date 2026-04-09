@@ -1,5 +1,5 @@
 <template>
-    <div class="ppms-profile" :class="{ 'ppms-profile--dark': darkMode }">
+    <div class="ppms-profile">
         <div v-if="loadErr" class="ppms-error">{{ loadErr }}</div>
         <template v-else>
             <header class="ppms-profile-header">
@@ -24,11 +24,6 @@
                         >
                         <span class="ppms-profile-status-pill">{{ t('profile.statusOnline') }}</span>
                     </div>
-                </div>
-                <div class="ppms-profile-toolbar">
-                    <button type="button" class="ppms-pf-btn" @click="toggleDark">
-                        {{ t('profile.darkMode') }}
-                    </button>
                 </div>
             </header>
 
@@ -58,12 +53,10 @@
 
 <script setup>
 import axios from 'axios';
-import { computed, defineAsyncComponent, ref, shallowRef, watch } from 'vue';
+import { computed, defineAsyncComponent, onMounted, ref, shallowRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { formatApiUserMessage } from '../../bootstrap';
-
-const PPMS_PROFILE_DARK = 'ppms-profile-dark';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -76,8 +69,6 @@ const header = ref({
     role: '',
     avatar_url: null,
 });
-const darkMode = ref(false);
-
 const TAB_ALIAS = { permissions: 'access' };
 
 const tabs = computed(() => [
@@ -115,7 +106,7 @@ const initial = computed(() => {
 
 function roleLabel(role) {
     if (!role) {
-        return '—';
+        return t('layout.role.unassigned');
     }
     const key = `layout.role.${role}`;
     const tr = t(key);
@@ -124,7 +115,10 @@ function roleLabel(role) {
 
 function roleBadgeClass(role) {
     const r = (role || '').toLowerCase();
-    return `ppms-profile-role-badge--${r || 'developer'}`;
+    if (!r) {
+        return 'ppms-profile-role-badge--unassigned';
+    }
+    return `ppms-profile-role-badge--${r}`;
 }
 
 function setTab(id) {
@@ -134,21 +128,6 @@ function setTab(id) {
         delay: 0,
     });
     router.replace({ query: { ...route.query, tab: id } });
-}
-
-function toggleDark() {
-    darkMode.value = !darkMode.value;
-    try {
-        if (darkMode.value) {
-            document.documentElement.classList.add(PPMS_PROFILE_DARK);
-            localStorage.setItem(PPMS_PROFILE_DARK, '1');
-        } else {
-            document.documentElement.classList.remove(PPMS_PROFILE_DARK);
-            localStorage.removeItem(PPMS_PROFILE_DARK);
-        }
-    } catch {
-        /* ignore */
-    }
 }
 
 async function loadHeader() {
@@ -179,26 +158,19 @@ watch(
 
 loadHeader();
 
-try {
-    darkMode.value = localStorage.getItem(PPMS_PROFILE_DARK) === '1';
-    if (darkMode.value) {
-        document.documentElement.classList.add(PPMS_PROFILE_DARK);
+onMounted(() => {
+    try {
+        document.documentElement.classList.remove('ppms-profile-dark');
+        localStorage.removeItem('ppms-profile-dark');
+    } catch {
+        /* ignore */
     }
-} catch {
-    /* ignore */
-}
+});
 </script>
 
 <style scoped>
 .ppms-error {
     padding: 1rem;
     color: #b91c1c;
-}
-html.ppms-profile-dark {
-    color-scheme: dark;
-}
-html.ppms-profile-dark body {
-    background: #0f172a;
-    color: #e2e8f0;
 }
 </style>

@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\UserDelegationController;
 use App\Http\Controllers\Api\UserLookupController;
 use App\Http\Controllers\Api\UserProfileController;
 use App\Http\Controllers\Api\UserRbacController;
+use App\Http\Controllers\Api\UserRoleController;
 use App\Http\Controllers\Api\UserSecurityController;
 use App\Http\Controllers\Api\UserSessionController;
 use App\Http\Controllers\Auth\GoogleOAuthController;
@@ -75,6 +76,7 @@ Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
     Route::get('/me/activity/export.csv', [UserActivityLogController::class, 'exportCsv']);
 
     Route::get('/users/lookup', [UserLookupController::class, 'index']);
+    Route::patch('/users/{user}/role', [UserRoleController::class, 'update'])->whereNumber('user');
     Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
 
     Route::get('/activity-feed/unread-count', [ActivityFeedController::class, 'unreadCount']);

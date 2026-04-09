@@ -9,18 +9,12 @@
     margin: 0;
 }
 
-.ppms-profile.ppms-profile--dark {
-    --ppms-pf-surface: rgba(15, 23, 42, 0.65);
-    --ppms-pf-border: rgba(148, 163, 184, 0.2);
-    --ppms-pf-muted: #94a3b8;
-}
-
 .ppms-profile-header {
     display: flex;
     flex-wrap: wrap;
     gap: 1rem 1.5rem;
     align-items: center;
-    padding: 1.25rem 0;
+    padding: 1.25rem clamp(0.75rem, 2vw, 1.25rem);
     background: var(--ppms-pf-surface);
     border: 1px solid var(--ppms-pf-border);
     border-radius: 0;
@@ -96,6 +90,13 @@
     background: rgba(100, 116, 139, 0.15);
     color: #475569;
 }
+.ppms-profile-role-badge--unassigned {
+    background: rgba(148, 163, 184, 0.2);
+    color: #64748b;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 500;
+}
 
 .ppms-profile-status-pill {
     display: inline-flex;
@@ -118,18 +119,11 @@
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
 }
 
-.ppms-profile-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    align-items: center;
-    margin-left: auto;
-}
-
 .ppms-profile-tabs-wrap {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     margin-bottom: 0.75rem;
+    padding: 0 clamp(0.75rem, 2vw, 1.25rem);
     border-bottom: 1px solid var(--ppms-pf-border);
 }
 
@@ -190,7 +184,7 @@
 }
 
 .ppms-profile-panel {
-    padding: 0;
+    padding: clamp(0.75rem, 2vw, 1.25rem);
     background: var(--ppms-pf-surface);
     border: 1px solid var(--ppms-pf-border);
     border-radius: 0;
@@ -210,11 +204,6 @@
     background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
     background-size: 200% 100%;
     animation: ppms-pf-skel 1.2s ease infinite;
-}
-
-.ppms-profile.ppms-profile--dark .ppms-profile-skel-line {
-    background: linear-gradient(90deg, rgba(51, 65, 85, 0.5) 0%, rgba(71, 85, 105, 0.6) 50%, rgba(51, 65, 85, 0.5) 100%);
-    background-size: 200% 100%;
 }
 
 @keyframes ppms-pf-skel {
