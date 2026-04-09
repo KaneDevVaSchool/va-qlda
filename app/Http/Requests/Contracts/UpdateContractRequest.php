@@ -16,8 +16,8 @@ class UpdateContractRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'vendor_id' => ['sometimes', 'integer', 'exists:vendors,id'],
-            'product_id' => ['sometimes', 'integer', 'exists:products,id'],
+            'vendor_name' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'product_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'department_id' => ['sometimes', 'integer', 'exists:departments,id'],
             'scope' => ['nullable', 'string', 'max:65535'],
             'start_date' => ['sometimes', 'date'],

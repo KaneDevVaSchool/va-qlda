@@ -5,7 +5,9 @@ namespace App\Services\Contracts;
 use App\Enums\ContractStatus;
 use App\Enums\PaymentCycle;
 use App\Models\Contract;
+use App\Models\Product;
 use App\Models\User;
+use App\Models\Vendor;
 use App\Support\Contract\PaymentScheduleBuilder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -20,10 +22,19 @@ class ContractService
     public function create(array $data, User $creator): Contract
     {
         return DB::transaction(function () use ($data, $creator) {
+            $vendor = Vendor::query()->firstOrCreate(
+                ['name' => trim($data['vendor_name'])],
+                []
+            );
+            $product = Product::query()->firstOrCreate(
+                ['name' => trim($data['product_name'])],
+                []
+            );
+
             $contract = Contract::query()->create([
                 'code' => $this->generateUniqueCode(),
-                'vendor_id' => $data['vendor_id'],
-                'product_id' => $data['product_id'],
+                'vendor_id' => $vendor->id,
+                'product_id' => $product->id,
                 'department_id' => $data['department_id'],
                 'scope' => $data['scope'] ?? null,
                 'status' => ContractStatus::Draft,
@@ -58,9 +69,24 @@ class ContractService
         return DB::transaction(function () use ($contract, $data, $user) {
             $snapshotBefore = $contract->toArray();
 
+            $vendorId = $contract->vendor_id;
+            $productId = $contract->product_id;
+            if (array_key_exists('vendor_name', $data) && $data['vendor_name'] !== null && trim((string) $data['vendor_name']) !== '') {
+                $vendorId = Vendor::query()->firstOrCreate(
+                    ['name' => trim($data['vendor_name'])],
+                    []
+                )->id;
+            }
+            if (array_key_exists('product_name', $data) && $data['product_name'] !== null && trim((string) $data['product_name']) !== '') {
+                $productId = Product::query()->firstOrCreate(
+                    ['name' => trim($data['product_name'])],
+                    []
+                )->id;
+            }
+
             $contract->fill([
-                'vendor_id' => $data['vendor_id'] ?? $contract->vendor_id,
-                'product_id' => $data['product_id'] ?? $contract->product_id,
+                'vendor_id' => $vendorId,
+                'product_id' => $productId,
                 'department_id' => $data['department_id'] ?? $contract->department_id,
                 'scope' => array_key_exists('scope', $data) ? $data['scope'] : $contract->scope,
                 'start_date' => $data['start_date'] ?? $contract->start_date,

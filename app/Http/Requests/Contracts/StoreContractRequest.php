@@ -16,8 +16,8 @@ class StoreContractRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'vendor_id' => ['required', 'integer', 'exists:vendors,id'],
-            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'vendor_name' => ['required', 'string', 'max:255'],
+            'product_name' => ['required', 'string', 'max:255'],
             'department_id' => ['required', 'integer', 'exists:departments,id'],
             'scope' => ['nullable', 'string', 'max:65535'],
             'start_date' => ['required', 'date'],

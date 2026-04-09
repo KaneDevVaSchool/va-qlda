@@ -213,6 +213,10 @@
             <div class="ppms-modal ppms-card">
                 <h2 class="ppms-modal-title">{{ t('contracts.modalEditTitle') }}</h2>
                 <form class="ppms-stack" @submit.prevent="saveEdit">
+                    <label>{{ t('contracts.fieldVendor') }}</label>
+                    <input v-model.trim="editForm.vendor_name" type="text" class="ppms-input" :placeholder="t('contracts.fieldVendorPlaceholder')" />
+                    <label>{{ t('contracts.fieldProduct') }}</label>
+                    <input v-model.trim="editForm.product_name" type="text" class="ppms-input" :placeholder="t('contracts.fieldProductPlaceholder')" />
                     <label>{{ t('contracts.fieldScope') }}</label>
                     <textarea v-model="editForm.scope" class="ppms-input" rows="3" />
                     <label>{{ t('contracts.fieldStart') }}</label>
@@ -267,6 +271,8 @@ const submitErr = ref('');
 const editOpen = ref(false);
 const editErr = ref('');
 const editForm = reactive({
+    vendor_name: '',
+    product_name: '',
     scope: '',
     start_date: '',
     end_date: '',
@@ -351,6 +357,8 @@ function openEdit() {
         return;
     }
     editErr.value = '';
+    editForm.vendor_name = contract.value.vendor?.name || '';
+    editForm.product_name = contract.value.product?.name || '';
     editForm.scope = contract.value.scope || '';
     editForm.start_date = contract.value.start_date || '';
     editForm.end_date = contract.value.end_date || '';
@@ -363,6 +371,8 @@ async function saveEdit() {
     editErr.value = '';
     try {
         await axios.patch(`/api/contracts/${props.id}`, {
+            vendor_name: editForm.vendor_name,
+            product_name: editForm.product_name,
             scope: editForm.scope || null,
             start_date: editForm.start_date,
             end_date: editForm.end_date,

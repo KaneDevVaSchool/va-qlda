@@ -48,24 +48,6 @@
                             <option v-for="d in lookups.departments" :key="d.id" :value="d.id">{{ d.name }}</option>
                         </select>
                     </div>
-                    <div class="contract-list__field contract-list__field--grow">
-                        <label class="contract-list__label" for="cl-filter-code">{{ t('contracts.filterCode') }}</label>
-                        <div class="contract-list__code-row">
-                            <input
-                                id="cl-filter-code"
-                                v-model.trim="codeDraft"
-                                type="search"
-                                class="ppms-input contract-list__input"
-                                :placeholder="t('contracts.filterCode')"
-                                autocomplete="off"
-                                @input="scheduleCodeDebounce"
-                                @keydown.enter.prevent="flushCodeAndCommit"
-                            />
-                            <button type="button" class="ppms-btn-ghost contract-list__btn-compact" @click="flushCodeAndCommit">
-                                {{ t('contracts.applySearch') }}
-                            </button>
-                        </div>
-                    </div>
                     <div class="contract-list__field">
                         <label class="contract-list__label" for="cl-filter-end-from">{{ t('contracts.filterEndFrom') }}</label>
                         <input
@@ -238,17 +220,26 @@
                             <div class="contract-modal__grid contract-modal__grid--2">
                                 <div class="contract-modal__field">
                                     <label for="cm-vendor">{{ t('contracts.fieldVendor') }}</label>
-                                    <select id="cm-vendor" v-model.number="form.vendor_id" class="ppms-input" required>
-                                        <option disabled :value="0">{{ t('contracts.fieldVendor') }}</option>
-                                        <option v-for="v in lookups.vendors" :key="v.id" :value="v.id">{{ v.name }}</option>
-                                    </select>
+                                    <input
+                                        id="cm-vendor"
+                                        v-model.trim="form.vendor_name"
+                                        type="text"
+                                        class="ppms-input"
+                                        required
+                                        autocomplete="organization"
+                                        :placeholder="t('contracts.fieldVendorPlaceholder')"
+                                    />
                                 </div>
                                 <div class="contract-modal__field">
                                     <label for="cm-product">{{ t('contracts.fieldProduct') }}</label>
-                                    <select id="cm-product" v-model.number="form.product_id" class="ppms-input" required>
-                                        <option disabled :value="0">{{ t('contracts.fieldProduct') }}</option>
-                                        <option v-for="p in lookups.products" :key="p.id" :value="p.id">{{ p.name }}</option>
-                                    </select>
+                                    <input
+                                        id="cm-product"
+                                        v-model.trim="form.product_name"
+                                        type="text"
+                                        class="ppms-input"
+                                        required
+                                        :placeholder="t('contracts.fieldProductPlaceholder')"
+                                    />
                                 </div>
                                 <div class="contract-modal__field contract-modal__field--full">
                                     <label for="cm-dept">{{ t('contracts.fieldDepartment') }}</label>
@@ -308,7 +299,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { useI18n } from 'vue-i18n';
@@ -330,14 +321,11 @@ const sortOrder = ref('desc');
 
 const filters = reactive({
     status: '',
-    code: '',
     vendor_id: 0,
     department_id: 0,
     end_from: '',
     end_to: '',
 });
-
-const codeDraft = ref('');
 
 const modalOpen = ref(false);
 const formError = ref('');
@@ -349,8 +337,8 @@ const lookups = reactive({
 });
 
 const form = reactive({
-    vendor_id: 0,
-    product_id: 0,
+    vendor_name: '',
+    product_name: '',
     department_id: 0,
     scope: '',
     start_date: '',
@@ -359,14 +347,11 @@ const form = reactive({
     payment_cycle: 'monthly',
 });
 
-const lookupWarning = computed(
-    () => lookups.vendors.length === 0 || lookups.products.length === 0 || lookups.departments.length === 0,
-);
+const lookupWarning = computed(() => lookups.departments.length === 0);
 
 const hasActiveFilters = computed(() => {
     return !!(
         filters.status ||
-        filters.code ||
         filters.vendor_id ||
         filters.department_id ||
         filters.end_from ||
@@ -385,7 +370,6 @@ function buildApiParams() {
         page: page.value,
         per_page: perPage.value,
         status: filters.status || undefined,
-        code: filters.code || undefined,
         vendor_id: filters.vendor_id || undefined,
         department_id: filters.department_id || undefined,
         end_from: filters.end_from || undefined,
@@ -401,7 +385,6 @@ function buildRouteQuery() {
     if (p.page > 1) q.page = String(p.page);
     if (p.per_page !== 25) q.per_page = String(p.per_page);
     if (p.status) q.status = p.status;
-    if (p.code) q.code = p.code;
     if (p.vendor_id) q.vendor_id = String(p.vendor_id);
     if (p.department_id) q.department_id = String(p.department_id);
     if (p.end_from) q.end_from = p.end_from;
@@ -415,8 +398,6 @@ function readQueryFromRoute(q = route.query) {
     page.value = q.page ? Math.max(1, parseInt(String(q.page), 10)) : 1;
     perPage.value = q.per_page ? clampPerPage(parseInt(String(q.per_page), 10)) : 25;
     filters.status = q.status ? String(q.status) : '';
-    filters.code = q.code ? String(q.code) : '';
-    codeDraft.value = filters.code;
     filters.vendor_id = q.vendor_id ? Number(q.vendor_id) : 0;
     filters.department_id = q.department_id ? Number(q.department_id) : 0;
     filters.end_from = q.end_from ? String(q.end_from) : '';
@@ -506,27 +487,8 @@ async function onPerPageChange() {
     await replaceRouteQuery();
 }
 
-async function flushCodeAndCommit() {
-    clearTimeout(codeDebounceTimer);
-    filters.code = codeDraft.value;
-    page.value = 1;
-    await replaceRouteQuery();
-}
-
-let codeDebounceTimer = null;
-function scheduleCodeDebounce() {
-    clearTimeout(codeDebounceTimer);
-    codeDebounceTimer = setTimeout(async () => {
-        filters.code = codeDraft.value;
-        page.value = 1;
-        await replaceRouteQuery();
-    }, 420);
-}
-
 async function resetFilters() {
     filters.status = '';
-    filters.code = '';
-    codeDraft.value = '';
     filters.vendor_id = 0;
     filters.department_id = 0;
     filters.end_from = '';
@@ -588,8 +550,8 @@ async function loadLookups() {
 
 function openCreate() {
     formError.value = '';
-    form.vendor_id = lookups.vendors[0]?.id || 0;
-    form.product_id = lookups.products[0]?.id || 0;
+    form.vendor_name = '';
+    form.product_name = '';
     form.department_id = lookups.departments[0]?.id || 0;
     form.scope = '';
     form.start_date = '';
@@ -604,8 +566,8 @@ async function submitCreate() {
     saving.value = true;
     try {
         await axios.post('/api/contracts', {
-            vendor_id: form.vendor_id,
-            product_id: form.product_id,
+            vendor_name: form.vendor_name,
+            product_name: form.product_name,
             department_id: form.department_id,
             scope: form.scope || null,
             start_date: form.start_date,
@@ -628,7 +590,6 @@ async function downloadCsv() {
         const { data, headers } = await axios.get('/api/contracts/export.csv', {
             params: {
                 status: filters.status || undefined,
-                code: filters.code || undefined,
                 vendor_id: filters.vendor_id || undefined,
                 department_id: filters.department_id || undefined,
                 end_from: filters.end_from || undefined,
@@ -669,10 +630,6 @@ onMounted(async () => {
     await loadLookups();
     readQueryFromRoute();
     await load();
-});
-
-onUnmounted(() => {
-    clearTimeout(codeDebounceTimer);
 });
 </script>
 
@@ -719,15 +676,6 @@ onUnmounted(() => {
     flex: 1;
     min-width: 0;
 }
-.contract-list__field--grow {
-    grid-column: span 2;
-    min-width: 220px;
-}
-@media (max-width: 720px) {
-    .contract-list__field--grow {
-        grid-column: span 1;
-    }
-}
 .contract-list__label {
     display: block;
     font-size: 0.75rem;
@@ -740,19 +688,6 @@ onUnmounted(() => {
 .contract-list__input {
     width: 100%;
     min-height: 40px;
-}
-.contract-list__code-row {
-    display: flex;
-    gap: 8px;
-    align-items: stretch;
-}
-.contract-list__code-row .ppms-input {
-    flex: 1;
-    min-width: 0;
-}
-.contract-list__btn-compact {
-    flex-shrink: 0;
-    white-space: nowrap;
 }
 .contract-list__toolbar-actions {
     display: flex;
