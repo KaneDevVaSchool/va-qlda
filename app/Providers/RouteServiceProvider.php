@@ -24,8 +24,19 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        /** Global API throttle (Kernel api group). SPA + dev reload dễ vượt 60/phút. */
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+            $key = $request->user()?->id ?: $request->ip();
+
+            if (app()->environment('testing')) {
+                return Limit::perMinute(1000)->by($key);
+            }
+
+            if (app()->environment('local')) {
+                return Limit::none();
+            }
+
+            return Limit::perMinute(300)->by($key);
         });
 
         RateLimiter::for('login', function (Request $request) {
