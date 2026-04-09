@@ -1,9 +1,5 @@
 <template>
     <div class="ppms-page contract-list">
-        <header class="contract-list__intro">
-            <h1 class="contract-list__title">{{ t('contracts.pageTitle') }}</h1>
-            <p class="contract-list__desc">{{ t('contracts.pageDescription') }}</p>
-        </header>
 
         <section class="ppms-card contract-list__card">
             <div class="contract-list__toolbar" role="region" :aria-label="t('contracts.filterBarTitle')">
@@ -260,11 +256,33 @@
             </div>
         </section>
 
-        <div v-if="modalOpen" class="contract-modal__backdrop" role="presentation" @click.self="modalOpen = false">
-            <div class="contract-modal ppms-card" role="dialog" aria-modal="true" :aria-label="t('contracts.modalCreateTitle')">
+        <div
+            v-if="modalOpen"
+            class="contract-modal__backdrop"
+            role="presentation"
+            @click.self="!createBusy && (modalOpen = false)"
+        >
+            <div
+                class="contract-modal ppms-card"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="modal-create-title"
+                aria-describedby="modal-create-desc"
+            >
                 <div class="contract-modal__head">
-                    <h2 class="contract-modal__title">{{ t('contracts.modalCreateTitle') }}</h2>
-                    <button type="button" class="contract-modal__close" :aria-label="t('common.cancel')" @click="modalOpen = false">×</button>
+                    <div class="contract-modal__head-text">
+                        <h2 id="modal-create-title" class="contract-modal__title">{{ t('contracts.modalCreateTitle') }}</h2>
+                        <p id="modal-create-desc" class="contract-modal__subtitle">{{ t('contracts.modalCreateSubtitle') }}</p>
+                    </div>
+                    <button
+                        type="button"
+                        class="contract-modal__close"
+                        :disabled="createBusy"
+                        :aria-label="t('common.cancel')"
+                        @click="modalOpen = false"
+                    >
+                        ×
+                    </button>
                 </div>
                 <form class="contract-modal__form" @submit.prevent="submitCreate">
                     <div class="contract-modal__body">
@@ -337,12 +355,95 @@
                                 </div>
                             </div>
                         </section>
+
+                        <section class="contract-modal__section contract-modal__section--attachments" :aria-label="t('contracts.sectionAttachments')">
+                            <div class="contract-modal__section-head">
+                                <h3 class="contract-modal__section-title">{{ t('contracts.sectionAttachments') }}</h3>
+                                <span v-if="pendingFiles.length" class="contract-modal__attach-badge">{{ t('contracts.attachCount', { n: pendingFiles.length }) }}</span>
+                            </div>
+                            <p class="contract-modal__attach-hint">{{ t('contracts.attachHint', { max: attachMaxFiles, sizeMb: attachMaxSizeMb }) }}</p>
+                            <div
+                                class="contract-modal__dropzone"
+                                :class="{ 'contract-modal__dropzone--active': dropzoneActive }"
+                                tabindex="0"
+                                @click="onDropzoneClick"
+                                @keydown.enter.prevent="openFilePicker"
+                                @keydown.space.prevent="openFilePicker"
+                                @dragenter.prevent="onDragEnterZone"
+                                @dragover.prevent="onDragOverZone"
+                                @dragleave.prevent="onDragLeaveZone"
+                                @drop.prevent="onDropFiles"
+                            >
+                                <input
+                                    id="cm-files"
+                                    ref="fileInputRef"
+                                    type="file"
+                                    class="ppms-sr-only"
+                                    multiple
+                                    @change="onFileInputChange"
+                                />
+                                <div class="contract-modal__dropzone-inner" aria-hidden="true">
+                                    <svg class="contract-modal__dropzone-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M12 4v12m0 0l-3.5-3.5M12 16l3.5-3.5M4 15v2a2 2 0 002 2h12a2 2 0 002-2v-2"
+                                            stroke="currentColor"
+                                            stroke-width="1.75"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        />
+                                    </svg>
+                                </div>
+                                <p class="contract-modal__dropzone-text">{{ t('contracts.attachDropzone') }}</p>
+                                <button
+                                    type="button"
+                                    class="ppms-btn-ghost contract-modal__browse-btn"
+                                    @click.stop.prevent="openFilePicker"
+                                >
+                                    {{ t('contracts.attachBrowse') }}
+                                </button>
+                            </div>
+
+                            <ul v-if="pendingFiles.length" class="contract-modal__file-list" role="list">
+                                <li v-for="f in pendingFiles" :key="f.uid" class="contract-modal__file-item" role="listitem">
+                                    <div class="contract-modal__file-preview">
+                                        <img v-if="f.kind === 'image' && f.previewUrl" :src="f.previewUrl" alt="" class="contract-modal__thumb" />
+                                        <iframe
+                                            v-else-if="f.kind === 'pdf' && f.previewUrl"
+                                            :src="f.previewUrl"
+                                            class="contract-modal__pdf-frame"
+                                            :title="f.name"
+                                        />
+                                        <div v-else class="contract-modal__file-placeholder" aria-hidden="true">
+                                            <span class="contract-modal__file-doc-icon" />
+                                        </div>
+                                    </div>
+                                    <div class="contract-modal__file-meta">
+                                        <span class="contract-modal__file-name" :title="f.name">{{ f.name }}</span>
+                                        <span class="contract-modal__file-size">{{ formatFileSize(f.size) }}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        class="contract-modal__file-remove ppms-btn-ghost ppms-btn-sm"
+                                        :disabled="createBusy"
+                                        @click="removePendingFile(f.uid)"
+                                    >
+                                        {{ t('contracts.attachRemove') }}
+                                    </button>
+                                </li>
+                            </ul>
+                        </section>
                     </div>
                     <div class="contract-modal__footer">
                         <p v-if="formError" class="ppms-error contract-modal__error">{{ formError }}</p>
                         <div class="contract-modal__actions">
-                            <button type="button" class="ppms-btn-ghost" @click="modalOpen = false">{{ t('common.cancel') }}</button>
-                            <button type="submit" class="ppms-btn-primary" :disabled="saving">{{ t('common.save') }}</button>
+                            <button type="button" class="ppms-btn-ghost" :disabled="createBusy" @click="modalOpen = false">
+                                {{ t('common.cancel') }}
+                            </button>
+                            <button type="submit" class="ppms-btn-primary contract-modal__submit" :disabled="createBusy">
+                                <span v-if="saving">{{ t('contracts.modalSaving') }}</span>
+                                <span v-else-if="uploadingAttachments">{{ t('contracts.attachUploading') }}</span>
+                                <span v-else>{{ t('common.save') }}</span>
+                            </button>
                         </div>
                     </div>
                 </form>
@@ -382,6 +483,20 @@ const filters = reactive({
 
 const modalOpen = ref(false);
 const formError = ref('');
+
+const ATTACH_MAX_FILES = 10;
+const attachMaxFiles = ATTACH_MAX_FILES;
+/** KB — align with config `ppms.upload_max_file_kb` default */
+const ATTACH_MAX_KB = 51200;
+const attachMaxSizeMb = Math.round(ATTACH_MAX_KB / 1024);
+
+const pendingFiles = ref([]);
+const dropzoneActive = ref(false);
+const uploadingAttachments = ref(false);
+const fileInputRef = ref(null);
+let dragDepth = 0;
+
+const createBusy = computed(() => saving.value || uploadingAttachments.value);
 
 const lookups = reactive({
     vendors: [],
@@ -603,7 +718,119 @@ async function loadLookups() {
     }
 }
 
+function newPendingUid() {
+    return typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function fileKind(mime) {
+    const m = mime || '';
+    if (m.startsWith('image/')) return 'image';
+    if (m === 'application/pdf') return 'pdf';
+    return 'other';
+}
+
+function formatFileSize(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function clearPendingFiles() {
+    pendingFiles.value.forEach((p) => {
+        if (p.previewUrl) URL.revokeObjectURL(p.previewUrl);
+    });
+    pendingFiles.value = [];
+}
+
+function removePendingFile(uid) {
+    const i = pendingFiles.value.findIndex((p) => p.uid === uid);
+    if (i === -1) return;
+    const p = pendingFiles.value[i];
+    if (p.previewUrl) URL.revokeObjectURL(p.previewUrl);
+    pendingFiles.value.splice(i, 1);
+}
+
+function addPendingFiles(fileList) {
+    const list = Array.from(fileList);
+    let skippedLarge = 0;
+    for (const file of list) {
+        if (pendingFiles.value.length >= ATTACH_MAX_FILES) {
+            ppmsToastError(t('contracts.attachMaxFiles', { max: ATTACH_MAX_FILES }));
+            break;
+        }
+        if (file.size > ATTACH_MAX_KB * 1024) {
+            skippedLarge++;
+            continue;
+        }
+        const kind = fileKind(file.type || '');
+        let previewUrl = null;
+        if (kind === 'image' || kind === 'pdf') {
+            previewUrl = URL.createObjectURL(file);
+        }
+        pendingFiles.value.push({
+            uid: newPendingUid(),
+            file,
+            name: file.name,
+            size: file.size,
+            previewUrl,
+            kind,
+        });
+    }
+    if (skippedLarge) {
+        ppmsToastError(t('contracts.attachTooLarge', { sizeMb: attachMaxSizeMb }));
+    }
+}
+
+function onDragOverZone(e) {
+    e.preventDefault();
+}
+
+function onDragEnterZone(e) {
+    e.preventDefault();
+    dragDepth++;
+    dropzoneActive.value = true;
+}
+
+function onDragLeaveZone(e) {
+    e.preventDefault();
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) {
+        dropzoneActive.value = false;
+    }
+}
+
+function onDropFiles(e) {
+    e.preventDefault();
+    dragDepth = 0;
+    dropzoneActive.value = false;
+    if (e.dataTransfer?.files?.length) {
+        addPendingFiles(e.dataTransfer.files);
+    }
+}
+
+function openFilePicker() {
+    fileInputRef.value?.click();
+}
+
+function onDropzoneClick(e) {
+    if (e.target?.closest?.('.contract-modal__browse-btn')) return;
+    openFilePicker();
+}
+
+function onFileInputChange(e) {
+    const el = e.target;
+    if (el instanceof HTMLInputElement && el.files?.length) {
+        addPendingFiles(el.files);
+        el.value = '';
+    }
+}
+
 function openCreate() {
+    clearPendingFiles();
+    dragDepth = 0;
+    dropzoneActive.value = false;
     formError.value = '';
     form.vendor_name = '';
     form.product_name = '';
@@ -620,7 +847,7 @@ async function submitCreate() {
     formError.value = '';
     saving.value = true;
     try {
-        await axios.post('/api/contracts', {
+        const { data: body } = await axios.post('/api/contracts', {
             vendor_name: form.vendor_name,
             product_name: form.product_name,
             department_id: form.department_id,
@@ -630,6 +857,32 @@ async function submitCreate() {
             total_value: form.total_value,
             payment_cycle: form.payment_cycle,
         });
+        const contractId = body.data?.id ?? body.id;
+        if (contractId == null) {
+            formError.value = t('contracts.loadError');
+            return;
+        }
+        const filesToUpload = [...pendingFiles.value];
+        if (filesToUpload.length) {
+            uploadingAttachments.value = true;
+            let failed = 0;
+            for (const p of filesToUpload) {
+                try {
+                    const fd = new FormData();
+                    fd.append('file', p.file);
+                    await axios.post(`/api/contracts/${contractId}/files`, fd);
+                } catch {
+                    failed++;
+                }
+            }
+            uploadingAttachments.value = false;
+            if (failed > 0) {
+                ppmsToastError(
+                    failed === 1 ? t('contracts.attachUploadPartialFailOne') : t('contracts.attachUploadPartialFail', { n: failed }),
+                );
+            }
+        }
+        clearPendingFiles();
         ppmsToastSuccess(t('contracts.created'));
         modalOpen.value = false;
         await load();
@@ -637,8 +890,17 @@ async function submitCreate() {
         formError.value = formatApiUserMessage(e, t('contracts.loadError'));
     } finally {
         saving.value = false;
+        uploadingAttachments.value = false;
     }
 }
+
+watch(modalOpen, (open) => {
+    if (!open) {
+        clearPendingFiles();
+        dragDepth = 0;
+        dropzoneActive.value = false;
+    }
+});
 
 async function downloadCsv() {
     try {
@@ -1102,14 +1364,26 @@ onMounted(async () => {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 12px;
-    padding: 20px 22px 0;
+    gap: 16px;
+    padding: 20px 22px 12px;
     flex-shrink: 0;
+    border-bottom: 1px solid var(--ppms-border, #e2e8f0);
+}
+.contract-modal__head-text {
+    flex: 1;
+    min-width: 0;
 }
 .contract-modal__title {
     margin: 0;
     font-size: 1.2rem;
     font-weight: 700;
+}
+.contract-modal__subtitle {
+    margin: 8px 0 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--ppms-muted, #64748b);
+    max-width: 42rem;
 }
 .contract-modal__close {
     flex-shrink: 0;
@@ -1128,6 +1402,10 @@ onMounted(async () => {
     background: rgba(148, 163, 184, 0.2);
     color: var(--ppms-fg, #0f172a);
 }
+.contract-modal__close:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
 .contract-modal__form {
     display: flex;
     flex-direction: column;
@@ -1135,11 +1413,36 @@ onMounted(async () => {
     flex: 1;
 }
 .contract-modal__body {
-    padding: 12px 22px 8px;
+    padding: 16px 22px 12px;
     overflow-y: auto;
     overflow-x: hidden;
     flex: 1;
     min-height: 0;
+}
+.contract-modal__section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px 12px;
+    margin-bottom: 8px;
+}
+.contract-modal__section-head .contract-modal__section-title {
+    margin-bottom: 0;
+}
+.contract-modal__attach-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--ppms-accent, #4f46e5);
+    background: rgba(79, 70, 229, 0.08);
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+.contract-modal__attach-hint {
+    margin: 0 0 12px;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: var(--ppms-muted, #64748b);
 }
 .contract-modal__section {
     margin-bottom: 18px;
@@ -1151,6 +1454,11 @@ onMounted(async () => {
 .contract-modal__section:last-child {
     margin-bottom: 8px;
 }
+.contract-modal__section--attachments {
+    background: #fff;
+    border-style: dashed;
+    border-color: #cbd5e1;
+}
 .contract-modal__section-title {
     margin: 0 0 14px;
     font-size: 0.72rem;
@@ -1158,6 +1466,9 @@ onMounted(async () => {
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--ppms-muted, #64748b);
+}
+.contract-modal__section--attachments .contract-modal__section-title {
+    margin-bottom: 0;
 }
 .contract-modal__grid {
     display: grid;
@@ -1186,6 +1497,158 @@ onMounted(async () => {
     min-height: 72px;
     max-height: 160px;
 }
+
+.contract-modal__dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 132px;
+    padding: 16px 14px;
+    border-radius: 12px;
+    border: 2px dashed #cbd5e1;
+    background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease,
+        box-shadow 0.15s ease;
+    outline: none;
+}
+.contract-modal__dropzone:hover,
+.contract-modal__dropzone:focus-visible {
+    border-color: rgba(79, 70, 229, 0.45);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+.contract-modal__dropzone--active {
+    border-color: #4f46e5;
+    background: rgba(79, 70, 229, 0.06);
+}
+.contract-modal__dropzone-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    color: #4f46e5;
+}
+.contract-modal__dropzone-svg {
+    width: 28px;
+    height: 28px;
+}
+.contract-modal__dropzone-text {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ppms-fg, #0f172a);
+    text-align: center;
+}
+.contract-modal__browse-btn {
+    font-weight: 600;
+}
+.contract-modal__file-list {
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.contract-modal__file-item {
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--ppms-border, #e2e8f0);
+    background: #f8fafc;
+}
+@media (max-width: 560px) {
+    .contract-modal__file-item {
+        grid-template-columns: 1fr;
+    }
+}
+.contract-modal__file-preview {
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.contract-modal__thumb {
+    display: block;
+    width: 100%;
+    max-height: 100px;
+    height: auto;
+    object-fit: contain;
+}
+.contract-modal__pdf-frame {
+    width: 100%;
+    height: 100px;
+    border: none;
+    background: #f1f5f9;
+}
+.contract-modal__file-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 72px;
+    padding: 8px;
+}
+.contract-modal__file-doc-icon {
+    display: block;
+    width: 36px;
+    height: 44px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+    position: relative;
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.12);
+}
+.contract-modal__file-doc-icon::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 10px 0 rgba(255, 255, 255, 0.35);
+}
+.contract-modal__file-meta {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.contract-modal__file-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ppms-fg, #0f172a);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.contract-modal__file-size {
+    font-size: 0.75rem;
+    color: var(--ppms-muted, #64748b);
+    font-variant-numeric: tabular-nums;
+}
+.contract-modal__file-remove {
+    justify-self: end;
+}
+.contract-modal__submit {
+    min-width: 8.5rem;
+}
+
 .contract-modal__footer {
     flex-shrink: 0;
     padding: 12px 22px 20px;
