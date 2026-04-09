@@ -181,17 +181,19 @@
                                         }}</span>
                                     </button>
                                 </th>
-                                <th>{{ t('contracts.tableVendor') }}</th>
                                 <th>{{ t('contracts.tableProduct') }}</th>
                                 <th>{{ t('contracts.tableDepartment') }}</th>
                                 <th>{{ t('contracts.tableStatus') }}</th>
                                 <th>
-                                    <button type="button" class="contract-list__th-btn" @click="toggleSort('end_date')">
-                                        {{ t('contracts.tablePeriod') }}
-                                        <span v-if="sortKey === 'end_date'" class="contract-list__sort-ind" aria-hidden="true">{{
-                                            sortOrder === 'asc' ? '↑' : '↓'
-                                        }}</span>
-                                    </button>
+                                    <div class="contract-list__th-stack">
+                                        <button type="button" class="contract-list__th-btn" @click="toggleSort('end_date')">
+                                            {{ t('contracts.tablePeriod') }}
+                                            <span v-if="sortKey === 'end_date'" class="contract-list__sort-ind" aria-hidden="true">{{
+                                                sortOrder === 'asc' ? '↑' : '↓'
+                                            }}</span>
+                                        </button>
+                                        <span class="contract-list__th-sub">{{ t('contracts.tablePeriodProgress') }}</span>
+                                    </div>
                                 </th>
                                 <th class="contract-list__cell-num">
                                     <button type="button" class="contract-list__th-btn" @click="toggleSort('total_value')">
@@ -206,35 +208,66 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr
-                                v-for="row in items"
-                                :key="row.id"
-                                class="contract-list__row"
-                                tabindex="0"
-                                @click="goDetail(row.id)"
-                                @keydown.enter.prevent="goDetail(row.id)"
-                            >
-                                <td>
-                                    <router-link :to="`/contracts/${row.id}`" class="contract-list__link" @click.stop>{{ row.code }}</router-link>
-                                </td>
-                                <td>{{ row.vendor?.name || '—' }}</td>
-                                <td class="contract-list__cell-muted">{{ row.product?.name || '—' }}</td>
-                                <td>{{ row.department?.name || '—' }}</td>
-                                <td>
-                                    <span class="contract-list__pill" :class="statusPillClass(row.status)">{{ statusLabel(row.status) }}</span>
-                                </td>
-                                <td>
-                                    <span class="contract-list__period">{{ row.start_date }} → {{ row.end_date }}</span>
-                                </td>
-                                <td class="contract-list__cell-num">{{ formatMoney(row.total_value) }}</td>
-                                <td>
-                                    <span v-if="expiresBadge(row)" class="contract-list__badge-soon">{{ expiresBadge(row) }}</span>
-                                    <span v-else class="contract-list__cell-muted">—</span>
-                                </td>
-                                <td @click.stop>
-                                    <router-link :to="`/contracts/${row.id}`" class="ppms-btn-ghost ppms-btn-sm">{{ t('contracts.view') }}</router-link>
-                                </td>
-                            </tr>
+                            <template v-for="g in vendorGroups" :key="g.key">
+                                <tr class="contract-list__vendor-group">
+                                    <td colspan="8">
+                                        <button
+                                            type="button"
+                                            class="contract-list__group-toggle"
+                                            :aria-expanded="!isVendorGroupCollapsed(g.key)"
+                                            @click.stop="toggleVendorGroup(g.key)"
+                                        >
+                                            <span
+                                                class="contract-list__group-chevron"
+                                                :class="{ 'contract-list__group-chevron--collapsed': isVendorGroupCollapsed(g.key) }"
+                                                aria-hidden="true"
+                                            >▼</span>
+                                            <strong>{{ g.vendorName }}</strong>
+                                            <span class="contract-list__group-count">{{ t('contracts.vendorGroupCount', { n: g.items.length }) }}</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr
+                                    v-for="row in g.items"
+                                    v-show="!isVendorGroupCollapsed(g.key)"
+                                    :key="row.id"
+                                    class="contract-list__row"
+                                    tabindex="0"
+                                    @click="goDetail(row.id)"
+                                    @keydown.enter.prevent="goDetail(row.id)"
+                                >
+                                    <td>
+                                        <router-link :to="`/contracts/${row.id}`" class="contract-list__link" @click.stop>{{ row.code }}</router-link>
+                                    </td>
+                                    <td class="contract-list__cell-muted">{{ row.product?.name || '—' }}</td>
+                                    <td>{{ row.department?.name || '—' }}</td>
+                                    <td>
+                                        <span class="contract-list__pill" :class="statusPillClass(row.status)">{{ statusLabel(row.status) }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="contract-list__period-cell">
+                                            <span class="contract-list__period">{{ row.start_date }} → {{ row.end_date }}</span>
+                                            <div v-if="periodProgressPercent(row) !== null" class="contract-list__period-progress">
+                                                <div class="contract-list__period-bar-track" role="presentation">
+                                                    <div
+                                                        class="contract-list__period-bar-fill"
+                                                        :style="{ width: `${periodProgressPercent(row)}%` }"
+                                                    />
+                                                </div>
+                                                <span class="contract-list__period-pct">{{ periodProgressPercent(row) }}%</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="contract-list__cell-num">{{ formatMoney(row.total_value) }}</td>
+                                    <td>
+                                        <span v-if="expiresBadge(row)" class="contract-list__badge-soon">{{ expiresBadge(row) }}</span>
+                                        <span v-else class="contract-list__cell-muted">—</span>
+                                    </td>
+                                    <td @click.stop>
+                                        <router-link :to="`/contracts/${row.id}`" class="ppms-btn-ghost ppms-btn-sm">{{ t('contracts.view') }}</router-link>
+                                    </td>
+                                </tr>
+                            </template>
                         </tbody>
                     </table>
                 </div>
@@ -343,7 +376,17 @@
                                 </div>
                                 <div class="contract-modal__field">
                                     <label for="cm-value">{{ t('contracts.fieldValue') }}</label>
-                                    <input id="cm-value" v-model="form.total_value" type="text" class="ppms-input" required placeholder="0" />
+                                    <input
+                                        id="cm-value"
+                                        v-model="totalValueDisplay"
+                                        type="text"
+                                        class="ppms-input"
+                                        inputmode="numeric"
+                                        autocomplete="off"
+                                        required
+                                        placeholder="0"
+                                    />
+                                    <p v-if="totalValueInWords" class="contract-modal__amount-words">{{ totalValueInWords }}</p>
                                 </div>
                                 <div class="contract-modal__field">
                                     <label for="cm-cycle">{{ t('contracts.fieldCycle') }}</label>
@@ -459,6 +502,7 @@ import axios from 'axios';
 import { useI18n } from 'vue-i18n';
 import { formatApiUserMessage } from '@/bootstrap';
 import { ppmsToastError, ppmsToastSuccess } from '@/ppmsUi';
+import { readVndAmountVietnamese } from '@/utils/vndReadWords';
 
 const { t, locale } = useI18n();
 const route = useRoute();
@@ -514,6 +558,56 @@ const form = reactive({
     total_value: '',
     payment_cycle: 'monthly',
 });
+
+/** Chỉ chữ số — dùng cho API; ô nhập format kiểu vi-VN qua computed */
+const totalValueDisplay = computed({
+    get() {
+        if (!form.total_value) return '';
+        const n = Number(form.total_value);
+        if (!Number.isFinite(n)) return form.total_value;
+        return new Intl.NumberFormat('vi-VN').format(n);
+    },
+    set(raw) {
+        form.total_value = String(raw ?? '').replace(/\D/g, '');
+    },
+});
+
+const totalValueInWords = computed(() => {
+    if (!form.total_value) return '';
+    const n = Number(form.total_value);
+    if (!Number.isFinite(n) || n < 0) return '';
+    if (locale.value === 'vi') {
+        return `${t('contracts.amountInWordsPrefix')}: ${readVndAmountVietnamese(n)}`;
+    }
+    return `${t('contracts.amountInWordsPrefix')}: ${formatMoney(n)}`;
+});
+
+const vendorGroups = computed(() => {
+    const map = new Map();
+    for (const row of items.value) {
+        const key = row.vendor_id != null ? `v-${row.vendor_id}` : `n-${row.vendor?.name ?? '—'}`;
+        if (!map.has(key)) {
+            map.set(key, {
+                key,
+                vendorName: row.vendor?.name || '—',
+                items: [],
+            });
+        }
+        map.get(key).items.push(row);
+    }
+    const loc = locale.value === 'vi' ? 'vi' : 'en';
+    return Array.from(map.values()).sort((a, b) => a.vendorName.localeCompare(b.vendorName, loc));
+});
+
+const collapsedVendorKeys = ref({});
+
+function toggleVendorGroup(key) {
+    collapsedVendorKeys.value = { ...collapsedVendorKeys.value, [key]: !collapsedVendorKeys.value[key] };
+}
+
+function isVendorGroupCollapsed(key) {
+    return !!collapsedVendorKeys.value[key];
+}
 
 const lookupWarning = computed(() => lookups.departments.length === 0);
 
@@ -612,8 +706,32 @@ function formatMoney(value) {
     if (Number.isNaN(n)) {
         return value ?? '—';
     }
-    const loc = locale.value === 'vi' ? 'vi-VN' : 'en-US';
-    return new Intl.NumberFormat(loc, { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(n);
+    const formatted = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(n);
+    return `${formatted} VNĐ`;
+}
+
+function parseDateOnly(str) {
+    if (!str) return null;
+    const d = new Date(`${str}T12:00:00`);
+    return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** Tiến độ thời hạn theo khoảng start→end; null = không hiển thị thanh */
+function periodProgressPercent(row) {
+    const start = parseDateOnly(row.start_date);
+    const end = parseDateOnly(row.end_date);
+    if (!start || !end) return null;
+    const span = end.getTime() - start.getTime();
+    if (span <= 0) return 100;
+    if (row.status === 'terminated' || row.status === 'expired') {
+        return 100;
+    }
+    const now = new Date();
+    now.setHours(12, 0, 0, 0);
+    const t = now.getTime();
+    if (t <= start.getTime()) return 0;
+    if (t >= end.getTime()) return 100;
+    return Math.min(100, Math.max(0, Math.round(((t - start.getTime()) / span) * 100)));
 }
 
 function daysUntilEnd(endDateStr) {
@@ -854,7 +972,7 @@ async function submitCreate() {
             scope: form.scope || null,
             start_date: form.start_date,
             end_date: form.end_date,
-            total_value: form.total_value,
+            total_value: form.total_value === '' ? 0 : Number(form.total_value),
             payment_cycle: form.payment_cycle,
         });
         const contractId = body.data?.id ?? body.id;
@@ -1286,6 +1404,85 @@ onMounted(async () => {
     font-size: 0.85em;
     opacity: 0.85;
 }
+.contract-list__th-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+.contract-list__th-sub {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--ppms-muted, #64748b);
+    letter-spacing: 0.02em;
+}
+.contract-list__vendor-group td {
+    padding: 8px 12px;
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 1px solid var(--ppms-border, #e2e8f0);
+}
+.contract-list__group-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 4px 0;
+    border: none;
+    background: none;
+    font: inherit;
+    cursor: pointer;
+    color: var(--ppms-fg, #0f172a);
+    text-align: left;
+}
+.contract-list__group-toggle:hover {
+    color: var(--ppms-accent, #4f46e5);
+}
+.contract-list__group-chevron {
+    display: inline-block;
+    font-size: 0.65rem;
+    line-height: 1;
+    transition: transform 0.15s ease;
+}
+.contract-list__group-chevron--collapsed {
+    transform: rotate(-90deg);
+}
+.contract-list__group-count {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--ppms-muted, #64748b);
+}
+.contract-list__period-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+.contract-list__period-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.contract-list__period-bar-track {
+    flex: 1;
+    min-width: 48px;
+    max-width: 128px;
+    height: 6px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+.contract-list__period-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #818cf8, #4f46e5);
+}
+.contract-list__period-pct {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--ppms-muted, #64748b);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
 .contract-list__row {
     cursor: pointer;
     transition: background 0.12s ease;
@@ -1538,6 +1735,13 @@ onMounted(async () => {
 
 .contract-modal__field--full {
     grid-column: 1 / -1;
+}
+
+.contract-modal__amount-words {
+    margin: 8px 0 0;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: #475569;
 }
 
 /* Inputs trong modal: đồng bộ với bộ lọc, nền sáng, focus rõ */
