@@ -35,17 +35,19 @@
                 </button>
                 <p v-show="phaseFilterExpanded" class="ppms-muted ppms-pl-phase-filter-hint">{{ t('projects.phaseFilterHint') }}</p>
                 <div v-show="phaseFilterExpanded" class="ppms-pl-phase-filter-body">
-                    <div class="ppms-pl-phase-filter-chips" role="group" :aria-label="t('projects.phaseFilterTitle')">
+                    <div class="ppms-pl-phase-filter-nested" role="group" :aria-label="t('projects.phaseFilterTitle')">
                         <button
                             v-for="ph in KANBAN_PHASE_ORDER"
                             :key="'phf-empty-' + ph"
                             type="button"
-                            class="ppms-pl-phase-filter-chip"
-                            :class="{ 'ppms-pl-phase-filter-chip--active': filters.phase === ph }"
+                            class="ppms-pl-customer-group-head ppms-pl-phase-filter-nested-row"
+                            :class="{ 'ppms-pl-phase-filter-nested-row--active': filters.phase === ph }"
+                            :aria-pressed="filters.phase === ph"
                             @click="setPhaseFilter(ph)"
                         >
-                            <span class="ppms-pl-phase-filter-label">{{ t(`projects.phase.${ph}`) }}</span>
-                            <span class="ppms-pl-phase-filter-num">{{ phaseCountDisplay(ph) }}</span>
+                            <span class="ppms-pl-phase-filter-nested-spacer" aria-hidden="true" />
+                            <span class="ppms-pl-customer-group-title">{{ t(`projects.phase.${ph}`) }}</span>
+                            <span class="ppms-pl-customer-group-count">{{ phaseCountDisplay(ph) }}</span>
                         </button>
                     </div>
                     <button
@@ -180,17 +182,19 @@
                                 </button>
                                 <p v-show="phaseFilterExpanded" class="ppms-muted ppms-pl-phase-filter-hint">{{ t('projects.phaseFilterHint') }}</p>
                                 <div v-show="phaseFilterExpanded" class="ppms-pl-phase-filter-body">
-                                    <div class="ppms-pl-phase-filter-chips" role="group" :aria-label="t('projects.phaseFilterTitle')">
+                                    <div class="ppms-pl-phase-filter-nested" role="group" :aria-label="t('projects.phaseFilterTitle')">
                                         <button
                                             v-for="ph in KANBAN_PHASE_ORDER"
                                             :key="'phf-tbl-' + ph"
                                             type="button"
-                                            class="ppms-pl-phase-filter-chip"
-                                            :class="{ 'ppms-pl-phase-filter-chip--active': filters.phase === ph }"
+                                            class="ppms-pl-customer-group-head ppms-pl-phase-filter-nested-row"
+                                            :class="{ 'ppms-pl-phase-filter-nested-row--active': filters.phase === ph }"
+                                            :aria-pressed="filters.phase === ph"
                                             @click="setPhaseFilter(ph)"
                                         >
-                                            <span class="ppms-pl-phase-filter-label">{{ t(`projects.phase.${ph}`) }}</span>
-                                            <span class="ppms-pl-phase-filter-num">{{ phaseCountDisplay(ph) }}</span>
+                                            <span class="ppms-pl-phase-filter-nested-spacer" aria-hidden="true" />
+                                            <span class="ppms-pl-customer-group-title">{{ t(`projects.phase.${ph}`) }}</span>
+                                            <span class="ppms-pl-customer-group-count">{{ phaseCountDisplay(ph) }}</span>
                                         </button>
                                     </div>
                                     <button
@@ -1056,59 +1060,46 @@
 }
 .ppms-pl-phase-filter-body {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem 0.65rem;
-    padding: 0 0.75rem 0.5rem;
-}
-.ppms-pl-phase-filter-chips {
-    display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 0.4rem;
-    flex: 1 1 12rem;
+    padding: 0 0.4rem 0.45rem 0.5rem;
+}
+.ppms-pl-phase-filter-nested {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
     min-width: 0;
 }
-.ppms-pl-phase-filter-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    max-width: 100%;
-    padding: 0.35rem 0.6rem;
-    border-radius: 999px;
-    border: 1px solid var(--ppms-border, #e2e8f0);
-    background: #f8fafc;
+/* Dòng con dưới collapse « Phân bổ theo giai đoạn » — cùng title/count với nhóm khách hàng, thụt + viền trái */
+.ppms-pl-phase-filter-nested-row.ppms-pl-customer-group-head {
+    margin-left: 0.65rem;
+    padding: 0.34rem 0.65rem 0.34rem 0.4rem;
     font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--ppms-text, #0f172a);
+    font-weight: 700;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.4);
+    border: none;
+    border-left: 3px solid rgba(37, 99, 235, 0.28);
+    border-radius: 0;
     cursor: pointer;
-    transition:
-        background 0.15s ease,
-        border-color 0.15s ease,
-        box-shadow 0.15s ease;
 }
-.ppms-pl-phase-filter-chip:hover {
-    border-color: rgba(99, 102, 241, 0.45);
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+.ppms-pl-phase-filter-nested-row.ppms-pl-customer-group-head:hover {
+    background: rgba(255, 255, 255, 0.72);
 }
-.ppms-pl-phase-filter-chip--active {
-    border-color: #6366f1;
-    background: #eef2ff;
-    color: #3730a3;
+.ppms-pl-phase-filter-nested-row--active.ppms-pl-customer-group-head {
+    border-left-color: var(--ppms-primary, #2563eb);
+    background: rgba(37, 99, 235, 0.12);
 }
-.ppms-pl-phase-filter-label {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 16rem;
-}
-.ppms-pl-phase-filter-num {
-    font-weight: 800;
-    font-size: 0.78rem;
-    opacity: 0.9;
+.ppms-pl-phase-filter-nested-spacer {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+    opacity: 0;
+    pointer-events: none;
 }
 .ppms-pl-phase-filter-clear {
-    flex-shrink: 0;
+    align-self: flex-start;
+    margin-left: 0.65rem;
     font-size: 0.8125rem;
     padding: 0.35rem 0.65rem;
 }
