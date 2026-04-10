@@ -4,7 +4,7 @@
         v-if="open"
         class="ppms-modal-backdrop ppms-modal-backdrop--project-create"
         role="presentation"
-        @click.self="tryClose"
+        @click.self="onBackdropClick"
     >
         <div
             id="main-content"
@@ -35,9 +35,20 @@
                     </button>
                 </div>
             </div>
-            <div class="ppms-pc-modal-head">
-                <h2 id="ppms-modal-create-project-title">{{ modalTitle }}</h2>
-                <p class="ppms-pc-modal-subtitle">{{ modalSubtitle }}</p>
+            <div class="ppms-pc-modal-head ppms-pc-modal-head--toolbar">
+                <div class="ppms-pc-modal-head__main">
+                    <h2 id="ppms-modal-create-project-title">{{ modalTitle }}</h2>
+                    <p class="ppms-pc-modal-subtitle">{{ modalSubtitle }}</p>
+                </div>
+                <button
+                    type="button"
+                    class="ppms-pc-modal-close"
+                    :aria-label="t('common.close')"
+                    :title="t('projects.modalCloseHint')"
+                    @click="tryClose"
+                >
+                    <span aria-hidden="true">×</span>
+                </button>
             </div>
             <form class="ppms-pc-form" @submit.prevent="emit('submit')">
                 <div class="ppms-pc-form-body">
@@ -627,28 +638,42 @@
         v-if="open && leaveConfirmOpen"
         class="ppms-modal-backdrop ppms-pc-leave-backdrop"
         role="presentation"
-        @click.self="leaveConfirmOpen = false"
+        @click.self="dismissLeaveConfirm"
     >
         <div
             class="ppms-modal ppms-pc-leave-dialog"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="ppms-pc-leave-title"
+            :aria-labelledby="leaveConfirmIsEdit ? 'ppms-pc-leave-edit-title' : 'ppms-pc-leave-title'"
             @click.stop
         >
-            <h3 id="ppms-pc-leave-title" class="ppms-modal-title">{{ t('projects.leaveCreateTitle') }}</h3>
-            <p class="ppms-modal-msg">{{ t('projects.leaveCreateMessage') }}</p>
-            <div class="ppms-modal-actions ppms-pc-leave-actions">
-                <button type="button" class="ppms-btn-primary" @click="leaveConfirmOpen = false">
-                    {{ t('projects.leaveCreateStay') }}
-                </button>
-                <button type="button" class="ppms-btn-ghost" @click="discardAndClose">
-                    {{ t('projects.leaveCreateDiscard') }}
-                </button>
-                <button type="button" class="ppms-btn-ghost" @click="saveDraftAndClose">
-                    {{ t('projects.leaveCreateSaveDraft') }}
-                </button>
-            </div>
+            <template v-if="leaveConfirmIsEdit">
+                <h3 id="ppms-pc-leave-edit-title" class="ppms-modal-title">{{ t('projects.leaveEditTitle') }}</h3>
+                <p class="ppms-modal-msg">{{ t('projects.leaveEditMessage') }}</p>
+                <div class="ppms-modal-actions ppms-pc-leave-actions">
+                    <button type="button" class="ppms-btn-primary" @click="dismissLeaveConfirm">
+                        {{ t('projects.leaveEditStay') }}
+                    </button>
+                    <button type="button" class="ppms-btn-ghost" @click="discardAndClose">
+                        {{ t('projects.leaveEditDiscard') }}
+                    </button>
+                </div>
+            </template>
+            <template v-else>
+                <h3 id="ppms-pc-leave-title" class="ppms-modal-title">{{ t('projects.leaveCreateTitle') }}</h3>
+                <p class="ppms-modal-msg">{{ t('projects.leaveCreateMessage') }}</p>
+                <div class="ppms-modal-actions ppms-pc-leave-actions">
+                    <button type="button" class="ppms-btn-primary" @click="dismissLeaveConfirm">
+                        {{ t('projects.leaveCreateStay') }}
+                    </button>
+                    <button type="button" class="ppms-btn-ghost" @click="discardAndClose">
+                        {{ t('projects.leaveCreateDiscard') }}
+                    </button>
+                    <button type="button" class="ppms-btn-ghost" @click="saveDraftAndClose">
+                        {{ t('projects.leaveCreateSaveDraft') }}
+                    </button>
+                </div>
+            </template>
         </div>
     </div>
 
@@ -1084,7 +1109,9 @@ const progressPctDisplay = computed(() => {
 const open = defineModel('open', { type: Boolean, default: false });
 
 const leaveConfirmOpen = ref(false);
+const leaveConfirmIsEdit = ref(false);
 const baselineJson = ref('');
+const editBaselineJson = ref('');
 const draftBannerVisible = ref(false);
 const storedDraftMeta = ref(null);
 
@@ -1094,6 +1121,18 @@ const hasDirtyCreate = computed(() => {
     }
     return JSON.stringify(serializeProjectCreateForm(props.form)) !== baselineJson.value;
 });
+
+const hasDirtyEdit = computed(() => {
+    if (!open.value || !props.form.editingId) {
+        return false;
+    }
+    if (!editBaselineJson.value) {
+        return false;
+    }
+    return JSON.stringify(serializeProjectCreateForm(props.form)) !== editBaselineJson.value;
+});
+
+const shouldConfirmLeave = computed(() => hasDirtyCreate.value || hasDirtyEdit.value);
 
 const draftSavedAtLabel = computed(() => {
     const ts = storedDraftMeta.value?.savedAt;
@@ -1112,23 +1151,34 @@ const draftSavedAtLabel = computed(() => {
     }
 });
 
+function dismissLeaveConfirm() {
+    leaveConfirmOpen.value = false;
+    leaveConfirmIsEdit.value = false;
+}
+
 async function tryClose() {
-    if (!hasDirtyCreate.value) {
+    if (!shouldConfirmLeave.value) {
         open.value = false;
 
         return;
     }
+    leaveConfirmIsEdit.value = !!props.form.editingId;
     leaveConfirmOpen.value = true;
 }
 
+/** Backdrop: cùng logic đóng có xác nhận khi có thay đổi (tránh mất dữ liệu khi sửa). */
+function onBackdropClick() {
+    tryClose();
+}
+
 function discardAndClose() {
-    leaveConfirmOpen.value = false;
+    dismissLeaveConfirm();
     open.value = false;
 }
 
 function saveDraftAndClose() {
     saveProjectCreateDraft(props.form);
-    leaveConfirmOpen.value = false;
+    dismissLeaveConfirm();
     open.value = false;
     ppmsToastSuccess(t('projects.draftSavedToast'));
 }
@@ -1166,7 +1216,7 @@ function onDocumentKeydown(e) {
         return;
     }
     if (leaveConfirmOpen.value) {
-        leaveConfirmOpen.value = false;
+        dismissLeaveConfirm();
         e.preventDefault();
 
         return;
@@ -1542,6 +1592,8 @@ watch(open, async (isOpen) => {
         executorLookupPending.value = false;
         followerLookupPending.value = false;
         leaveConfirmOpen.value = false;
+        leaveConfirmIsEdit.value = false;
+        editBaselineJson.value = '';
 
         return;
     }
@@ -1555,6 +1607,8 @@ watch(open, async (isOpen) => {
     } else {
         draftBannerVisible.value = false;
         storedDraftMeta.value = null;
+        await nextTick();
+        editBaselineJson.value = JSON.stringify(serializeProjectCreateForm(props.form));
     }
 });
 
@@ -1939,5 +1993,45 @@ defineExpose({ handleDocumentClick, closeProgressCalc, closeOwnerLookup, clearCr
     border: 1px dashed var(--ppms-border-subtle, rgba(0, 0, 0, 0.18));
     border-radius: 8px;
     background: rgba(248, 250, 252, 0.6);
+}
+
+/* Header: tiêu đề + nút đóng rõ ràng (giảm đóng nhầm chỉ bằng backdrop) */
+.ppms-pc-modal-head--toolbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+}
+.ppms-pc-modal-head__main {
+    min-width: 0;
+    flex: 1;
+}
+.ppms-pc-modal-close {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.35rem;
+    height: 2.35rem;
+    margin: -0.2rem -0.25rem 0 0;
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ppms-muted, #64748b);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+}
+.ppms-pc-modal-close:hover {
+    background: rgba(15, 23, 42, 0.06);
+    color: var(--ppms-text, #0f172a);
+}
+.ppms-pc-modal-close:focus-visible {
+    outline: 2px solid var(--ppms-accent, #4f46e5);
+    outline-offset: 2px;
 }
 </style>
