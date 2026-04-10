@@ -1,35 +1,18 @@
 <template>
-    <div class="ppms-page vm-detail">
+    <div class="ppms-page vm-detail vm-detail--flat">
         <div v-if="loading" class="ppms-loading-line" role="status">{{ t('common.loading') }}</div>
         <p v-else-if="err" class="ppms-error">{{ err }}</p>
         <template v-else-if="vendor">
             <header class="vm-detail__header">
-                <div class="vm-detail__toprow">
-                    <router-link to="/vendors" class="ppms-back vm-detail__back">{{ t('vendors.backToVendors') }}</router-link>
-                    <div class="vm-detail__head-main">
-                        <h1 class="vm-detail__title">{{ vendor.name }}</h1>
-                        <p v-if="vendor.updated_at" class="vm-detail__meta">
-                            <span class="vm-detail__meta-label">{{ t('vendors.metaLastUpdated') }}</span>
-                            <time class="vm-detail__meta-time" :datetime="vendor.updated_at">{{ formatVendorDateTime(vendor.updated_at) }}</time>
-                            <template v-if="vendor.updated_by?.name">
-                                <span class="vm-detail__meta-sep" aria-hidden="true">·</span>
-                                <span class="vm-detail__meta-by">{{ t('vendors.metaBy') }} {{ vendor.updated_by.name }}</span>
-                            </template>
-                        </p>
-                    </div>
-                    <div v-if="canDelete" class="vm-detail__toolbar-actions">
-                        <button
-                            type="button"
-                            class="ppms-btn-ghost ppms-btn-danger"
-                            @click="removeVendor"
-                        >
-                            {{ t('vendors.deleteVendor') }}
-                        </button>
-                    </div>
-                </div>
+                <h1 class="vm-detail__title">{{ vendor.name }}</h1>
                 <div class="vm-detail__badges">
-                    <span class="vm-pill">{{ kindLabel(vendor.kind) }}</span>
-                    <span class="vm-pill vm-pill--muted">{{ statusLabel(vendor.status) }}</span>
+                    <template v-if="vendor.kind === 'research' && vendor.status === 'researching'">
+                        <span class="vm-pill vm-pill--muted">{{ statusLabel(vendor.status) }}</span>
+                    </template>
+                    <template v-else>
+                        <span class="vm-pill">{{ kindLabel(vendor.kind) }}</span>
+                        <span class="vm-pill vm-pill--muted">{{ statusLabel(vendor.status) }}</span>
+                    </template>
                     <span v-if="vendor.vendor_score" class="vm-pill vm-pill--score">{{ t('vendors.vendorScore') }}: {{ vendor.vendor_score }}</span>
                 </div>
             </header>
@@ -177,6 +160,7 @@
                                 </template>
                             </td>
                         </tr>
+                        <template v-if="vendor.kind !== 'research'">
                         <tr class="vm-kv__group">
                             <th colspan="2" class="vm-kv__group-title">{{ t('vendors.tabBusiness') }}</th>
                         </tr>
@@ -523,6 +507,7 @@
                                 </template>
                             </td>
                         </tr>
+                        </template>
                     </tbody>
                 </table>
                 <div v-if="isEditing" class="vm-detail__inline-actions">
@@ -533,7 +518,7 @@
                         {{ t('vendors.cancel') }}
                     </button>
                 </div>
-                <div v-if="vendor.products?.length" class="ppms-mt">
+                <div v-if="vendor.kind !== 'research' && vendor.products?.length" class="ppms-mt">
                     <h4>{{ t('vendors.productLines') }}</h4>
                     <ul class="vm-product-list">
                         <li v-for="p in vendor.products" :key="p.id"><strong>{{ p.name }}</strong> — {{ p.description || '' }}</li>
@@ -542,6 +527,7 @@
             </section>
 
             <section
+                v-if="vendor.kind !== 'research'"
                 id="vm-panel-contracts"
                 class="ppms-card ppms-mt vm-panel"
             >
@@ -581,6 +567,7 @@
             </section>
 
             <section
+                v-if="vendor.kind !== 'research'"
                 id="vm-panel-reviews"
                 class="ppms-card ppms-mt vm-panel"
             >
@@ -596,6 +583,7 @@
             </section>
 
             <section
+                v-if="vendor.kind !== 'research'"
                 id="vm-panel-timeline"
                 class="ppms-card ppms-mt vm-panel"
             >
@@ -668,7 +656,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 import { getApiErrorMessage } from '@/bootstrap';
@@ -683,7 +671,6 @@ defineProps({
 
 const { t, locale } = useI18n();
 const route = useRoute();
-const router = useRouter();
 
 const loading = ref(true);
 const err = ref('');
@@ -747,7 +734,6 @@ const phases = [
 ];
 
 const canEdit = computed(() => ['admin', 'pm', 'tl', 'hr', 'developer'].includes(me.value?.role));
-const canDelete = computed(() => ['admin', 'pm', 'tl'].includes(me.value?.role));
 const isEditing = computed(() => canEdit.value);
 
 const deptSelectionSummary = computed(() => {
@@ -788,17 +774,6 @@ function isEmptyText(v) {
 
 function isEmptyNumber(v) {
     return v === null || v === undefined || v === '';
-}
-
-function formatVendorDateTime(iso) {
-    if (!iso) return '';
-    try {
-        const d = new Date(iso);
-        const loc = locale.value === 'vi' ? 'vi-VN' : undefined;
-        return new Intl.DateTimeFormat(loc, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
-    } catch {
-        return iso;
-    }
 }
 
 function contractStatusLabel(status) {
@@ -883,6 +858,13 @@ async function loadVendor() {
         const payload = data.data ?? data;
         vendor.value = payload;
         snapshotFromVendor(payload);
+        if (payload?.kind === 'research') {
+            timelineEvents.value = [];
+            timelineErr.value = '';
+            timelineLoading.value = false;
+        } else {
+            await loadTimeline();
+        }
     } catch (e) {
         err.value = getApiErrorMessage(e);
         vendor.value = null;
@@ -927,10 +909,12 @@ async function saveVendor() {
         for (const k of OVERVIEW_FIELD_KEYS) {
             body[k] = edit[k];
         }
-        for (const k of BUSINESS_FIELD_KEYS) {
-            body[k] = edit[k];
+        if (vendor.value?.kind !== 'research') {
+            for (const k of BUSINESS_FIELD_KEYS) {
+                body[k] = edit[k];
+            }
+            body.department_ids = editDepartmentIds.value.map((x) => Number(x));
         }
-        body.department_ids = editDepartmentIds.value.map((x) => Number(x));
         await axios.patch(`/api/vendors/${route.params.id}`, body);
         ppmsToastSuccess(t('vendors.saved'));
         deptMenuOpen.value = false;
@@ -939,18 +923,6 @@ async function saveVendor() {
         ppmsToastError(getApiErrorMessage(e));
     } finally {
         saving.value = false;
-    }
-}
-
-async function removeVendor() {
-    const ok = await ppmsConfirm(t('vendors.deleteVendorConfirm'), { title: t('vendors.deleteVendor') });
-    if (!ok) return;
-    try {
-        await axios.delete(`/api/vendors/${route.params.id}`);
-        ppmsToastSuccess(t('vendors.deleted'));
-        router.push({ name: 'vendors' });
-    } catch (e) {
-        ppmsToastError(getApiErrorMessage(e));
     }
 }
 
@@ -1022,7 +994,6 @@ onMounted(async () => {
     }
     await loadLookups();
     await loadVendor();
-    await loadTimeline();
 });
 
 onUnmounted(() => {
@@ -1671,5 +1642,65 @@ textarea.vm-field__control {
 .vm-field__checkbox input {
     margin-top: 0.2rem;
     flex-shrink: 0;
+}
+
+/* Borderless / flat layout */
+.vm-detail--flat .vm-detail__header {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.vm-detail--flat .vm-detail__badges {
+    border-top: none;
+    padding-top: 0.5rem;
+    margin-top: 0.35rem;
+}
+
+.vm-detail--flat .ppms-card {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent;
+}
+
+.vm-detail--flat .vm-kv th,
+.vm-detail--flat .vm-kv td {
+    border-bottom: none;
+}
+
+.vm-detail--flat .vm-kv__group-title {
+    border-bottom: none;
+    background: transparent;
+}
+
+.vm-detail--flat .vm-kv__section-hint {
+    border-bottom: none;
+    background: transparent;
+}
+
+.vm-detail--flat .ppms-input,
+.vm-detail--flat .vm-kv__select,
+.vm-detail--flat textarea.ppms-input {
+    border: none;
+    background: #f1f5f9;
+}
+
+.vm-detail--flat .ppms-input:focus,
+.vm-detail--flat .vm-kv__select:focus,
+.vm-detail--flat textarea.ppms-input:focus {
+    outline: 2px solid var(--ppms-focus, #2563eb);
+    outline-offset: 1px;
+}
+
+.vm-detail--flat .vm-dept-multi__trigger {
+    border: none;
+    background: #f1f5f9;
+}
+
+.vm-detail--flat .vm-detail__inline-actions {
+    border-top: none;
+    padding-top: 0.75rem;
 }
 </style>

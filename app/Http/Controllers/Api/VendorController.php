@@ -18,7 +18,8 @@ class VendorController extends Controller
 {
     public function __construct(
         protected VendorMetricsService $metrics
-    ) {}
+    ) {
+    }
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -29,13 +30,13 @@ class VendorController extends Controller
         $paginator = VendorListCache::remember($innerKey, 120, function () use ($request) {
             $q = Vendor::query()
                 ->with(['departments:id,name,code'])
-                ->when($request->query('kind'), fn ($b, $kind) => $b->where('kind', $kind))
-                ->when($request->query('status'), fn ($b, $status) => $b->where('status', $status))
-                ->when($request->query('industry'), fn ($b, $industry) => $b->where('industry', $industry))
-                ->when($request->query('q'), fn ($b, $term) => $b->searchName($term))
+                ->when($request->query('kind'), fn($b, $kind) => $b->where('kind', $kind))
+                ->when($request->query('status'), fn($b, $status) => $b->where('status', $status))
+                ->when($request->query('industry'), fn($b, $industry) => $b->where('industry', $industry))
+                ->when($request->query('q'), fn($b, $term) => $b->searchName($term))
                 ->when(
                     $request->query('min_score') !== null && $request->query('min_score') !== '',
-                    fn ($b) => $b->where('vendor_score', '>=', (float) $request->query('min_score'))
+                    fn($b) => $b->where('vendor_score', '>=', (float) $request->query('min_score'))
                 )
                 ->orderByDesc('updated_at');
 
@@ -77,9 +78,9 @@ class VendorController extends Controller
             'departments:id,name,code',
             'products',
             'updatedBy:id,name',
-            'reviews' => fn ($q) => $q->latest('created_at')->limit(50),
+            'reviews' => fn($q) => $q->latest('created_at')->limit(50),
             'reviews.author:id,name,email',
-            'contracts' => fn ($q) => $q->latest('updated_at')->limit(50),
+            'contracts' => fn($q) => $q->latest('updated_at')->limit(50),
             'contracts.department:id,name,code',
         ]);
 

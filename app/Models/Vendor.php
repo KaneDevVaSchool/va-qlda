@@ -96,7 +96,10 @@ class Vendor extends Model
         return $query->where('kind', $value);
     }
 
-    public function scopeSearchName(Builder $query, ?string $term): Builder
+    /**
+     * Full-text style match on vendor fields and product lines (param `q` on index API).
+     */
+    public function scopeSearchAll(Builder $query, ?string $term): Builder
     {
         if ($term === null || trim($term) === '') {
             return $query;
@@ -104,6 +107,26 @@ class Vendor extends Model
 
         $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], trim($term)).'%';
 
-        return $query->where('name', 'like', $like);
+        return $query->where(function (Builder $w) use ($like) {
+            $w->where('name', 'like', $like)
+                ->orWhere('legal_name', 'like', $like)
+                ->orWhere('tax_code', 'like', $like)
+                ->orWhere('country', 'like', $like)
+                ->orWhere('website', 'like', $like)
+                ->orWhere('industry', 'like', $like)
+                ->orWhere('research_source', 'like', $like)
+                ->orWhere('contact_info', 'like', $like)
+                ->orWhere('internal_note', 'like', $like)
+                ->orWhere('main_products', 'like', $like)
+                ->orWhere('research_note', 'like', $like)
+                ->orWhere('pros', 'like', $like)
+                ->orWhere('cons', 'like', $like)
+                ->orWhereHas('products', function (Builder $pq) use ($like) {
+                    $pq->where(function (Builder $p2) use ($like) {
+                        $p2->where('name', 'like', $like)
+                            ->orWhere('description', 'like', $like);
+                    });
+                });
+        });
     }
 }

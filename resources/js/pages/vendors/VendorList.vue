@@ -48,7 +48,6 @@
                             class="ppms-input"
                             autocomplete="off"
                             :placeholder="t('vendors.searchPlaceholder')"
-                            @keyup.enter="load"
                         />
                     </label>
                     <label class="ppms-field ppms-field--compact vm-filters__field">
@@ -65,7 +64,6 @@
                             class="ppms-input"
                             autocomplete="off"
                             :placeholder="t('vendors.industryPlaceholder')"
-                            @change="load"
                         />
                     </label>
                     <label class="ppms-field ppms-field--compact vm-filters__field">
@@ -79,7 +77,6 @@
                             class="ppms-input"
                             inputmode="decimal"
                             :placeholder="t('vendors.minScorePlaceholder')"
-                            @change="load"
                         />
                     </label>
                     <div class="vm-filters-actions">
@@ -279,6 +276,22 @@ watch(
     },
 );
 
+/** Text/number filters: reload without pressing Enter */
+let vendorFilterDebounce = null;
+function scheduleVendorFilterReload() {
+    clearTimeout(vendorFilterDebounce);
+    vendorFilterDebounce = setTimeout(() => {
+        page.value = 1;
+        load();
+    }, 350);
+}
+watch(
+    () => [filters.q, filters.industry, filters.min_score],
+    () => {
+        scheduleVendorFilterReload();
+    },
+);
+
 const statusOptions = computed(() => {
     if (filters.kind === 'research') {
         return ['researching', 'shortlist', 'rejected'];
@@ -294,6 +307,7 @@ const createStatusOptions = computed(() => {
 });
 
 function setKind(k) {
+    clearTimeout(vendorFilterDebounce);
     filters.kind = k;
     filters.status = '';
     page.value = 1;
@@ -301,6 +315,7 @@ function setKind(k) {
 }
 
 function resetFilters() {
+    clearTimeout(vendorFilterDebounce);
     filters.q = '';
     filters.status = '';
     filters.industry = '';
@@ -474,6 +489,7 @@ function buildParams() {
 }
 
 async function load() {
+    clearTimeout(vendorFilterDebounce);
     loading.value = true;
     err.value = '';
     try {
@@ -490,6 +506,7 @@ async function load() {
 }
 
 function pageTo(n) {
+    clearTimeout(vendorFilterDebounce);
     page.value = n;
     load();
 }

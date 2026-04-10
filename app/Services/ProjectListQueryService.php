@@ -65,7 +65,7 @@ class ProjectListQueryService
 
         if ($search = trim((string) $request->query('search', ''))) {
             $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
-            $like = '%'.$escaped.'%';
+            $like = '%' . $escaped . '%';
             $q->where(function ($w) use ($like) {
                 $w->where('name', 'like', $like)
                     ->orWhere('customer_name', 'like', $like);
@@ -93,7 +93,7 @@ class ProjectListQueryService
     public function applySort(Builder $q, Request $request): void
     {
         $sort = (string) $request->query('sort', 'updated_desc');
-        if (! in_array($sort, ['updated_desc', 'progress_desc', 'progress_asc', 'name_asc', 'deadline_asc', 'type_asc'], true)) {
+        if (!in_array($sort, ['updated_desc', 'progress_desc', 'progress_asc', 'name_asc', 'deadline_asc', 'type_asc'], true)) {
             $sort = 'updated_desc';
         }
         match ($sort) {
@@ -137,11 +137,11 @@ class ProjectListQueryService
         $users = User::query()->whereIn('id', $idList)->get(['id', 'name', 'email'])->keyBy('id');
         foreach ($projects as $p) {
             $ex = collect($p->executor_user_ids ?? [])
-                ->map(fn ($id) => $users->get((int) $id))
+                ->map(fn($id) => $users->get((int) $id))
                 ->filter()
                 ->values();
             $fo = collect($p->follower_user_ids ?? [])
-                ->map(fn ($id) => $users->get((int) $id))
+                ->map(fn($id) => $users->get((int) $id))
                 ->filter()
                 ->values();
             $p->setAttribute('executor_users', $ex);

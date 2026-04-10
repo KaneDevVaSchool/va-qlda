@@ -43,17 +43,15 @@
                     <label class="ppms-activity-field ppms-activity-field--grow">
                         <span class="ppms-muted">{{ t('common.search') }}</span>
                         <input
-                            v-model="searchQ"
+                            v-model="filters.q"
                             type="search"
                             class="ppms-input"
                             :placeholder="t('activityFeed.searchPlaceholder')"
                             enterkeyhint="search"
-                            @keyup.enter="resetAndLoad"
                         />
                     </label>
                 </div>
                 <div class="ppms-activity-actions">
-                    <button type="button" class="ppms-btn-ghost" @click="applySearch">{{ t('activityFeed.apply') }}</button>
                     <button type="button" class="ppms-btn-ghost" @click="clearFilters">{{ t('activityFeed.clearFilters') }}</button>
                     <button type="button" class="ppms-btn-ghost" :disabled="initialLoading" @click="markAll">
                         {{ t('activityFeed.markAllRead') }}
@@ -327,7 +325,9 @@ const filters = ref({
     to: '',
     q: '',
 });
-const searchQ = ref('');
+
+/** Debounced text search — cleared when other filters call resetAndLoad */
+let activityFeedQDebounce = null;
 
 const items = ref([]);
 /** First load with empty list — skeleton */
@@ -584,6 +584,7 @@ async function fetchFeed() {
 }
 
 function resetAndLoad() {
+    clearTimeout(activityFeedQDebounce);
     currentPage.value = 1;
     loadError.value = '';
     fetchFeed();
@@ -610,11 +611,6 @@ function goNextPage() {
     fetchFeed();
 }
 
-function applySearch() {
-    filters.value.q = searchQ.value.trim();
-    resetAndLoad();
-}
-
 function clearFilters() {
     filters.value = {
         subject_type: '',
@@ -624,9 +620,17 @@ function clearFilters() {
         to: '',
         q: '',
     };
-    searchQ.value = '';
+    clearTimeout(activityFeedQDebounce);
     resetAndLoad();
 }
+
+watch(
+    () => filters.value.q,
+    () => {
+        clearTimeout(activityFeedQDebounce);
+        activityFeedQDebounce = setTimeout(() => resetAndLoad(), 320);
+    },
+);
 
 async function markOne(item) {
     try {

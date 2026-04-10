@@ -36,9 +36,6 @@
                         />
                     </label>
                     <div class="ppms-pf-activity-filters__actions">
-                        <button type="button" class="ppms-pf-btn ppms-pf-btn--primary" @click="load(1)">
-                            {{ t('common.search') }}
-                        </button>
                         <button type="button" class="ppms-pf-btn" @click="exportCsv">{{ t('profile.exportCsv') }}</button>
                     </div>
                 </div>
@@ -96,7 +93,7 @@
 
 <script setup>
 import axios from 'axios';
-import { onMounted, reactive, ref, unref } from 'vue';
+import { onMounted, reactive, ref, unref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { formatApiUserMessage } from '../../bootstrap';
 
@@ -118,6 +115,8 @@ const filters = reactive({
     event: '',
     q: '',
 });
+
+let activityFilterDebounce = null;
 
 function actionLabel(code) {
     if (!code || code === '—') {
@@ -164,6 +163,7 @@ function formatTime(v) {
 }
 
 async function load(page = 1) {
+    clearTimeout(activityFilterDebounce);
     loading.value = true;
     err.value = '';
     try {
@@ -209,6 +209,24 @@ async function exportCsv() {
         window.alert(formatApiUserMessage(e, 'Export failed'));
     }
 }
+
+function scheduleActivityLoad() {
+    clearTimeout(activityFilterDebounce);
+    activityFilterDebounce = setTimeout(() => load(1), 400);
+}
+watch(
+    () => [filters.q, filters.event],
+    () => {
+        scheduleActivityLoad();
+    },
+);
+watch(
+    () => [filters.from, filters.to],
+    () => {
+        clearTimeout(activityFilterDebounce);
+        load(1);
+    },
+);
 
 onMounted(() => load(1));
 </script>
