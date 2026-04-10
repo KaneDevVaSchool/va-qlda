@@ -4,27 +4,52 @@
         <p v-else-if="err" class="ppms-error">{{ err }}</p>
         <template v-else-if="vendor">
             <header class="vm-detail__header">
-                <router-link to="/vendors" class="ppms-back">{{ t('common.back') }}</router-link>
-                <h1 class="vm-detail__title">{{ vendor.name }}</h1>
+                <div class="vm-detail__toprow">
+                    <router-link to="/vendors" class="ppms-back vm-detail__back">{{ t('vendors.backToVendors') }}</router-link>
+                    <div class="vm-detail__head-main">
+                        <h1 class="vm-detail__title">{{ vendor.name }}</h1>
+                        <p v-if="vendor.updated_at" class="vm-detail__meta">
+                            <span class="vm-detail__meta-label">{{ t('vendors.metaLastUpdated') }}</span>
+                            <time class="vm-detail__meta-time" :datetime="vendor.updated_at">{{ formatVendorDateTime(vendor.updated_at) }}</time>
+                            <template v-if="vendor.updated_by?.name">
+                                <span class="vm-detail__meta-sep" aria-hidden="true">·</span>
+                                <span class="vm-detail__meta-by">{{ t('vendors.metaBy') }} {{ vendor.updated_by.name }}</span>
+                            </template>
+                        </p>
+                    </div>
+                    <div v-if="canEdit || canDelete" class="vm-detail__toolbar-actions">
+                        <template v-if="canEdit && canEditCurrentTab">
+                            <button
+                                v-if="!editingTab"
+                                type="button"
+                                class="ppms-btn-ghost"
+                                @click="startEditTab"
+                            >
+                                {{ t('vendors.edit') }}
+                            </button>
+                            <template v-else-if="editingTab === tab">
+                                <button type="button" class="ppms-btn-primary" :disabled="saving" @click="saveTab">
+                                    {{ t('vendors.save') }}
+                                </button>
+                                <button type="button" class="ppms-btn-ghost" :disabled="saving" @click="cancelEditTab">
+                                    {{ t('vendors.cancel') }}
+                                </button>
+                            </template>
+                        </template>
+                        <button
+                            v-if="canDelete"
+                            type="button"
+                            class="ppms-btn-ghost ppms-btn-danger"
+                            @click="removeVendor"
+                        >
+                            {{ t('vendors.deleteVendor') }}
+                        </button>
+                    </div>
+                </div>
                 <div class="vm-detail__badges">
                     <span class="vm-pill">{{ kindLabel(vendor.kind) }}</span>
                     <span class="vm-pill vm-pill--muted">{{ statusLabel(vendor.status) }}</span>
                     <span v-if="vendor.vendor_score" class="vm-pill vm-pill--score">{{ t('vendors.vendorScore') }}: {{ vendor.vendor_score }}</span>
-                </div>
-                <div v-if="canEdit" class="vm-detail__actions">
-                    <button v-if="!editMode" type="button" class="ppms-btn-ghost" @click="startEdit">{{ t('vendors.edit') }}</button>
-                    <template v-else>
-                        <button type="button" class="ppms-btn-primary" :disabled="saving" @click="save">{{ t('vendors.save') }}</button>
-                        <button type="button" class="ppms-btn-ghost" @click="cancelEdit">{{ t('vendors.cancel') }}</button>
-                    </template>
-                    <button
-                        v-if="canDelete"
-                        type="button"
-                        class="ppms-btn-ghost ppms-btn-danger"
-                        @click="removeVendor"
-                    >
-                        {{ t('vendors.deleteVendor') }}
-                    </button>
                 </div>
             </header>
 
@@ -103,27 +128,72 @@
                 role="tabpanel"
                 aria-labelledby="vm-tab-overview"
             >
-                <table v-if="!editMode" class="vm-kv">
+                <h3 v-if="editingTab !== 'overview'" class="vm-sec-title">{{ t('vendors.tabOverview') }}</h3>
+                <table v-if="editingTab !== 'overview'" class="vm-kv">
                     <tbody>
-                        <tr><th>{{ t('vendors.legalName') }}</th><td>{{ vendor.legal_name || '—' }}</td></tr>
-                        <tr><th>{{ t('vendors.country') }}</th><td>{{ vendor.country || '—' }}</td></tr>
-                        <tr><th>{{ t('vendors.website') }}</th><td><a v-if="vendor.website" :href="vendor.website" target="_blank" rel="noopener">{{ vendor.website }}</a><template v-else>—</template></td></tr>
-                        <tr><th>{{ t('vendors.taxCode') }}</th><td>{{ vendor.tax_code || '—' }}</td></tr>
-                        <tr><th>{{ t('vendors.riskLevel') }}</th><td>{{ riskLabel(vendor.risk_level) }}</td></tr>
-                        <tr><th>{{ t('vendors.internalNote') }}</th><td class="vm-pre">{{ vendor.internal_note || '—' }}</td></tr>
+                        <tr>
+                            <th>{{ t('vendors.legalName') }}</th>
+                            <td>
+                                <template v-if="!isEmptyText(vendor.legal_name)">{{ vendor.legal_name }}</template>
+                                <span v-else class="vm-empty" :title="t('vendors.detailLegalNameHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('vendors.country') }}</th>
+                            <td>
+                                <template v-if="!isEmptyText(vendor.country)">{{ vendor.country }}</template>
+                                <span v-else class="vm-empty" :title="t('vendors.detailCountryHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('vendors.website') }}</th>
+                            <td>
+                                <a v-if="!isEmptyText(vendor.website)" :href="vendor.website" target="_blank" rel="noopener">{{ vendor.website }}</a>
+                                <span v-else class="vm-empty" :title="t('vendors.detailWebsiteHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('vendors.taxCode') }}</th>
+                            <td>
+                                <template v-if="!isEmptyText(vendor.tax_code)">{{ vendor.tax_code }}</template>
+                                <span v-else class="vm-empty" :title="t('vendors.detailTaxHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('vendors.contactInfo') }}</th>
+                            <td class="vm-pre">
+                                <template v-if="!isEmptyText(vendor.contact_info)">{{ vendor.contact_info }}</template>
+                                <span v-else class="vm-empty" :title="t('vendors.detailContactHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('vendors.riskLevel') }}</th>
+                            <td>
+                                <template v-if="vendor.risk_level">{{ riskLabel(vendor.risk_level) }}</template>
+                                <span v-else class="vm-empty" :title="t('vendors.detailRiskHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('vendors.internalNote') }}</th>
+                            <td class="vm-pre">
+                                <template v-if="!isEmptyText(vendor.internal_note)">{{ vendor.internal_note }}</template>
+                                <span v-else class="vm-empty" :title="t('vendors.detailInternalNoteHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            </td>
+                        </tr>
                         <tr>
                             <th>{{ t('vendors.departments') }}</th>
                             <td>
                                 <span v-for="d in vendor.departments || []" :key="d.id" class="vm-dept-badge">{{ d.name }}</span>
-                                <template v-if="!(vendor.departments || []).length">—</template>
+                                <span v-if="!(vendor.departments || []).length" class="vm-empty" :title="t('vendors.emptyDepartmentsHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
                             </td>
                         </tr>
                     </tbody>
                 </table>
                 <div v-else class="vm-edit-form">
+                    <h3 class="vm-sec-title vm-sec-title--panel">{{ t('vendors.tabOverview') }}</h3>
                     <div class="vm-edit-banner" role="status">
                         <strong class="vm-edit-banner__title">{{ t('vendors.editModeBanner') }}</strong>
-                        <p class="vm-edit-banner__hint">{{ t('vendors.editModeBannerHint') }}</p>
+                        <p class="vm-edit-banner__hint">{{ t('vendors.editModeBannerOverview') }}</p>
                     </div>
                     <section class="vm-form-section">
                         <h3 class="vm-form-section__title">{{ t('vendors.formSectionOverview') }}</h3>
@@ -174,6 +244,18 @@
                                     aria-describedby="vm-o-tax-hint"
                                 />
                             </div>
+                            <div class="vm-field vm-field--full">
+                                <label class="vm-field__label" for="vm-o-contact">{{ t('vendors.contactInfo') }}</label>
+                                <p id="vm-o-contact-hint" class="vm-field__hint">{{ t('vendors.detailContactHint') }}</p>
+                                <textarea
+                                    id="vm-o-contact"
+                                    v-model="edit.contact_info"
+                                    rows="3"
+                                    class="ppms-input vm-field__control"
+                                    :placeholder="t('vendors.detailContactPlaceholder')"
+                                    aria-describedby="vm-o-contact-hint"
+                                />
+                            </div>
                             <div class="vm-field vm-field--span-2 vm-field--max-md">
                                 <label class="vm-field__label" for="vm-o-risk">{{ t('vendors.riskLevel') }}</label>
                                 <p id="vm-o-risk-hint" class="vm-field__hint">{{ t('vendors.detailRiskHint') }}</p>
@@ -208,25 +290,86 @@
                 role="tabpanel"
                 aria-labelledby="vm-tab-business"
             >
-                <h3 class="vm-sec-title">{{ t('vendors.tabBusiness') }}</h3>
-                <table v-if="!editMode" class="vm-kv">
+                <h3 v-if="editingTab !== 'business'" class="vm-sec-title">{{ t('vendors.tabBusiness') }}</h3>
+                <table v-if="editingTab !== 'business'" class="vm-kv">
                     <tbody>
-                        <tr><th>{{ t('vendors.filterIndustry') }}</th><td>{{ vendor.industry || '—' }}</td></tr>
-                        <tr><th>{{ t('vendors.mainProducts') }}</th><td class="vm-pre">{{ vendor.main_products || '—' }}</td></tr>
-                        <tr><th>{{ t('vendors.contractValue') }}</th><td>{{ vendor.contract_value ?? '—' }}</td></tr>
-                        <tr><th>{{ t('vendors.estimatedCost') }}</th><td>{{ vendor.estimated_cost ?? '—' }}</td></tr>
-                        <tr><th>{{ t('vendors.referencePrice') }}</th><td>{{ vendor.reference_price ?? '—' }}</td></tr>
-                        <tr><th>{{ t('vendors.researchSource') }}</th><td>{{ vendor.research_source || '—' }}</td></tr>
-                        <tr><th>{{ t('vendors.fitScore') }}</th><td>{{ vendor.fit_score ?? '—' }}</td></tr>
-                        <tr><th>{{ t('vendors.pros') }}</th><td class="vm-pre">{{ vendor.pros || '—' }}</td></tr>
-                        <tr><th>{{ t('vendors.cons') }}</th><td class="vm-pre">{{ vendor.cons || '—' }}</td></tr>
-                        <tr><th>{{ t('vendors.researchNote') }}</th><td class="vm-pre">{{ vendor.research_note || '—' }}</td></tr>
+                        <tr>
+                            <th>{{ t('vendors.filterIndustry') }}</th>
+                            <td>
+                                <template v-if="!isEmptyText(vendor.industry)">{{ vendor.industry }}</template>
+                                <span v-else class="vm-empty" :title="t('vendors.detailIndustryHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('vendors.mainProducts') }}</th>
+                            <td class="vm-pre">
+                                <template v-if="!isEmptyText(vendor.main_products)">{{ vendor.main_products }}</template>
+                                <span v-else class="vm-empty" :title="t('vendors.detailMainProductsHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('vendors.contractValue') }}</th>
+                            <td>
+                                <template v-if="!isEmptyNumber(vendor.contract_value)">{{ vendor.contract_value }}</template>
+                                <span v-else class="vm-empty" :title="t('vendors.detailContractValueHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('vendors.estimatedCost') }}</th>
+                            <td>
+                                <template v-if="!isEmptyNumber(vendor.estimated_cost)">{{ vendor.estimated_cost }}</template>
+                                <span v-else class="vm-empty" :title="t('vendors.detailEstimatedCostHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('vendors.referencePrice') }}</th>
+                            <td>
+                                <template v-if="!isEmptyNumber(vendor.reference_price)">{{ vendor.reference_price }}</template>
+                                <span v-else class="vm-empty" :title="t('vendors.detailReferencePriceHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('vendors.researchSource') }}</th>
+                            <td>
+                                <template v-if="!isEmptyText(vendor.research_source)">{{ vendor.research_source }}</template>
+                                <span v-else class="vm-empty" :title="t('vendors.detailResearchSourceHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('vendors.fitScore') }}</th>
+                            <td>
+                                <template v-if="!isEmptyNumber(vendor.fit_score)">{{ vendor.fit_score }}</template>
+                                <span v-else class="vm-empty" :title="t('vendors.detailFitScoreHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('vendors.pros') }}</th>
+                            <td class="vm-pre">
+                                <template v-if="!isEmptyText(vendor.pros)">{{ vendor.pros }}</template>
+                                <span v-else class="vm-empty" :title="t('vendors.detailProsPlaceholder')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('vendors.cons') }}</th>
+                            <td class="vm-pre">
+                                <template v-if="!isEmptyText(vendor.cons)">{{ vendor.cons }}</template>
+                                <span v-else class="vm-empty" :title="t('vendors.detailConsPlaceholder')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ t('vendors.researchNote') }}</th>
+                            <td class="vm-pre">
+                                <template v-if="!isEmptyText(vendor.research_note)">{{ vendor.research_note }}</template>
+                                <span v-else class="vm-empty" :title="t('vendors.detailResearchNoteHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
                 <div v-else class="vm-edit-form">
+                    <h3 class="vm-sec-title vm-sec-title--panel">{{ t('vendors.tabBusiness') }}</h3>
                     <div class="vm-edit-banner" role="status">
                         <strong class="vm-edit-banner__title">{{ t('vendors.editModeBanner') }}</strong>
-                        <p class="vm-edit-banner__hint">{{ t('vendors.editModeBannerHint') }}</p>
+                        <p class="vm-edit-banner__hint">{{ t('vendors.editModeBannerBusiness') }}</p>
                     </div>
                     <section class="vm-form-section">
                         <h4 class="vm-form-section__title">{{ t('vendors.formSectionBiz') }}</h4>
@@ -595,7 +738,7 @@ defineProps({
     id: { type: String, required: true },
 });
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
 
@@ -603,8 +746,34 @@ const loading = ref(true);
 const err = ref('');
 const vendor = ref(null);
 const me = ref(null);
-const editMode = ref(false);
+const editingTab = ref(null);
 const saving = ref(false);
+
+const OVERVIEW_FIELD_KEYS = [
+    'legal_name',
+    'country',
+    'website',
+    'tax_code',
+    'contact_info',
+    'internal_note',
+    'risk_level',
+];
+const BUSINESS_FIELD_KEYS = [
+    'industry',
+    'main_products',
+    'contract_value',
+    'estimated_cost',
+    'reference_price',
+    'research_source',
+    'research_note',
+    'pros',
+    'cons',
+    'fit_score',
+    'score_price',
+    'score_quality',
+    'score_sla',
+    'score_support',
+];
 const lookups = ref({ departments: [] });
 
 const edit = reactive({});
@@ -636,6 +805,7 @@ const phases = [
 
 const canEdit = computed(() => ['admin', 'pm', 'tl', 'hr', 'developer'].includes(me.value?.role));
 const canDelete = computed(() => ['admin', 'pm', 'tl'].includes(me.value?.role));
+const canEditCurrentTab = computed(() => tab.value === 'overview' || tab.value === 'business');
 
 function kindLabel(k) {
     return k === 'research' ? t('vendors.kindResearch') : t('vendors.kindActive');
@@ -658,6 +828,25 @@ function riskLabel(r) {
     const map = { low: 'vendors.riskLow', medium: 'vendors.riskMedium', high: 'vendors.riskHigh' };
     const key = map[r];
     return key ? t(key) : r || '—';
+}
+
+function isEmptyText(v) {
+    return v === null || v === undefined || String(v).trim() === '';
+}
+
+function isEmptyNumber(v) {
+    return v === null || v === undefined || v === '';
+}
+
+function formatVendorDateTime(iso) {
+    if (!iso) return '';
+    try {
+        const d = new Date(iso);
+        const loc = locale.value === 'vi' ? 'vi-VN' : undefined;
+        return new Intl.DateTimeFormat(loc, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
+    } catch {
+        return iso;
+    }
 }
 
 function timelinePhaseLabel(ph) {
@@ -732,29 +921,36 @@ function openTimeline() {
     loadTimeline();
 }
 
-function startEdit() {
-    editMode.value = true;
+function startEditTab() {
+    if (!canEditCurrentTab.value) return;
+    editingTab.value = tab.value;
     if (vendor.value) snapshotFromVendor(vendor.value);
 }
 
-function cancelEdit() {
-    editMode.value = false;
+function cancelEditTab() {
+    editingTab.value = null;
     if (vendor.value) snapshotFromVendor(vendor.value);
 }
 
-async function save() {
+async function saveTab() {
+    const section = editingTab.value;
+    if (!section) return;
     saving.value = true;
     try {
-        const body = {
-            ...edit,
-            department_ids: editDepartmentIds.value,
-        };
-        await axios.patch(`/api/vendors/${route.params.id}`, {
-            ...body,
-            department_ids: editDepartmentIds.value.map((x) => Number(x)),
-        });
+        const body = {};
+        if (section === 'overview') {
+            for (const k of OVERVIEW_FIELD_KEYS) {
+                body[k] = edit[k];
+            }
+        } else if (section === 'business') {
+            for (const k of BUSINESS_FIELD_KEYS) {
+                body[k] = edit[k];
+            }
+            body.department_ids = editDepartmentIds.value.map((x) => Number(x));
+        }
+        await axios.patch(`/api/vendors/${route.params.id}`, body);
         ppmsToastSuccess(t('vendors.saved'));
-        editMode.value = false;
+        editingTab.value = null;
         await loadVendor();
     } catch (e) {
         ppmsToastError(getApiErrorMessage(e));
@@ -828,9 +1024,16 @@ async function onDeleteReview(r) {
 watch(
     () => route.params.id,
     () => {
+        editingTab.value = null;
         loadVendor();
     }
 );
+
+watch(tab, () => {
+    if (editingTab.value) {
+        cancelEditTab();
+    }
+});
 
 onMounted(async () => {
     try {
@@ -848,9 +1051,48 @@ onMounted(async () => {
 .vm-detail__header {
     margin-bottom: 1rem;
 }
+.vm-detail__toprow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.75rem 1rem;
+}
+.vm-detail__back {
+    flex-shrink: 0;
+    align-self: center;
+}
+.vm-detail__head-main {
+    flex: 1 1 14rem;
+    min-width: 0;
+}
+.vm-detail__toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-left: auto;
+}
 .vm-detail__title {
-    margin: 0.35rem 0;
+    margin: 0.15rem 0 0.25rem;
     font-size: 1.5rem;
+    line-height: 1.25;
+}
+.vm-detail__meta {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--ppms-muted, #64748b);
+}
+.vm-detail__meta-time {
+    font-weight: 600;
+    color: var(--ppms-text-muted, #475569);
+}
+.vm-detail__meta-sep {
+    margin: 0 0.35rem;
+    opacity: 0.65;
+}
+.vm-detail__meta-by {
+    color: var(--ppms-text, #0f172a);
 }
 .vm-detail__badges {
     display: flex;
@@ -872,11 +1114,11 @@ onMounted(async () => {
     background: #dbeafe;
     color: #1d4ed8;
 }
-.vm-detail__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
+.vm-empty {
+    cursor: help;
+    color: var(--ppms-muted, #94a3b8);
+    font-style: italic;
+    border-bottom: 1px dashed var(--ppms-border, #cbd5e1);
 }
 
 /* —— Tabs —— */
@@ -969,6 +1211,10 @@ onMounted(async () => {
 .vm-sec-title {
     margin: 0 0 0.75rem;
     font-size: 1.05rem;
+}
+.vm-sec-title--panel {
+    margin-top: 0;
+    margin-bottom: 0.65rem;
 }
 .vm-product-list {
     margin: 0.5rem 0 0;

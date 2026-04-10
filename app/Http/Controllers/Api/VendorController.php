@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\VendorKind;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Vendors\StoreVendorRequest;
 use App\Http\Requests\Vendors\UpdateVendorRequest;
@@ -52,6 +51,7 @@ class VendorController extends Controller
 
         $vendor = DB::transaction(function () use ($request) {
             $data = collect($request->validated())->except(['department_ids', 'products'])->all();
+            $data['updated_by_user_id'] = $request->user()?->id;
             $vendor = Vendor::query()->create($data);
             $this->metrics->recalculateCriterionScore($vendor);
             $vendor->save();
@@ -61,7 +61,7 @@ class VendorController extends Controller
             }
             $this->syncProducts($vendor, $request->input('products'));
 
-            return $vendor->fresh(['departments', 'products']);
+            return $vendor->fresh(['departments', 'products', 'updatedBy:id,name']);
         });
 
         VendorListCache::bump();
@@ -76,6 +76,7 @@ class VendorController extends Controller
         $vendor->load([
             'departments:id,name,code',
             'products',
+            'updatedBy:id,name',
             'reviews' => fn ($q) => $q->latest('created_at')->limit(50),
             'reviews.author:id,name,email',
             'contracts' => fn ($q) => $q->latest('updated_at')->limit(50),
@@ -94,6 +95,7 @@ class VendorController extends Controller
             if ($data !== []) {
                 $vendor->fill($data);
             }
+            $vendor->updated_by_user_id = $request->user()?->id;
             $this->metrics->recalculateCriterionScore($vendor);
             $vendor->save();
 
@@ -107,7 +109,7 @@ class VendorController extends Controller
 
         VendorListCache::bump();
 
-        return new VendorResource($vendor->fresh(['departments', 'products']));
+        return new VendorResource($vendor->fresh(['departments', 'products', 'updatedBy:id,name']));
     }
 
     public function destroy(Vendor $vendor): JsonResponse

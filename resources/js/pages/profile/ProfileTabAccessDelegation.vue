@@ -240,70 +240,6 @@
                         </table>
                     </div>
                 </div>
-
-                <div class="ppms-profile-access-card ppms-profile-access-card--tight ppms-profile-access-card--form">
-                    <h4 class="ppms-profile-access-h4">{{ t('profile.delegationAdd') }}</h4>
-                    <div class="ppms-profile-access-field">
-                        <label class="ppms-profile-access-lbl" for="del-search">{{ t('profile.delegationDelegatee') }}</label>
-                        <div ref="lookupEl" class="ppms-profile-access-lookup">
-                            <input
-                                id="del-search"
-                                v-model="searchQ"
-                                type="search"
-                                class="ppms-profile-access-input"
-                                autocomplete="off"
-                                :placeholder="t('profile.delegationSearchPlaceholder')"
-                                :aria-label="t('profile.delegationSearchPlaceholder')"
-                                :aria-expanded="pickCandidates.length > 0"
-                                aria-controls="del-pick-list"
-                                aria-autocomplete="list"
-                                @input="onSearchInput"
-                                @keydown.escape.prevent="closePick"
-                            />
-                            <ul
-                                v-if="pickCandidates.length"
-                                id="del-pick-list"
-                                class="ppms-profile-access-pick"
-                                role="listbox"
-                                :aria-label="t('profile.delegationSearchPlaceholder')"
-                            >
-                                <li v-for="u in pickCandidates" :key="u.id" role="option">
-                                    <button type="button" class="ppms-profile-access-pick-btn" @click="selectUser(u)">
-                                        <span class="ppms-profile-access-user">{{ u.name }}</span>
-                                        <span class="ppms-profile-access-email">{{ u.email }}</span>
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-                        <p v-if="picked" class="ppms-profile-access-picked">
-                            <span>{{ picked.name }} · {{ picked.email }}</span>
-                            <button type="button" class="ppms-profile-access-clear" @click="clearPick">{{ t('common.cancel') }}</button>
-                        </p>
-                    </div>
-                    <div class="ppms-profile-access-field-row">
-                        <div class="ppms-profile-access-field">
-                            <label class="ppms-profile-access-lbl" for="del-scope">{{ t('profile.delegationScope') }}</label>
-                            <select id="del-scope" v-model="formScope" class="ppms-profile-access-input">
-                                <option v-for="s in scopeOptions" :key="s" :value="s">{{ scopeLabel(s) }}</option>
-                            </select>
-                        </div>
-                        <div class="ppms-profile-access-field">
-                            <label class="ppms-profile-access-lbl" for="del-exp">{{ t('profile.delegationExpires') }}</label>
-                            <input id="del-exp" v-model="formExpires" type="date" class="ppms-profile-access-input" />
-                        </div>
-                    </div>
-                    <div class="ppms-profile-access-actions">
-                        <button
-                            type="button"
-                            class="ppms-pf-btn ppms-pf-btn--primary"
-                            :disabled="!picked || saving"
-                            :aria-busy="saving"
-                            @click="submitDelegation"
-                        >
-                            {{ t('common.save') }}
-                        </button>
-                    </div>
-                </div>
             </section>
         </div>
 
@@ -383,25 +319,15 @@ watch([canManageRbac, rbacLoading], () => {
 const listLoading = ref(true);
 const delErr = ref('');
 const items = ref([]);
-const scopeOptions = ref(['supplier_contracts', 'projects', 'all']);
 const revokingId = ref(null);
-const saving = ref(false);
 const currentUserId = ref(null);
 const canManageOthers = ref(false);
 const delegatorContext = ref(null);
 
-const searchQ = ref('');
-const pickCandidates = ref([]);
-const picked = ref(null);
-const formScope = ref('supplier_contracts');
-const formExpires = ref('');
-
 const delegSearchQ = ref('');
 const delegPickCandidates = ref([]);
 
-const lookupEl = ref(null);
 const delegLookupEl = ref(null);
-let searchTimer;
 let delegSearchTimer;
 
 async function loadRbac() {
@@ -494,10 +420,6 @@ async function saveDelegatorRole() {
     }
 }
 
-function effectiveDelegatorId() {
-    return delegatorContext.value?.id ?? currentUserId.value;
-}
-
 function roleBadgeClass(role) {
     const r = (role || '').toLowerCase();
     if (!r) {
@@ -551,37 +473,11 @@ async function loadDelegations() {
             roleOptions.value = data.role_options;
         }
         items.value = Array.isArray(data.items) ? data.items : [];
-        if (Array.isArray(data.scopes) && data.scopes.length) {
-            scopeOptions.value = data.scopes;
-            if (!data.scopes.includes(formScope.value)) {
-                formScope.value = data.scopes[0];
-            }
-        }
     } catch (e) {
         delErr.value = formatApiUserMessage(e, t('profile.delegationLoadError'));
     } finally {
         listLoading.value = false;
     }
-}
-
-function onSearchInput() {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(async () => {
-        const q = searchQ.value.trim();
-        if (q.length < 2) {
-            pickCandidates.value = [];
-
-            return;
-        }
-        try {
-            const { data } = await axios.get('/api/users/lookup', { params: { q } });
-            const raw = Array.isArray(data) ? data : [];
-            const ex = effectiveDelegatorId();
-            pickCandidates.value = raw.filter((u) => u.id !== ex);
-        } catch {
-            pickCandidates.value = [];
-        }
-    }, 280);
 }
 
 function onDelegatorSearchInput() {
@@ -602,23 +498,15 @@ function onDelegatorSearchInput() {
     }, 280);
 }
 
-function closePick() {
-    pickCandidates.value = [];
-}
-
 function closeDelegPick() {
     delegPickCandidates.value = [];
 }
 
 function onDocClick(e) {
     const elTarget = e.target;
-    if (lookupEl.value?.contains(elTarget)) {
-        return;
-    }
     if (delegLookupEl.value?.contains(elTarget)) {
         return;
     }
-    closePick();
     closeDelegPick();
 }
 
@@ -642,52 +530,6 @@ async function clearDelegatorContext() {
     delegPickCandidates.value = [];
     delegatorRoleReady.value = false;
     await loadDelegations();
-}
-
-function selectUser(u) {
-    picked.value = u;
-    pickCandidates.value = [];
-    searchQ.value = '';
-}
-
-function clearPick() {
-    picked.value = null;
-}
-
-async function submitDelegation() {
-    if (!picked.value) {
-        return;
-    }
-    const ok = await ppmsConfirm(t('profile.confirmDelegationAdd'), {
-        title: t('profile.delegationAdd'),
-        confirmLabel: t('common.save'),
-        cancelLabel: t('common.cancel'),
-    });
-    if (!ok) {
-        return;
-    }
-    saving.value = true;
-    try {
-        const payload = {
-            delegatee_id: picked.value.id,
-            scope: formScope.value,
-        };
-        if (formExpires.value) {
-            payload.expires_at = `${formExpires.value}T23:59:59`;
-        }
-        if (canManageOthers.value && delegatorContext.value) {
-            payload.delegator_id = delegatorContext.value.id;
-        }
-        await axios.post('/api/me/delegations', payload);
-        ppmsToastSuccess(t('profile.delegationSaved'));
-        picked.value = null;
-        formExpires.value = '';
-        await loadDelegations();
-    } catch (e) {
-        ppmsToastError(formatApiUserMessage(e, t('profile.saveError')));
-    } finally {
-        saving.value = false;
-    }
 }
 
 async function revoke(row) {
@@ -724,7 +566,6 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-    clearTimeout(searchTimer);
     clearTimeout(delegSearchTimer);
     document.removeEventListener('click', onDocClick, true);
 });

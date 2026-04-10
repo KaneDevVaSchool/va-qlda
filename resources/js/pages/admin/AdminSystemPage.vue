@@ -2,16 +2,6 @@
     <div class="ppms-page ppms-admin-sys">
         <div v-if="loadErr" class="ppms-admin-sys-alert ppms-admin-sys-alert--err" role="alert">{{ loadErr }}</div>
         <template v-else>
-            <header class="ppms-admin-sys-hero">
-                <div class="ppms-admin-sys-hero-row">
-                    <div class="ppms-admin-sys-kicker" aria-hidden="true">{{ t('admin.system.heroBadge') }}</div>
-                    <div class="ppms-admin-sys-hero-text">
-                        <h1 class="ppms-admin-sys-title">{{ t('admin.system.pageTitle') }}</h1>
-                        <p class="ppms-admin-sys-desc">{{ t('admin.system.pageDescription') }}</p>
-                    </div>
-                </div>
-            </header>
-
             <nav
                 class="ppms-admin-sys-tabs"
                 role="tablist"
@@ -73,7 +63,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="n in 6" :key="'skel-' + n">
+                                <tr v-for="n in 4" :key="'skel-' + n">
                                     <td><span class="ppms-admin-sys-skel ppms-admin-sys-skel--lg" /></td>
                                     <td><span class="ppms-admin-sys-skel ppms-admin-sys-skel--sm" /></td>
                                     <td><span class="ppms-admin-sys-skel ppms-admin-sys-skel--switch" /></td>
@@ -142,34 +132,7 @@
                 role="tabpanel"
                 :aria-labelledby="'ppms-admin-tab-access'"
             >
-                <div class="ppms-admin-sys-info-grid">
-                    <details class="ppms-admin-sys-details">
-                        <summary class="ppms-admin-sys-details-sum">
-                            <span class="ppms-admin-sys-details-sum-text">{{ t('admin.system.securityModelTitle') }}</span>
-                        </summary>
-                        <p class="ppms-admin-sys-details-lead">{{ t('admin.system.securityModelLead') }}</p>
-                        <ul class="ppms-admin-sys-bullets">
-                            <li>{{ t('admin.system.securityBullet1') }}</li>
-                            <li>{{ t('admin.system.securityBullet2') }}</li>
-                            <li>{{ t('admin.system.securityBullet3') }}</li>
-                            <li>{{ t('admin.system.securityBullet4') }}</li>
-                            <li>{{ t('admin.system.securityBullet5') }}</li>
-                        </ul>
-                    </details>
-                    <details class="ppms-admin-sys-details ppms-admin-sys-details--muted">
-                        <summary class="ppms-admin-sys-details-sum">
-                            <span class="ppms-admin-sys-details-sum-text">{{ t('admin.system.roadmapTitle') }}</span>
-                        </summary>
-                        <p class="ppms-admin-sys-details-lead">{{ t('admin.system.roadmapLead') }}</p>
-                        <ul class="ppms-admin-sys-bullets">
-                            <li>{{ t('admin.system.roadmapBullet1') }}</li>
-                            <li>{{ t('admin.system.roadmapBullet2') }}</li>
-                            <li>{{ t('admin.system.roadmapBullet3') }}</li>
-                            <li>{{ t('admin.system.roadmapBullet4') }}</li>
-                        </ul>
-                    </details>
-                </div>
-                <div class="ppms-admin-sys-access-shell">
+                <div class="ppms-admin-sys-access-shell ppms-admin-sys-access-shell--rbac">
                     <ProfileTabAccessDelegation embedded @refresh="onAccessRefresh" />
                 </div>
             </div>
@@ -307,54 +270,6 @@ onMounted(load);
     border: 1px solid rgba(220, 38, 38, 0.2);
 }
 
-.ppms-admin-sys-hero {
-    margin-bottom: 1.25rem;
-    padding: 1rem 1.1rem 1.15rem;
-    border-radius: 14px;
-    border: 1px solid var(--ppms-border-subtle, rgba(15, 23, 42, 0.08));
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.07) 0%, rgba(248, 250, 252, 0.98) 48%, rgba(255, 255, 255, 1) 100%);
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
-}
-
-.ppms-admin-sys-hero-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-}
-
-.ppms-admin-sys-kicker {
-    flex-shrink: 0;
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--ppms-primary, #2563eb);
-    padding: 0.35rem 0.55rem;
-    border-radius: 8px;
-    background: rgba(37, 99, 235, 0.12);
-    border: 1px solid rgba(37, 99, 235, 0.2);
-}
-
-.ppms-admin-sys-hero-text {
-    min-width: 0;
-}
-
-.ppms-admin-sys-title {
-    margin: 0 0 0.35rem;
-    font-size: clamp(1.25rem, 2.5vw, 1.55rem);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: var(--ppms-text, #0f172a);
-}
-
-.ppms-admin-sys-desc {
-    margin: 0;
-    font-size: 0.95rem;
-    line-height: 1.55;
-    color: var(--ppms-text-muted, #64748b);
-    max-width: 40rem;
-}
-
 .ppms-admin-sys-tabs {
     display: flex;
     flex-wrap: nowrap;
@@ -417,109 +332,7 @@ onMounted(load);
 }
 
 .ppms-admin-sys-panel--access {
-    padding-top: 0.15rem;
-}
-
-.ppms-admin-sys-info-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-}
-
-.ppms-admin-sys-details {
-    border-radius: 12px;
-    border: 1px solid var(--ppms-border-subtle, rgba(15, 23, 42, 0.1));
-    background: linear-gradient(165deg, rgba(37, 99, 235, 0.06), rgba(248, 250, 252, 0.95));
-    padding: 0.6rem 0.95rem 0.85rem;
-}
-
-.ppms-admin-sys-details--muted {
-    background: linear-gradient(165deg, rgba(100, 116, 139, 0.08), rgba(248, 250, 252, 0.96));
-}
-
-.ppms-admin-sys-details-sum {
-    cursor: pointer;
-    list-style: none;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    width: 100%;
-    padding: 0.15rem 0;
-    font: inherit;
-    text-align: left;
-}
-
-.ppms-admin-sys-details-sum::-webkit-details-marker {
-    display: none;
-}
-
-.ppms-admin-sys-details-sum-text {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--ppms-text, #0f172a);
-}
-
-.ppms-admin-sys-details-sum-text::before {
-    content: '';
-    width: 0.3rem;
-    height: 1.05rem;
-    border-radius: 2px;
-    background: var(--ppms-primary, #2563eb);
-    flex-shrink: 0;
-}
-
-.ppms-admin-sys-details--muted .ppms-admin-sys-details-sum-text::before {
-    background: #64748b;
-}
-
-.ppms-admin-sys-details-sum::after {
-    content: '';
-    width: 0.45rem;
-    height: 0.45rem;
-    border-right: 2px solid currentColor;
-    border-bottom: 2px solid currentColor;
-    transform: rotate(45deg);
-    transition: transform 0.2s ease;
-    flex-shrink: 0;
-    opacity: 0.55;
-    margin-top: -0.2rem;
-}
-
-.ppms-admin-sys-details[open] > .ppms-admin-sys-details-sum::after {
-    transform: rotate(225deg);
-    margin-top: 0.15rem;
-}
-
-.ppms-admin-sys-details[open] > .ppms-admin-sys-details-sum {
-    margin-bottom: 0.35rem;
-}
-
-.ppms-admin-sys-details-lead {
-    margin: 0 0 0.5rem;
-    font-size: 0.88rem;
-    line-height: 1.45;
-    color: var(--ppms-text-muted, #64748b);
-}
-
-.ppms-admin-sys-bullets {
-    margin: 0;
-    padding-left: 1.15rem;
-    font-size: 0.88rem;
-    line-height: 1.5;
-    color: var(--ppms-text, #334155);
-}
-
-.ppms-admin-sys-bullets li {
-    margin-bottom: 0.35rem;
-}
-
-.ppms-admin-sys-bullets li:last-child {
-    margin-bottom: 0;
+    padding-top: 0;
 }
 
 .ppms-admin-sys-access-shell {
@@ -534,6 +347,251 @@ onMounted(load);
 
 .ppms-admin-sys-access-shell :deep(.ppms-profile-access--embedded) {
     padding-bottom: 0.25rem;
+}
+
+/* RBAC tab: inner subtabs (permissions / delegation / org RBAC) */
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-subtabs) {
+    margin-bottom: 1.35rem;
+    padding: 0.45rem;
+    gap: 0.4rem;
+    border-radius: 12px;
+    background: linear-gradient(165deg, rgba(241, 245, 249, 0.95) 0%, rgba(226, 232, 240, 0.55) 100%);
+    border: 1px solid rgba(148, 163, 184, 0.38);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.75),
+        0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-subtab) {
+    min-height: 2.7rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #475569;
+    transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-subtab:hover) {
+    color: #0f172a;
+    background: rgba(255, 255, 255, 0.55);
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-subtab--active) {
+    background: #fff;
+    color: #1d4ed8;
+    font-weight: 700;
+    box-shadow:
+        0 1px 3px rgba(37, 99, 235, 0.15),
+        0 0 0 1px rgba(37, 99, 235, 0.12);
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-subtab:focus-visible) {
+    outline: 2px solid var(--ppms-focus, #2563eb);
+    outline-offset: 2px;
+}
+
+/* Field labels */
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-lbl),
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-rbac-admin-label) {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 0.45rem;
+}
+
+/* Inputs, search, selects */
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-input),
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-perm-input),
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-rbac-admin-input:not(textarea)) {
+    min-height: 2.75rem;
+    padding: 0.5rem 0.85rem;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.55);
+    background: #fff;
+    font-size: 0.92rem;
+    line-height: 1.35;
+    color: var(--ppms-text, #0f172a);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-input::placeholder),
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-perm-input::placeholder) {
+    color: #94a3b8;
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-input:hover:not(:disabled)),
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-perm-input:hover:not(:disabled)),
+.ppms-admin-sys-access-shell--rbac :deep(select.ppms-rbac-admin-input:hover:not(:disabled)),
+.ppms-admin-sys-access-shell--rbac :deep(select.ppms-profile-access-input:hover:not(:disabled)) {
+    border-color: rgba(100, 116, 139, 0.65);
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-input:focus),
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-input:focus-visible),
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-perm-input:focus),
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-perm-input:focus-visible),
+.ppms-admin-sys-access-shell--rbac :deep(select.ppms-rbac-admin-input:focus),
+.ppms-admin-sys-access-shell--rbac :deep(select.ppms-rbac-admin-input:focus-visible),
+.ppms-admin-sys-access-shell--rbac :deep(select.ppms-profile-access-input:focus),
+.ppms-admin-sys-access-shell--rbac :deep(select.ppms-profile-access-input:focus-visible) {
+    outline: none;
+    border-color: rgba(37, 99, 235, 0.65);
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.12),
+        0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(select.ppms-profile-access-input),
+.ppms-admin-sys-access-shell--rbac :deep(select.ppms-rbac-admin-input) {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 2.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 14px;
+    cursor: pointer;
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(select.ppms-profile-access-input:disabled),
+.ppms-admin-sys-access-shell--rbac :deep(select.ppms-rbac-admin-input:disabled) {
+    opacity: 0.65;
+    cursor: not-allowed;
+    background-color: #f8fafc;
+}
+
+/* Matrix search row */
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-perm-search) {
+    margin: 0.85rem 0 1rem;
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-rbac-admin-toolbar) {
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+@media (min-width: 640px) {
+    .ppms-admin-sys-access-shell--rbac :deep(.ppms-rbac-admin-toolbar) {
+        display: flex;
+        align-items: flex-end;
+    }
+
+    .ppms-admin-sys-access-shell--rbac :deep(.ppms-rbac-admin-field--grow) {
+        flex: 1 1 12rem;
+        min-width: 0;
+    }
+}
+
+/* Section cards */
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-card) {
+    border-radius: 12px;
+    border-color: rgba(148, 163, 184, 0.32);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-section) {
+    margin-bottom: 1.35rem;
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-h),
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-h4) {
+    color: #0f172a;
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-desc) {
+    color: #64748b;
+}
+
+/* Permission matrix tables */
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-table) {
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(226, 232, 240, 0.95);
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-table thead th) {
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.55rem 0.5rem;
+    border-bottom: 1px solid rgba(226, 232, 240, 1);
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-table tbody tr:nth-child(even)) {
+    background: rgba(248, 250, 252, 0.65);
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-table tbody tr:hover) {
+    background: rgba(37, 99, 235, 0.04);
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-table th[scope='row']) {
+    font-weight: 600;
+    color: #334155;
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-perm-cb) {
+    width: 1.15rem;
+    height: 1.15rem;
+    border-radius: 4px;
+    accent-color: #2563eb;
+}
+
+/* Org RBAC panel */
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-rbac-admin) {
+    border-radius: 14px;
+    border: 1px solid rgba(59, 130, 246, 0.22);
+    background: linear-gradient(165deg, rgba(239, 246, 255, 0.5) 0%, rgba(248, 250, 252, 0.98) 100%);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-rbac-admin-panel) {
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    background: rgba(255, 255, 255, 0.75);
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-rbac-admin-panel-head) {
+    gap: 0.65rem;
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-pick) {
+    border-radius: 10px;
+    border: 1px solid rgba(226, 232, 240, 1);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-pick-btn) {
+    border-radius: 8px;
+}
+
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-pf-btn--primary) {
+    border-radius: 10px;
+    min-height: 2.65rem;
+    padding-left: 1.15rem;
+    padding-right: 1.15rem;
+    font-weight: 600;
+}
+
+/* Read-only banner */
+.ppms-admin-sys-access-shell--rbac :deep(.ppms-profile-access-banner--readonly) {
+    border-radius: 12px;
 }
 
 .ppms-admin-sys-card {

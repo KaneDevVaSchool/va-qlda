@@ -42,6 +42,15 @@ class VendorResource extends JsonResource
             'review_rating_avg' => $this->review_rating_avg !== null ? (string) $this->review_rating_avg : null,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
+            'updated_by' => $this->when(
+                $this->relationLoaded('updatedBy'),
+                fn () => $this->updatedBy === null
+                    ? null
+                    : [
+                        'id' => $this->updatedBy->id,
+                        'name' => $this->updatedBy->name,
+                    ]
+            ),
             'deleted_at' => $this->deleted_at?->toIso8601String(),
             'departments' => DepartmentResource::collection($this->whenLoaded('departments')),
             'products' => VendorProductResource::collection($this->whenLoaded('products')),
