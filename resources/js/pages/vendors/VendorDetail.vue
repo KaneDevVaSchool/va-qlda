@@ -23,6 +23,78 @@
                 class="ppms-card ppms-mt vm-panel vm-panel--full"
             >
                 <h2 class="vm-sec-title vm-sec-title--main">{{ t('vendors.tabOverview') }}</h2>
+                <div class="vm-overview-surface">
+                    <div v-if="overviewFeaturesList.length || overviewServicesList.length" class="vm-overview-grid">
+                        <div v-if="overviewFeaturesList.length" class="vm-overview-card vm-overview-card--features">
+                            <h3 class="vm-overview-card__title">{{ t('vendors.overviewFeaturesTitle') }}</h3>
+                            <ul class="vm-overview-card__list">
+                                <li v-for="(item, idx) in overviewFeaturesList" :key="'ov-f-' + idx">{{ item }}</li>
+                            </ul>
+                        </div>
+                        <div v-if="overviewServicesList.length" class="vm-overview-card vm-overview-card--services">
+                            <h3 class="vm-overview-card__title">{{ t('vendors.overviewServicesTitle') }}</h3>
+                            <ul class="vm-overview-card__list">
+                                <li v-for="(item, idx) in overviewServicesList" :key="'ov-s-' + idx">{{ item }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div
+                        v-if="normalizeHttpUrl(vendor.website) || vendor.kind !== 'research'"
+                        class="vm-overview-quicklinks"
+                    >
+                        <span class="vm-overview-quicklinks__label">{{ t('vendors.overviewQuickLinks') }}</span>
+                        <div class="vm-overview-quicklinks__row">
+                            <a
+                                v-if="normalizeHttpUrl(vendor.website)"
+                                :href="normalizeHttpUrl(vendor.website)"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="vm-overview-quicklinks__pill"
+                                @click.stop
+                                >{{ t('vendors.linkWebsite') }}</a
+                            >
+                            <a
+                                v-if="normalizeHttpUrl(vendor.website)"
+                                :href="vendorPathUrl(vendor.website, '/pricing')"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="vm-overview-quicklinks__pill"
+                                @click.stop
+                                >{{ t('vendors.linkPricing') }}</a
+                            >
+                            <a
+                                v-if="normalizeHttpUrl(vendor.website)"
+                                :href="vendorPathUrl(vendor.website, '/demo')"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="vm-overview-quicklinks__pill"
+                                @click.stop
+                                >{{ t('vendors.linkDemo') }}</a
+                            >
+                            <a
+                                v-if="normalizeHttpUrl(vendor.website)"
+                                :href="vendorPathUrl(vendor.website, '/docs')"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="vm-overview-quicklinks__pill"
+                                @click.stop
+                                >{{ t('vendors.linkDocs') }}</a
+                            >
+                            <button
+                                v-if="vendor.kind !== 'research'"
+                                type="button"
+                                class="vm-overview-quicklinks__pill vm-overview-quicklinks__pill--btn"
+                                @click.stop="scrollToReviews"
+                            >
+                                {{ t('vendors.linkReview') }}
+                            </button>
+                        </div>
+                    </div>
+                    <div v-if="vendor.pros && String(vendor.pros).trim()" class="vm-overview-note">
+                        <span class="vm-overview-note__k">{{ t('vendors.overviewNoteLabel') }}</span>
+                        <p class="vm-overview-note__txt">{{ vendor.pros }}</p>
+                    </div>
+                </div>
                 <table class="vm-kv vm-kv--comfort" :class="{ 'vm-kv--editing': isEditing }">
                     <tbody>
                         <tr>
@@ -160,6 +232,65 @@
                                 </template>
                             </td>
                         </tr>
+                        <template v-if="vendor.kind === 'research'">
+                            <tr>
+                                <th scope="row">{{ t('vendors.mainProducts') }}</th>
+                                <td :class="{ 'vm-pre': !isEditing }">
+                                    <template v-if="isEditing">
+                                        <textarea
+                                            id="vm-r-mp"
+                                            v-model="edit.main_products"
+                                            rows="3"
+                                            class="ppms-input vm-kv__control vm-kv__control--textarea"
+                                            :placeholder="t('vendors.detailMainProductsPlaceholder')"
+                                            :title="t('vendors.detailMainProductsHint')"
+                                        />
+                                    </template>
+                                    <template v-else>
+                                        <template v-if="!isEmptyText(vendor.main_products)">{{ vendor.main_products }}</template>
+                                        <span v-else class="vm-empty" :title="t('vendors.detailMainProductsHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                    </template>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">{{ t('vendors.servicesOffered') }}</th>
+                                <td :class="{ 'vm-pre': !isEditing }">
+                                    <template v-if="isEditing">
+                                        <textarea
+                                            id="vm-r-sv"
+                                            v-model="edit.services_offered"
+                                            rows="3"
+                                            class="ppms-input vm-kv__control vm-kv__control--textarea"
+                                            :placeholder="t('vendors.detailServicesOfferedPlaceholder')"
+                                            :title="t('vendors.detailServicesOfferedHint')"
+                                        />
+                                    </template>
+                                    <template v-else>
+                                        <template v-if="!isEmptyText(vendor.services_offered)">{{ vendor.services_offered }}</template>
+                                        <span v-else class="vm-empty" :title="t('vendors.detailServicesOfferedHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                    </template>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">{{ t('vendors.pros') }}</th>
+                                <td :class="{ 'vm-pre': !isEditing }">
+                                    <template v-if="isEditing">
+                                        <textarea
+                                            id="vm-r-pros"
+                                            v-model="edit.pros"
+                                            rows="3"
+                                            class="ppms-input vm-kv__control vm-kv__control--textarea"
+                                            :placeholder="t('vendors.detailProsPlaceholder')"
+                                            :title="t('vendors.detailProsPlaceholder')"
+                                        />
+                                    </template>
+                                    <template v-else>
+                                        <template v-if="!isEmptyText(vendor.pros)">{{ vendor.pros }}</template>
+                                        <span v-else class="vm-empty" :title="t('vendors.detailProsPlaceholder')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                    </template>
+                                </td>
+                            </tr>
+                        </template>
                         <template v-if="vendor.kind !== 'research'">
                         <tr class="vm-kv__group">
                             <th colspan="2" class="vm-kv__group-title">{{ t('vendors.tabBusiness') }}</th>
@@ -198,6 +329,25 @@
                                 <template v-else>
                                     <template v-if="!isEmptyText(vendor.main_products)">{{ vendor.main_products }}</template>
                                     <span v-else class="vm-empty" :title="t('vendors.detailMainProductsHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ t('vendors.servicesOffered') }}</th>
+                            <td :class="{ 'vm-pre': !isEditing }">
+                                <template v-if="isEditing">
+                                    <textarea
+                                        id="vm-b-sv"
+                                        v-model="edit.services_offered"
+                                        rows="3"
+                                        class="ppms-input vm-kv__control vm-kv__control--textarea"
+                                        :placeholder="t('vendors.detailServicesOfferedPlaceholder')"
+                                        :title="t('vendors.detailServicesOfferedHint')"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyText(vendor.services_offered)">{{ vendor.services_offered }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailServicesOfferedHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
                                 </template>
                             </td>
                         </tr>
@@ -690,6 +840,7 @@ const OVERVIEW_FIELD_KEYS = [
 const BUSINESS_FIELD_KEYS = [
     'industry',
     'main_products',
+    'services_offered',
     'contract_value',
     'estimated_cost',
     'reference_price',
@@ -744,6 +895,53 @@ const deptSelectionSummary = computed(() => {
     if (names.length <= 3) return names.join(', ');
     return t('vendors.deptMultiNSelected', { n: names.length });
 });
+
+const RESEARCH_PATCH_KEYS = ['main_products', 'services_offered', 'pros'];
+
+function splitVendorList(text) {
+    if (text === null || text === undefined) return [];
+    const s = String(text).trim();
+    if (!s) return [];
+    return s
+        .split(/[\n,;|]+/)
+        .map((x) => x.trim())
+        .filter(Boolean);
+}
+
+const overviewFeaturesList = computed(() => splitVendorList(vendor.value?.main_products));
+const overviewServicesList = computed(() => splitVendorList(vendor.value?.services_offered));
+
+function normalizeHttpUrl(url) {
+    if (!url || typeof url !== 'string') {
+        return '';
+    }
+    const u = url.trim();
+    if (!u) {
+        return '';
+    }
+    return /^https?:\/\//i.test(u) ? u : `https://${u}`;
+}
+
+function vendorOriginBase(url) {
+    try {
+        return new URL(normalizeHttpUrl(url)).origin;
+    } catch {
+        return '';
+    }
+}
+
+function vendorPathUrl(url, path) {
+    const o = vendorOriginBase(url);
+    if (!o) {
+        return '#';
+    }
+    const p = path.startsWith('/') ? path : `/${path}`;
+    return `${o}${p}`;
+}
+
+function scrollToReviews() {
+    document.getElementById('vm-panel-reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 function kindLabel(k) {
     return k === 'research' ? t('vendors.kindResearch') : t('vendors.kindActive');
@@ -835,7 +1033,7 @@ function timelinePhaseLabel(ph) {
 function snapshotFromVendor(v) {
     const keys = [
         'legal_name', 'country', 'website', 'tax_code', 'contact_info', 'internal_note', 'risk_level',
-        'industry', 'main_products', 'contract_value', 'estimated_cost', 'reference_price',
+        'industry', 'main_products', 'services_offered', 'contract_value', 'estimated_cost', 'reference_price',
         'research_source', 'research_note', 'pros', 'cons', 'fit_score',
         'score_price', 'score_quality', 'score_sla', 'score_support',
     ];
@@ -909,7 +1107,11 @@ async function saveVendor() {
         for (const k of OVERVIEW_FIELD_KEYS) {
             body[k] = edit[k];
         }
-        if (vendor.value?.kind !== 'research') {
+        if (vendor.value?.kind === 'research') {
+            for (const k of RESEARCH_PATCH_KEYS) {
+                body[k] = edit[k];
+            }
+        } else {
             for (const k of BUSINESS_FIELD_KEYS) {
                 body[k] = edit[k];
             }
@@ -1865,6 +2067,144 @@ textarea.vm-field__control {
     border: 1px solid #c7d2fe;
     padding: 0.2rem 0.55rem;
     font-weight: 500;
+}
+
+/* —— Overview: features / services / quick links / note —— */
+.vm-overview-surface {
+    margin: 0 0 1.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.vm-overview-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 720px) {
+    .vm-overview-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.vm-overview-card {
+    border-radius: 14px;
+    padding: 1rem 1.15rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: linear-gradient(165deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+}
+
+.vm-overview-card--features {
+    border-left: 4px solid #3b82f6;
+}
+
+.vm-overview-card--services {
+    border-left: 4px solid #8b5cf6;
+}
+
+.vm-overview-card__title {
+    margin: 0 0 0.65rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.vm-overview-card__list {
+    margin: 0;
+    padding-left: 1.2rem;
+    color: #1e293b;
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+.vm-overview-card__list li {
+    margin-bottom: 0.35rem;
+}
+
+.vm-overview-card__list li:last-child {
+    margin-bottom: 0;
+}
+
+.vm-overview-quicklinks {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.85rem 1rem;
+    border-radius: 14px;
+    border: 1px solid rgba(15, 23, 42, 0.07);
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.vm-overview-quicklinks__label {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.vm-overview-quicklinks__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: center;
+}
+
+.vm-overview-quicklinks__pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #2563eb;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.vm-overview-quicklinks__pill:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.12);
+}
+
+.vm-overview-quicklinks__pill--btn {
+    font: inherit;
+    cursor: pointer;
+    color: #4f46e5;
+}
+
+.vm-overview-note {
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    border: 1px solid #fde68a;
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 45%, #fff 100%);
+}
+
+.vm-overview-note__k {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #92400e;
+    margin-bottom: 0.35rem;
+}
+
+.vm-overview-note__txt {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #78350f;
+    white-space: pre-wrap;
 }
 
 @media (max-width: 640px) {

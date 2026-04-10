@@ -26,6 +26,7 @@ class Vendor extends Model
         'contact_info',
         'industry',
         'main_products',
+        'services_offered',
         'contract_value',
         'estimated_cost',
         'reference_price',
@@ -96,6 +97,12 @@ class Vendor extends Model
         return $query->where('kind', $value);
     }
 
+    /** Alias for {@see scopeSearchAll} (index `q` filter). */
+    public function scopeSearchName(Builder $query, ?string $term): Builder
+    {
+        return $query->searchAll($term);
+    }
+
     /**
      * Full-text style match on vendor fields and product lines (param `q` on index API).
      */
@@ -118,6 +125,7 @@ class Vendor extends Model
                 ->orWhere('contact_info', 'like', $like)
                 ->orWhere('internal_note', 'like', $like)
                 ->orWhere('main_products', 'like', $like)
+                ->orWhere('services_offered', 'like', $like)
                 ->orWhere('research_note', 'like', $like)
                 ->orWhere('pros', 'like', $like)
                 ->orWhere('cons', 'like', $like)

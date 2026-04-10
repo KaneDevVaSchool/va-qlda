@@ -24,6 +24,7 @@ class VendorResource extends JsonResource
             'contact_info' => $this->contact_info,
             'industry' => $this->industry,
             'main_products' => $this->main_products,
+            'services_offered' => $this->services_offered,
             'contract_value' => $this->contract_value !== null ? (string) $this->contract_value : null,
             'estimated_cost' => $this->estimated_cost !== null ? (string) $this->estimated_cost : null,
             'reference_price' => $this->reference_price !== null ? (string) $this->reference_price : null,

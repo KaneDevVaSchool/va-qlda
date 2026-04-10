@@ -53,6 +53,7 @@ class StoreVendorRequest extends FormRequest
             'contact_info' => ['nullable', 'string'],
             'industry' => ['nullable', 'string', 'max:255'],
             'main_products' => ['nullable', 'string'],
+            'services_offered' => ['nullable', 'string'],
             'contract_value' => ['nullable', 'numeric', 'min:0'],
             'estimated_cost' => ['nullable', 'numeric', 'min:0'],
             'reference_price' => ['nullable', 'numeric', 'min:0'],
