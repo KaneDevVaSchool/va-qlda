@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Vendors\StoreVendorReviewRequest;
 use App\Http\Resources\VendorReviewResource;
+use App\Models\Vendor;
 use App\Models\VendorReview;
 use App\Services\Vendors\VendorMetricsService;
 use App\Support\Vendors\VendorListCache;
@@ -21,11 +22,9 @@ class VendorReviewController extends Controller
     {
         $this->authorize('update', $vendor);
 
-        $review = $vendor->reviews()->create([
-            'user_id' => $request->user()->id,
-            'rating' => $request->validated('rating'),
-            'body' => $request->validated('body'),
-        ]);
+        $data = $request->validated();
+        $data['user_id'] = $request->user()->id;
+        $review = $vendor->reviews()->create($data);
 
         $review->load('author:id,name,email');
 

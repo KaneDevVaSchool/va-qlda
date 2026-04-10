@@ -71,6 +71,18 @@
                         </button>
                     </div>
                 </div>
+                <div v-if="canEditProject && projects.length && viewMode === 'list'" class="ppms-pl-task-hint">
+                    <p class="ppms-pl-task-hint__title">{{ t('projects.taskQuickHintTitle') }}</p>
+                    <p class="ppms-pl-task-hint__lead">{{ t('projects.taskQuickHintLead') }}</p>
+                    <div class="ppms-pl-task-hint__rows">
+                        <div v-for="(ex, ei) in taskExampleRows" :key="'tex-' + ei" class="ppms-pl-task-hint__row">
+                            <button type="button" class="ppms-pl-task-hint__btn" @click="onTaskExampleClick(ex)">
+                                {{ t('projects.taskQuickEnter') }}
+                            </button>
+                            <span class="ppms-pl-task-hint__ex">{{ ex }}</span>
+                        </div>
+                    </div>
+                </div>
                 <div class="ppms-table-scroll ppms-table-scroll--sticky-head ppms-project-list-table-wrap">
                     <table class="ppms-table ppms-table--project-staging">
                     <caption class="ppms-sr-only">
@@ -129,7 +141,12 @@
                                 </td>
                             </tr>
                             <template v-if="!isCustomerGroupCollapsed(group.key)">
-                                <tr v-for="p in group.projects" :key="p.id" class="ppms-pl-data-row">
+                                <tr
+                                    v-for="p in group.projects"
+                                    :key="p.id"
+                                    class="ppms-pl-data-row"
+                                    :class="{ 'ppms-pl-data-row--inline': isInlineEditing(p) }"
+                                >
                                 <td v-if="canBulk" class="ppms-td-check">
                                     <input v-model="selectedProjectIds" type="checkbox" :value="p.id" />
                                 </td>
@@ -151,8 +168,28 @@
                                         <span class="ppms-pl-username">{{ p.owner?.name || '—' }}</span>
                                     </button>
                                 </td>
-                                <td v-if="colVis('code')" class="ppms-td-code ppms-muted">{{ projectCode(p) }}</td>
+                                <td v-if="colVis('code')" class="ppms-td-code ppms-muted">
+                                    <input
+                                        v-if="canEditProject && isInlineEditing(p)"
+                                        v-model="inlineDraft.code"
+                                        type="text"
+                                        class="ppms-input ppms-pl-inline-input"
+                                        :placeholder="t('projects.inlinePlaceholderCode')"
+                                        @click.stop
+                                    />
+                                    <template v-else>{{ projectCode(p) }}</template>
+                                </td>
                                 <td v-if="colVis('name')" class="ppms-td-name">
+                                    <template v-if="canEditProject && isInlineEditing(p)">
+                                        <input
+                                            v-model="inlineDraft.name"
+                                            type="text"
+                                            class="ppms-input ppms-pl-inline-input"
+                                            :placeholder="t('projects.inlinePlaceholderName')"
+                                            @click.stop
+                                        />
+                                    </template>
+                                    <template v-else>
                                     <router-link class="ppms-pl-name-link" :to="'/projects/' + p.id">{{ p.name }}</router-link>
                                     <div class="ppms-pl-name-labels-row">
                                         <div v-if="projectLabelList(p).length" class="ppms-pl-name-labels">
@@ -193,10 +230,22 @@
                                             </button>
                                         </template>
                                     </div>
+                                    </template>
                                 </td>
                                 <td v-if="colVis('team')" class="ppms-td-team">
+                                    <select
+                                        v-if="canEditProject && isInlineEditing(p)"
+                                        v-model="inlineDraft.team_id"
+                                        class="ppms-input ppms-pl-inline-select"
+                                        @click.stop
+                                    >
+                                        <option value="">{{ t('projects.inlineTeamUnset') }}</option>
+                                        <option v-for="tm in teamOptions" :key="'itm-' + tm.id" :value="String(tm.id)">{{ tm.name }}</option>
+                                    </select>
+                                    <template v-else>
                                     <span v-if="p.team?.name" class="ppms-pl-team-pill" :title="p.team.name">{{ p.team.name }}</span>
                                     <span v-else class="ppms-muted">—</span>
+                                    </template>
                                 </td>
                                 <td v-if="colVis('participants')" class="ppms-td-participants">
                                     <div class="ppms-pl-participants">
@@ -254,26 +303,97 @@
                                 </td>
                                 <td v-if="colVis('tasks')" class="ppms-td-num ppms-td-tasks">{{ p.tasks_count ?? '—' }}</td>
                                 <td v-if="colVis('start')" class="ppms-td-date">
+                                    <input
+                                        v-if="canEditProject && isInlineEditing(p)"
+                                        v-model="inlineDraft.start_date"
+                                        type="date"
+                                        class="ppms-input ppms-pl-inline-date"
+                                        @click.stop
+                                    />
+                                    <template v-else>
                                     <span v-if="!p.start_date" class="ppms-muted">{{ t('projects.startNone') }}</span>
                                     <span v-else>{{ formatDateIso(p.start_date) }}</span>
+                                    </template>
                                 </td>
                                 <td v-if="colVis('actualStart')" class="ppms-td-date">
+                                    <input
+                                        v-if="canEditProject && isInlineEditing(p)"
+                                        v-model="inlineDraft.actual_start_date"
+                                        type="date"
+                                        class="ppms-input ppms-pl-inline-date"
+                                        @click.stop
+                                    />
+                                    <template v-else>
                                     <span v-if="!p.actual_start_date" class="ppms-muted">{{ t('projects.actualStartNone') }}</span>
                                     <span v-else>{{ formatDateIso(p.actual_start_date) }}</span>
+                                    </template>
                                 </td>
                                 <td v-if="colVis('end')" class="ppms-td-date">
+                                    <input
+                                        v-if="canEditProject && isInlineEditing(p)"
+                                        v-model="inlineDraft.deadline"
+                                        type="date"
+                                        class="ppms-input ppms-pl-inline-date"
+                                        @click.stop
+                                    />
+                                    <template v-else>
                                     <span v-if="!p.deadline" class="ppms-muted">{{ t('projects.deadlineNone') }}</span>
                                     <span v-else class="ppms-deadline" :class="deadlineTone(p.deadline).cls">
                                         {{ formatDeadline(p.deadline) }}
                                     </span>
+                                    </template>
                                 </td>
                                 <td v-if="colVis('status')" class="ppms-td-status">
-                                    <span class="ppms-status-pill" :class="statusPillClass(p.status)">{{
+                                    <div v-if="canEditProject && isInlineEditing(p)" class="ppms-pl-inline-type-status">
+                                        <select v-model="inlineDraft.type" class="ppms-input ppms-pl-inline-select ppms-pl-inline-select--sm" @click.stop>
+                                            <option value="maintenance">{{ t('projects.typeShort.maintenance') }}</option>
+                                            <option value="delivery">{{ t('projects.typeShort.delivery') }}</option>
+                                            <option value="rnd">{{ t('projects.typeShort.rnd') }}</option>
+                                        </select>
+                                        <select v-model="inlineDraft.phase" class="ppms-input ppms-pl-inline-select ppms-pl-inline-select--sm" @click.stop>
+                                            <option value="planning">{{ t('projects.phase.planning') }}</option>
+                                            <option value="development">{{ t('projects.phase.development') }}</option>
+                                            <option value="uat">{{ t('projects.phase.uat') }}</option>
+                                            <option value="done">{{ t('projects.phase.done') }}</option>
+                                            <option value="maintenance">{{ t('projects.phase.maintenance') }}</option>
+                                            <option value="rnd">{{ t('projects.phase.rnd') }}</option>
+                                        </select>
+                                        <select v-model="inlineDraft.status" class="ppms-input ppms-pl-inline-select ppms-pl-inline-select--sm" @click.stop>
+                                            <option value="on_track">{{ t('projects.status.on_track') }}</option>
+                                            <option value="at_risk">{{ t('projects.status.at_risk') }}</option>
+                                            <option value="delayed">{{ t('projects.status.delayed') }}</option>
+                                            <option value="blocked">{{ t('projects.status.blocked') }}</option>
+                                        </select>
+                                    </div>
+                                    <span v-else class="ppms-status-pill" :class="statusPillClass(p.status)">{{
                                         t(`projects.status.${p.status}`)
                                     }}</span>
                                 </td>
                                 <td v-if="colVis('actions')" class="ppms-td-actions">
                                     <div class="ppms-pl-actions-cell">
+                                        <template v-if="canEditProject && isInlineEditing(p)">
+                                            <button
+                                                type="button"
+                                                class="ppms-btn-ghost ppms-pl-page-btn ppms-pl-inline-ok"
+                                                :disabled="inlineSaving"
+                                                :title="t('projects.inlineSave')"
+                                                :aria-label="t('projects.inlineSave')"
+                                                @click.stop="saveInlineEdit"
+                                            >
+                                                ✓
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="ppms-btn-ghost ppms-pl-page-btn ppms-pl-inline-cancel"
+                                                :disabled="inlineSaving"
+                                                :title="t('projects.inlineCancel')"
+                                                :aria-label="t('projects.inlineCancel')"
+                                                @click.stop="cancelInlineEdit"
+                                            >
+                                                ✕
+                                            </button>
+                                        </template>
+                                        <template v-else>
                                         <router-link
                                             :to="'/projects/' + p.id"
                                             class="ppms-btn-ghost ppms-pl-page-btn"
@@ -297,6 +417,16 @@
                                             v-if="canEditProject"
                                             type="button"
                                             class="ppms-btn-ghost ppms-pl-page-btn"
+                                            :title="t('projects.inlineOpen')"
+                                            :aria-label="t('projects.inlineOpen')"
+                                            @click.stop="startInlineEdit(p)"
+                                        >
+                                            <span class="ppms-pl-inline-ico" aria-hidden="true">⚡</span>
+                                        </button>
+                                        <button
+                                            v-if="canEditProject"
+                                            type="button"
+                                            class="ppms-btn-ghost ppms-pl-page-btn"
                                             :title="t('common.edit')"
                                             :aria-label="t('common.edit')"
                                             @click.stop="openEditModal(p)"
@@ -315,6 +445,7 @@
                                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                                             </svg>
                                         </button>
+                                        </template>
                                     </div>
                                 </td>
                                 </tr>
@@ -564,6 +695,94 @@
     </main>
 </template>
 
+<style scoped>
+.ppms-pl-task-hint {
+    margin: 0.75rem 0 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    border: 1px dashed var(--ppms-border, #cbd5e1);
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.65) 100%);
+}
+.ppms-pl-task-hint__title {
+    margin: 0 0 0.35rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ppms-muted, #64748b);
+}
+.ppms-pl-task-hint__lead {
+    margin: 0 0 0.65rem;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: var(--ppms-text, #0f172a);
+}
+.ppms-pl-task-hint__rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+.ppms-pl-task-hint__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+}
+.ppms-pl-task-hint__btn {
+    flex-shrink: 0;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1px solid var(--ppms-border, #e2e8f0);
+    background: #fff;
+    color: var(--ppms-text, #0f172a);
+    cursor: pointer;
+}
+.ppms-pl-task-hint__btn:hover {
+    border-color: #c7d2fe;
+    background: #eef2ff;
+}
+.ppms-pl-task-hint__ex {
+    font-size: 0.8125rem;
+    color: var(--ppms-muted, #64748b);
+}
+.ppms-pl-data-row--inline {
+    background: rgba(238, 242, 255, 0.35);
+}
+.ppms-pl-inline-input,
+.ppms-pl-inline-select,
+.ppms-pl-inline-date {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    font-size: 0.8125rem;
+}
+.ppms-pl-inline-type-status {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 8rem;
+}
+.ppms-pl-inline-select--sm {
+    font-size: 0.75rem;
+    min-height: 2rem;
+}
+.ppms-pl-inline-ok {
+    color: #047857 !important;
+    font-weight: 700;
+}
+.ppms-pl-inline-cancel {
+    color: #b91c1c !important;
+    font-weight: 700;
+}
+.ppms-pl-inline-ico {
+    font-size: 1rem;
+    line-height: 1;
+}
+</style>
+
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, unref, watch } from 'vue';
 import axios from 'axios';
@@ -617,6 +836,21 @@ const selectedProjectIds = ref([]);
 
 const teamOptions = ref([]);
 const contractLookups = ref({ departments: [], blocks: [], vendors: [] });
+
+const inlineEditingId = ref(null);
+const inlineSaving = ref(false);
+const inlineDraft = reactive({
+    id: null,
+    code: '',
+    name: '',
+    type: 'delivery',
+    phase: 'planning',
+    status: 'on_track',
+    team_id: '',
+    start_date: '',
+    actual_start_date: '',
+    deadline: '',
+});
 
 const filters = reactive({
     search: '',
@@ -728,6 +962,58 @@ function dateToInputValue(d) {
     }
 
     return '';
+}
+
+function startInlineEdit(p) {
+    if (inlineEditingId.value && inlineEditingId.value !== p.id) {
+        cancelInlineEdit();
+    }
+    inlineEditingId.value = p.id;
+    inlineDraft.id = p.id;
+    inlineDraft.code = p.code || '';
+    inlineDraft.name = p.name || '';
+    inlineDraft.type = p.type || 'delivery';
+    inlineDraft.phase = p.phase || 'planning';
+    inlineDraft.status = p.status || 'on_track';
+    inlineDraft.team_id = p.team_id != null ? String(p.team_id) : '';
+    inlineDraft.start_date = dateToInputValue(p.start_date);
+    inlineDraft.actual_start_date = dateToInputValue(p.actual_start_date);
+    inlineDraft.deadline = dateToInputValue(p.deadline);
+}
+
+function cancelInlineEdit() {
+    inlineEditingId.value = null;
+    inlineSaving.value = false;
+}
+
+async function saveInlineEdit() {
+    if (!inlineDraft.id) {
+        return;
+    }
+    if (!(await ppmsConfirm(t('projects.inlineEditConfirm'), { title: t('projects.inlineEditTitle') }))) {
+        return;
+    }
+    inlineSaving.value = true;
+    try {
+        await axios.patch(`/api/projects/${inlineDraft.id}`, {
+            name: inlineDraft.name,
+            code: inlineDraft.code || null,
+            type: inlineDraft.type,
+            phase: inlineDraft.phase,
+            status: inlineDraft.status,
+            team_id: inlineDraft.team_id ? Number(inlineDraft.team_id) : null,
+            start_date: inlineDraft.start_date || null,
+            actual_start_date: inlineDraft.actual_start_date || null,
+            deadline: inlineDraft.deadline || null,
+        });
+        ppmsToastSuccess(t('projects.inlineEditOk'));
+        cancelInlineEdit();
+        await load();
+    } catch (e) {
+        ppmsToastError(formatApiUserMessage(e, t('projects.inlineEditErr')));
+    } finally {
+        inlineSaving.value = false;
+    }
 }
 
 function suppliersArrayToText(suppliers) {
@@ -852,6 +1138,16 @@ const canEditProject = computed(() => {
 
     return r && ['admin', 'pm', 'tl'].includes(r);
 });
+
+const taskExampleRows = computed(() => [t('projects.taskExample1'), t('projects.taskExample2'), t('projects.taskExample3')]);
+
+function isInlineEditing(p) {
+    return inlineEditingId.value === p.id;
+}
+
+function onTaskExampleClick(ex) {
+    ppmsToastSuccess(t('projects.taskExampleToast', { ex }));
+}
 
 const canBulkDelete = computed(() => {
     const r = currentUser.value?.role;

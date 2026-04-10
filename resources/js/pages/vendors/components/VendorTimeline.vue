@@ -126,9 +126,9 @@ const grouped = computed(() => {
 }
 .vm-timeline__group-title {
     margin: 0 0 0.5rem;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--ppms-muted, #5c6470);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--ppms-muted, #64748b);
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
@@ -161,16 +161,20 @@ const grouped = computed(() => {
 }
 .vm-timeline__time {
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.875rem;
+    color: var(--ppms-text, #0f172a);
 }
 .vm-timeline__actor {
-    font-size: 0.9rem;
-    color: var(--ppms-muted, #5c6470);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--ppms-muted, #64748b);
 }
 .vm-timeline__note {
     margin-top: 0.35rem;
     white-space: pre-wrap;
-    font-size: 0.92rem;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--ppms-text, #0f172a);
 }
 .vm-timeline__badge {
     display: inline-block;

@@ -21,6 +21,7 @@
 
         <div v-if="!rbacLoading" class="ppms-profile-access-subtabs" role="tablist" :aria-label="t('profile.accessTabTitle')">
             <button
+                v-if="!hidePermissionsSubtab"
                 type="button"
                 role="tab"
                 class="ppms-profile-access-subtab"
@@ -53,7 +54,7 @@
             </button>
         </div>
 
-        <div v-show="activeSubTab === 'permissions'" class="ppms-profile-access-panel" role="tabpanel">
+        <div v-show="!hidePermissionsSubtab && activeSubTab === 'permissions'" class="ppms-profile-access-panel" role="tabpanel">
             <section class="ppms-profile-access-section" :aria-labelledby="'acc-role-' + uid">
                 <h3 :id="'acc-role-' + uid" class="ppms-profile-access-h">{{ t('profile.accessRoleTitle') }}</h3>
                 <p class="ppms-profile-access-desc">{{ t('profile.accessRoleLead') }}</p>
@@ -260,16 +261,18 @@ import ProfileTabPermissions from './ProfileTabPermissions.vue';
 
 const emit = defineEmits(['refresh']);
 
-defineProps({
+const props = defineProps({
     /** Hide page heading when embedded in System admin */
     embedded: { type: Boolean, default: false },
+    /** Hide «Permissions» sub-tab (e.g. admin page focuses on delegation & RBAC) */
+    hidePermissionsSubtab: { type: Boolean, default: false },
 });
 
 const { t, locale } = useI18n();
 
 const uid = `u${Math.random().toString(36).slice(2, 9)}`;
 
-const activeSubTab = ref('permissions');
+const activeSubTab = ref(props.hidePermissionsSubtab ? 'delegation' : 'permissions');
 
 const rbacLoading = ref(true);
 const myRbacRole = ref('');
@@ -312,7 +315,7 @@ const showDelegatorRoleBlock = computed(
 
 watch([canManageRbac, rbacLoading], () => {
     if (activeSubTab.value === 'admin' && (!canManageRbac.value || rbacLoading.value)) {
-        activeSubTab.value = 'permissions';
+        activeSubTab.value = props.hidePermissionsSubtab ? 'delegation' : 'permissions';
     }
 });
 

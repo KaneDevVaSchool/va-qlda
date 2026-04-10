@@ -2,6 +2,10 @@
     <div class="ppms-page ppms-admin-sys">
         <div v-if="loadErr" class="ppms-admin-sys-alert ppms-admin-sys-alert--err" role="alert">{{ loadErr }}</div>
         <template v-else>
+            <aside class="ppms-admin-sys-roadmap" role="note" :aria-label="t('admin.system.upgradeHintTitle')">
+                <h2 class="ppms-admin-sys-roadmap__h">{{ t('admin.system.upgradeHintTitle') }}</h2>
+                <p class="ppms-admin-sys-roadmap__p">{{ t('admin.system.upgradeHintLead') }}</p>
+            </aside>
             <nav
                 class="ppms-admin-sys-tabs"
                 role="tablist"
@@ -133,7 +137,7 @@
                 :aria-labelledby="'ppms-admin-tab-access'"
             >
                 <div class="ppms-admin-sys-access-shell ppms-admin-sys-access-shell--rbac">
-                    <ProfileTabAccessDelegation embedded @refresh="onAccessRefresh" />
+                    <ProfileTabAccessDelegation embedded hide-permissions-subtab @refresh="onAccessRefresh" />
                 </div>
             </div>
         </template>
@@ -252,10 +256,33 @@ onMounted(load);
 <style scoped>
 .ppms-admin-sys {
     width: 100%;
-    max-width: min(1200px, 100%);
-    margin: 0 auto;
+    max-width: none;
+    margin: 0;
     box-sizing: border-box;
-    padding-bottom: 2rem;
+    padding: 0 0.5rem 2rem;
+}
+
+.ppms-admin-sys-roadmap {
+    margin-bottom: 1.25rem;
+    padding: 1rem 1.15rem;
+    border-radius: 12px;
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    background: linear-gradient(135deg, rgba(239, 246, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%);
+    box-sizing: border-box;
+}
+
+.ppms-admin-sys-roadmap__h {
+    margin: 0 0 0.4rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ppms-text, #0f172a);
+}
+
+.ppms-admin-sys-roadmap__p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--ppms-text-muted, #475569);
 }
 
 .ppms-admin-sys-alert {

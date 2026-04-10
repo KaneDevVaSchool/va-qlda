@@ -11,11 +11,21 @@ class VendorReview extends Model
         'vendor_id',
         'user_id',
         'rating',
+        'summary',
+        'context',
+        'quality_score',
+        'delivery_score',
+        'communication_score',
+        'would_recommend',
         'body',
     ];
 
     protected $casts = [
         'rating' => 'decimal:1',
+        'quality_score' => 'decimal:1',
+        'delivery_score' => 'decimal:1',
+        'communication_score' => 'decimal:1',
+        'would_recommend' => 'boolean',
     ];
 
     public function vendor(): BelongsTo

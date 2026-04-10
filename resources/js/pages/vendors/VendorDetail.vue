@@ -128,60 +128,150 @@
                 role="tabpanel"
                 aria-labelledby="vm-tab-overview"
             >
-                <h3 v-if="editingTab !== 'overview'" class="vm-sec-title">{{ t('vendors.tabOverview') }}</h3>
-                <table v-if="editingTab !== 'overview'" class="vm-kv">
+                <h3 class="vm-sec-title">{{ t('vendors.tabOverview') }}</h3>
+                <div v-if="editingTab === 'overview'" class="vm-edit-banner" role="status">
+                    <strong class="vm-edit-banner__title">{{ t('vendors.editModeBanner') }}</strong>
+                    <p class="vm-edit-banner__hint">{{ t('vendors.editModeBannerOverview') }}</p>
+                </div>
+                <table class="vm-kv" :class="{ 'vm-kv--editing': editingTab === 'overview' }">
                     <tbody>
                         <tr>
-                            <th>{{ t('vendors.legalName') }}</th>
+                            <th scope="row">{{ t('vendors.legalName') }}</th>
                             <td>
-                                <template v-if="!isEmptyText(vendor.legal_name)">{{ vendor.legal_name }}</template>
-                                <span v-else class="vm-empty" :title="t('vendors.detailLegalNameHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                <template v-if="editingTab === 'overview'">
+                                    <input
+                                        id="vm-o-legal"
+                                        v-model="edit.legal_name"
+                                        class="ppms-input vm-kv__control"
+                                        :placeholder="t('vendors.detailLegalNamePlaceholder')"
+                                        :title="t('vendors.detailLegalNameHint')"
+                                        autocomplete="organization"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyText(vendor.legal_name)">{{ vendor.legal_name }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailLegalNameHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
                             </td>
                         </tr>
                         <tr>
-                            <th>{{ t('vendors.country') }}</th>
+                            <th scope="row">{{ t('vendors.country') }}</th>
                             <td>
-                                <template v-if="!isEmptyText(vendor.country)">{{ vendor.country }}</template>
-                                <span v-else class="vm-empty" :title="t('vendors.detailCountryHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                <template v-if="editingTab === 'overview'">
+                                    <input
+                                        id="vm-o-country"
+                                        v-model="edit.country"
+                                        class="ppms-input vm-kv__control"
+                                        :placeholder="t('vendors.detailCountryPlaceholder')"
+                                        :title="t('vendors.detailCountryHint')"
+                                        autocomplete="country-name"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyText(vendor.country)">{{ vendor.country }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailCountryHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
                             </td>
                         </tr>
                         <tr>
-                            <th>{{ t('vendors.website') }}</th>
+                            <th scope="row">{{ t('vendors.website') }}</th>
                             <td>
-                                <a v-if="!isEmptyText(vendor.website)" :href="vendor.website" target="_blank" rel="noopener">{{ vendor.website }}</a>
-                                <span v-else class="vm-empty" :title="t('vendors.detailWebsiteHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                <template v-if="editingTab === 'overview'">
+                                    <input
+                                        id="vm-o-web"
+                                        v-model="edit.website"
+                                        type="url"
+                                        class="ppms-input vm-kv__control"
+                                        :placeholder="t('vendors.detailWebsitePlaceholder')"
+                                        :title="t('vendors.detailWebsiteHint')"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <a v-if="!isEmptyText(vendor.website)" :href="vendor.website" target="_blank" rel="noopener">{{ vendor.website }}</a>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailWebsiteHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
                             </td>
                         </tr>
                         <tr>
-                            <th>{{ t('vendors.taxCode') }}</th>
+                            <th scope="row">{{ t('vendors.taxCode') }}</th>
                             <td>
-                                <template v-if="!isEmptyText(vendor.tax_code)">{{ vendor.tax_code }}</template>
-                                <span v-else class="vm-empty" :title="t('vendors.detailTaxHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                <template v-if="editingTab === 'overview'">
+                                    <input
+                                        id="vm-o-tax"
+                                        v-model="edit.tax_code"
+                                        class="ppms-input vm-kv__control"
+                                        :placeholder="t('vendors.detailTaxPlaceholder')"
+                                        :title="t('vendors.detailTaxHint')"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyText(vendor.tax_code)">{{ vendor.tax_code }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailTaxHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
                             </td>
                         </tr>
                         <tr>
-                            <th>{{ t('vendors.contactInfo') }}</th>
-                            <td class="vm-pre">
-                                <template v-if="!isEmptyText(vendor.contact_info)">{{ vendor.contact_info }}</template>
-                                <span v-else class="vm-empty" :title="t('vendors.detailContactHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            <th scope="row">{{ t('vendors.contactInfo') }}</th>
+                            <td :class="{ 'vm-pre': editingTab !== 'overview' }">
+                                <template v-if="editingTab === 'overview'">
+                                    <textarea
+                                        id="vm-o-contact"
+                                        v-model="edit.contact_info"
+                                        rows="3"
+                                        class="ppms-input vm-kv__control vm-kv__control--textarea"
+                                        :placeholder="t('vendors.detailContactPlaceholder')"
+                                        :title="t('vendors.detailContactHint')"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyText(vendor.contact_info)">{{ vendor.contact_info }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailContactHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
                             </td>
                         </tr>
                         <tr>
-                            <th>{{ t('vendors.riskLevel') }}</th>
+                            <th scope="row">{{ t('vendors.riskLevel') }}</th>
                             <td>
-                                <template v-if="vendor.risk_level">{{ riskLabel(vendor.risk_level) }}</template>
-                                <span v-else class="vm-empty" :title="t('vendors.detailRiskHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                <template v-if="editingTab === 'overview'">
+                                    <select
+                                        id="vm-o-risk"
+                                        v-model="edit.risk_level"
+                                        class="ppms-input vm-kv__control"
+                                        :title="t('vendors.detailRiskHint')"
+                                    >
+                                        <option value="">{{ t('vendors.riskNotSet') }}</option>
+                                        <option value="low">{{ t('vendors.riskLow') }}</option>
+                                        <option value="medium">{{ t('vendors.riskMedium') }}</option>
+                                        <option value="high">{{ t('vendors.riskHigh') }}</option>
+                                    </select>
+                                </template>
+                                <template v-else>
+                                    <template v-if="vendor.risk_level">{{ riskLabel(vendor.risk_level) }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailRiskHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
                             </td>
                         </tr>
                         <tr>
-                            <th>{{ t('vendors.internalNote') }}</th>
-                            <td class="vm-pre">
-                                <template v-if="!isEmptyText(vendor.internal_note)">{{ vendor.internal_note }}</template>
-                                <span v-else class="vm-empty" :title="t('vendors.detailInternalNoteHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            <th scope="row">{{ t('vendors.internalNote') }}</th>
+                            <td :class="{ 'vm-pre': editingTab !== 'overview' }">
+                                <template v-if="editingTab === 'overview'">
+                                    <textarea
+                                        id="vm-o-note"
+                                        v-model="edit.internal_note"
+                                        rows="4"
+                                        class="ppms-input vm-kv__control vm-kv__control--textarea"
+                                        :placeholder="t('vendors.detailInternalNotePlaceholder')"
+                                        :title="t('vendors.detailInternalNoteHint')"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyText(vendor.internal_note)">{{ vendor.internal_note }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailInternalNoteHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
                             </td>
                         </tr>
                         <tr>
-                            <th>{{ t('vendors.departments') }}</th>
+                            <th scope="row">{{ t('vendors.departments') }}</th>
                             <td>
                                 <span v-for="d in vendor.departments || []" :key="d.id" class="vm-dept-badge">{{ d.name }}</span>
                                 <span v-if="!(vendor.departments || []).length" class="vm-empty" :title="t('vendors.emptyDepartmentsHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
@@ -189,98 +279,6 @@
                         </tr>
                     </tbody>
                 </table>
-                <div v-else class="vm-edit-form">
-                    <h3 class="vm-sec-title vm-sec-title--panel">{{ t('vendors.tabOverview') }}</h3>
-                    <div class="vm-edit-banner" role="status">
-                        <strong class="vm-edit-banner__title">{{ t('vendors.editModeBanner') }}</strong>
-                        <p class="vm-edit-banner__hint">{{ t('vendors.editModeBannerOverview') }}</p>
-                    </div>
-                    <section class="vm-form-section">
-                        <h3 class="vm-form-section__title">{{ t('vendors.formSectionOverview') }}</h3>
-                        <div class="vm-form-grid vm-form-grid--2">
-                            <div class="vm-field">
-                                <label class="vm-field__label" for="vm-o-legal">{{ t('vendors.legalName') }}</label>
-                                <p id="vm-o-legal-hint" class="vm-field__hint">{{ t('vendors.detailLegalNameHint') }}</p>
-                                <input
-                                    id="vm-o-legal"
-                                    v-model="edit.legal_name"
-                                    class="ppms-input vm-field__control"
-                                    :placeholder="t('vendors.detailLegalNamePlaceholder')"
-                                    aria-describedby="vm-o-legal-hint"
-                                />
-                            </div>
-                            <div class="vm-field">
-                                <label class="vm-field__label" for="vm-o-country">{{ t('vendors.country') }}</label>
-                                <p id="vm-o-country-hint" class="vm-field__hint">{{ t('vendors.detailCountryHint') }}</p>
-                                <input
-                                    id="vm-o-country"
-                                    v-model="edit.country"
-                                    class="ppms-input vm-field__control"
-                                    :placeholder="t('vendors.detailCountryPlaceholder')"
-                                    autocomplete="country-name"
-                                    aria-describedby="vm-o-country-hint"
-                                />
-                            </div>
-                            <div class="vm-field">
-                                <label class="vm-field__label" for="vm-o-web">{{ t('vendors.website') }}</label>
-                                <p id="vm-o-web-hint" class="vm-field__hint">{{ t('vendors.detailWebsiteHint') }}</p>
-                                <input
-                                    id="vm-o-web"
-                                    v-model="edit.website"
-                                    type="url"
-                                    class="ppms-input vm-field__control"
-                                    :placeholder="t('vendors.detailWebsitePlaceholder')"
-                                    aria-describedby="vm-o-web-hint"
-                                />
-                            </div>
-                            <div class="vm-field">
-                                <label class="vm-field__label" for="vm-o-tax">{{ t('vendors.taxCode') }}</label>
-                                <p id="vm-o-tax-hint" class="vm-field__hint">{{ t('vendors.detailTaxHint') }}</p>
-                                <input
-                                    id="vm-o-tax"
-                                    v-model="edit.tax_code"
-                                    class="ppms-input vm-field__control"
-                                    :placeholder="t('vendors.detailTaxPlaceholder')"
-                                    aria-describedby="vm-o-tax-hint"
-                                />
-                            </div>
-                            <div class="vm-field vm-field--full">
-                                <label class="vm-field__label" for="vm-o-contact">{{ t('vendors.contactInfo') }}</label>
-                                <p id="vm-o-contact-hint" class="vm-field__hint">{{ t('vendors.detailContactHint') }}</p>
-                                <textarea
-                                    id="vm-o-contact"
-                                    v-model="edit.contact_info"
-                                    rows="3"
-                                    class="ppms-input vm-field__control"
-                                    :placeholder="t('vendors.detailContactPlaceholder')"
-                                    aria-describedby="vm-o-contact-hint"
-                                />
-                            </div>
-                            <div class="vm-field vm-field--span-2 vm-field--max-md">
-                                <label class="vm-field__label" for="vm-o-risk">{{ t('vendors.riskLevel') }}</label>
-                                <p id="vm-o-risk-hint" class="vm-field__hint">{{ t('vendors.detailRiskHint') }}</p>
-                                <select id="vm-o-risk" v-model="edit.risk_level" class="ppms-input vm-field__control" aria-describedby="vm-o-risk-hint">
-                                    <option value="">{{ t('vendors.riskNotSet') }}</option>
-                                    <option value="low">{{ t('vendors.riskLow') }}</option>
-                                    <option value="medium">{{ t('vendors.riskMedium') }}</option>
-                                    <option value="high">{{ t('vendors.riskHigh') }}</option>
-                                </select>
-                            </div>
-                            <div class="vm-field vm-field--full">
-                                <label class="vm-field__label" for="vm-o-note">{{ t('vendors.internalNote') }}</label>
-                                <p id="vm-o-note-hint" class="vm-field__hint">{{ t('vendors.detailInternalNoteHint') }}</p>
-                                <textarea
-                                    id="vm-o-note"
-                                    v-model="edit.internal_note"
-                                    rows="4"
-                                    class="ppms-input vm-field__control"
-                                    :placeholder="t('vendors.detailInternalNotePlaceholder')"
-                                    aria-describedby="vm-o-note-hint"
-                                />
-                            </div>
-                        </div>
-                    </section>
-                </div>
             </section>
 
             <section
@@ -290,308 +288,336 @@
                 role="tabpanel"
                 aria-labelledby="vm-tab-business"
             >
-                <h3 v-if="editingTab !== 'business'" class="vm-sec-title">{{ t('vendors.tabBusiness') }}</h3>
-                <table v-if="editingTab !== 'business'" class="vm-kv">
+                <h3 class="vm-sec-title">{{ t('vendors.tabBusiness') }}</h3>
+                <div v-if="editingTab === 'business'" class="vm-edit-banner" role="status">
+                    <strong class="vm-edit-banner__title">{{ t('vendors.editModeBanner') }}</strong>
+                    <p class="vm-edit-banner__hint">{{ t('vendors.editModeBannerBusiness') }}</p>
+                </div>
+                <table class="vm-kv" :class="{ 'vm-kv--editing': editingTab === 'business' }">
                     <tbody>
                         <tr>
-                            <th>{{ t('vendors.filterIndustry') }}</th>
+                            <th scope="row">{{ t('vendors.filterIndustry') }}</th>
                             <td>
-                                <template v-if="!isEmptyText(vendor.industry)">{{ vendor.industry }}</template>
-                                <span v-else class="vm-empty" :title="t('vendors.detailIndustryHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                <template v-if="editingTab === 'business'">
+                                    <input
+                                        id="vm-b-ind"
+                                        v-model="edit.industry"
+                                        class="ppms-input vm-kv__control"
+                                        :placeholder="t('vendors.detailIndustryPlaceholder')"
+                                        :title="t('vendors.detailIndustryHint')"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyText(vendor.industry)">{{ vendor.industry }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailIndustryHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
                             </td>
                         </tr>
                         <tr>
-                            <th>{{ t('vendors.mainProducts') }}</th>
-                            <td class="vm-pre">
-                                <template v-if="!isEmptyText(vendor.main_products)">{{ vendor.main_products }}</template>
-                                <span v-else class="vm-empty" :title="t('vendors.detailMainProductsHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            <th scope="row">{{ t('vendors.mainProducts') }}</th>
+                            <td :class="{ 'vm-pre': editingTab !== 'business' }">
+                                <template v-if="editingTab === 'business'">
+                                    <textarea
+                                        id="vm-b-mp"
+                                        v-model="edit.main_products"
+                                        rows="3"
+                                        class="ppms-input vm-kv__control vm-kv__control--textarea"
+                                        :placeholder="t('vendors.detailMainProductsPlaceholder')"
+                                        :title="t('vendors.detailMainProductsHint')"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyText(vendor.main_products)">{{ vendor.main_products }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailMainProductsHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
                             </td>
                         </tr>
                         <tr>
-                            <th>{{ t('vendors.contractValue') }}</th>
+                            <th scope="row">{{ t('vendors.contractValue') }}</th>
                             <td>
-                                <template v-if="!isEmptyNumber(vendor.contract_value)">{{ vendor.contract_value }}</template>
-                                <span v-else class="vm-empty" :title="t('vendors.detailContractValueHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                <template v-if="editingTab === 'business'">
+                                    <input
+                                        id="vm-b-cv"
+                                        v-model="edit.contract_value"
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        class="ppms-input vm-kv__control"
+                                        :placeholder="t('vendors.detailContractValuePlaceholder')"
+                                        :title="t('vendors.detailContractValueHint')"
+                                        inputmode="decimal"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyNumber(vendor.contract_value)">{{ vendor.contract_value }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailContractValueHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
                             </td>
                         </tr>
                         <tr>
-                            <th>{{ t('vendors.estimatedCost') }}</th>
+                            <th scope="row">{{ t('vendors.estimatedCost') }}</th>
                             <td>
-                                <template v-if="!isEmptyNumber(vendor.estimated_cost)">{{ vendor.estimated_cost }}</template>
-                                <span v-else class="vm-empty" :title="t('vendors.detailEstimatedCostHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                <template v-if="editingTab === 'business'">
+                                    <input
+                                        id="vm-b-ec"
+                                        v-model="edit.estimated_cost"
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        class="ppms-input vm-kv__control"
+                                        :placeholder="t('vendors.detailEstimatedCostPlaceholder')"
+                                        :title="t('vendors.detailEstimatedCostHint')"
+                                        inputmode="decimal"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyNumber(vendor.estimated_cost)">{{ vendor.estimated_cost }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailEstimatedCostHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
                             </td>
                         </tr>
                         <tr>
-                            <th>{{ t('vendors.referencePrice') }}</th>
+                            <th scope="row">{{ t('vendors.referencePrice') }}</th>
                             <td>
-                                <template v-if="!isEmptyNumber(vendor.reference_price)">{{ vendor.reference_price }}</template>
-                                <span v-else class="vm-empty" :title="t('vendors.detailReferencePriceHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                <template v-if="editingTab === 'business'">
+                                    <input
+                                        id="vm-b-rp"
+                                        v-model="edit.reference_price"
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        class="ppms-input vm-kv__control"
+                                        :placeholder="t('vendors.detailReferencePricePlaceholder')"
+                                        :title="t('vendors.detailReferencePriceHint')"
+                                        inputmode="decimal"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyNumber(vendor.reference_price)">{{ vendor.reference_price }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailReferencePriceHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
                             </td>
                         </tr>
                         <tr>
-                            <th>{{ t('vendors.researchSource') }}</th>
+                            <th scope="row">{{ t('vendors.researchSource') }}</th>
                             <td>
-                                <template v-if="!isEmptyText(vendor.research_source)">{{ vendor.research_source }}</template>
-                                <span v-else class="vm-empty" :title="t('vendors.detailResearchSourceHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                <template v-if="editingTab === 'business'">
+                                    <input
+                                        id="vm-b-src"
+                                        v-model="edit.research_source"
+                                        class="ppms-input vm-kv__control"
+                                        :placeholder="t('vendors.detailResearchSourcePlaceholder')"
+                                        :title="t('vendors.detailResearchSourceHint')"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyText(vendor.research_source)">{{ vendor.research_source }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailResearchSourceHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
                             </td>
                         </tr>
                         <tr>
-                            <th>{{ t('vendors.fitScore') }}</th>
+                            <th scope="row">{{ t('vendors.fitScore') }}</th>
                             <td>
-                                <template v-if="!isEmptyNumber(vendor.fit_score)">{{ vendor.fit_score }}</template>
-                                <span v-else class="vm-empty" :title="t('vendors.detailFitScoreHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                <template v-if="editingTab === 'business'">
+                                    <input
+                                        id="vm-b-fit"
+                                        v-model.number="edit.fit_score"
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        class="ppms-input vm-kv__control"
+                                        :placeholder="t('vendors.detailFitScorePlaceholder')"
+                                        :title="t('vendors.detailFitScoreHint')"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyNumber(vendor.fit_score)">{{ vendor.fit_score }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailFitScoreHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
                             </td>
                         </tr>
                         <tr>
-                            <th>{{ t('vendors.pros') }}</th>
-                            <td class="vm-pre">
-                                <template v-if="!isEmptyText(vendor.pros)">{{ vendor.pros }}</template>
-                                <span v-else class="vm-empty" :title="t('vendors.detailProsPlaceholder')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            <th scope="row">{{ t('vendors.pros') }}</th>
+                            <td :class="{ 'vm-pre': editingTab !== 'business' }">
+                                <template v-if="editingTab === 'business'">
+                                    <textarea
+                                        id="vm-b-pros"
+                                        v-model="edit.pros"
+                                        rows="3"
+                                        class="ppms-input vm-kv__control vm-kv__control--textarea"
+                                        :placeholder="t('vendors.detailProsPlaceholder')"
+                                        :title="t('vendors.detailProsPlaceholder')"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyText(vendor.pros)">{{ vendor.pros }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailProsPlaceholder')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
                             </td>
                         </tr>
                         <tr>
-                            <th>{{ t('vendors.cons') }}</th>
-                            <td class="vm-pre">
-                                <template v-if="!isEmptyText(vendor.cons)">{{ vendor.cons }}</template>
-                                <span v-else class="vm-empty" :title="t('vendors.detailConsPlaceholder')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            <th scope="row">{{ t('vendors.cons') }}</th>
+                            <td :class="{ 'vm-pre': editingTab !== 'business' }">
+                                <template v-if="editingTab === 'business'">
+                                    <textarea
+                                        id="vm-b-cons"
+                                        v-model="edit.cons"
+                                        rows="3"
+                                        class="ppms-input vm-kv__control vm-kv__control--textarea"
+                                        :placeholder="t('vendors.detailConsPlaceholder')"
+                                        :title="t('vendors.detailConsPlaceholder')"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyText(vendor.cons)">{{ vendor.cons }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailConsPlaceholder')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
                             </td>
                         </tr>
                         <tr>
-                            <th>{{ t('vendors.researchNote') }}</th>
-                            <td class="vm-pre">
-                                <template v-if="!isEmptyText(vendor.research_note)">{{ vendor.research_note }}</template>
-                                <span v-else class="vm-empty" :title="t('vendors.detailResearchNoteHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                            <th scope="row">{{ t('vendors.researchNote') }}</th>
+                            <td :class="{ 'vm-pre': editingTab !== 'business' }">
+                                <template v-if="editingTab === 'business'">
+                                    <textarea
+                                        id="vm-b-rn"
+                                        v-model="edit.research_note"
+                                        rows="3"
+                                        class="ppms-input vm-kv__control vm-kv__control--textarea"
+                                        :placeholder="t('vendors.detailResearchNotePlaceholder')"
+                                        :title="t('vendors.detailResearchNoteHint')"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyText(vendor.research_note)">{{ vendor.research_note }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailResearchNoteHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
+                            </td>
+                        </tr>
+                        <tr class="vm-kv__group">
+                            <th colspan="2" class="vm-kv__group-title">{{ t('vendors.formSectionBizCriteria') }}</th>
+                        </tr>
+                        <tr v-if="editingTab === 'business'">
+                            <td colspan="2" class="vm-kv__section-hint">{{ t('vendors.formSectionBizCriteriaHint') }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ t('vendors.scorePrice') }}</th>
+                            <td>
+                                <template v-if="editingTab === 'business'">
+                                    <input
+                                        id="vm-b-sp"
+                                        v-model="edit.score_price"
+                                        type="number"
+                                        min="0"
+                                        max="5"
+                                        step="0.1"
+                                        class="ppms-input vm-kv__control"
+                                        placeholder="0–5"
+                                        :title="t('vendors.detailScorePriceHint')"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyNumber(vendor.score_price)">{{ vendor.score_price }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailScorePriceHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ t('vendors.scoreQuality') }}</th>
+                            <td>
+                                <template v-if="editingTab === 'business'">
+                                    <input
+                                        id="vm-b-sq"
+                                        v-model="edit.score_quality"
+                                        type="number"
+                                        min="0"
+                                        max="5"
+                                        step="0.1"
+                                        class="ppms-input vm-kv__control"
+                                        placeholder="0–5"
+                                        :title="t('vendors.detailScoreQualityHint')"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyNumber(vendor.score_quality)">{{ vendor.score_quality }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailScoreQualityHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ t('vendors.scoreSla') }}</th>
+                            <td>
+                                <template v-if="editingTab === 'business'">
+                                    <input
+                                        id="vm-b-ss"
+                                        v-model="edit.score_sla"
+                                        type="number"
+                                        min="0"
+                                        max="5"
+                                        step="0.1"
+                                        class="ppms-input vm-kv__control"
+                                        placeholder="0–5"
+                                        :title="t('vendors.detailScoreSlaHint')"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyNumber(vendor.score_sla)">{{ vendor.score_sla }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailScoreSlaHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ t('vendors.scoreSupport') }}</th>
+                            <td>
+                                <template v-if="editingTab === 'business'">
+                                    <input
+                                        id="vm-b-su"
+                                        v-model="edit.score_support"
+                                        type="number"
+                                        min="0"
+                                        max="5"
+                                        step="0.1"
+                                        class="ppms-input vm-kv__control"
+                                        placeholder="0–5"
+                                        :title="t('vendors.detailScoreSupportHint')"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <template v-if="!isEmptyNumber(vendor.score_support)">{{ vendor.score_support }}</template>
+                                    <span v-else class="vm-empty" :title="t('vendors.detailScoreSupportHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
+                            </td>
+                        </tr>
+                        <tr class="vm-kv__group">
+                            <th colspan="2" class="vm-kv__group-title">{{ t('vendors.formSectionDepartments') }}</th>
+                        </tr>
+                        <tr v-if="editingTab === 'business'">
+                            <td colspan="2" class="vm-kv__section-hint">{{ t('vendors.detailDepartmentsHint') }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ t('vendors.departments') }}</th>
+                            <td>
+                                <template v-if="editingTab === 'business'">
+                                    <select
+                                        id="vm-b-dept"
+                                        v-model="editDepartmentIds"
+                                        class="ppms-input vm-kv__control vm-kv__control--multiselect"
+                                        multiple
+                                        size="6"
+                                        :title="t('vendors.detailDepartmentsHint')"
+                                    >
+                                        <option v-for="d in lookups.departments" :key="d.id" :value="d.id">{{ d.name }}</option>
+                                    </select>
+                                    <p class="vm-kv__foot">{{ t('contracts.addDepartment') }}</p>
+                                </template>
+                                <template v-else>
+                                    <span v-for="d in vendor.departments || []" :key="d.id" class="vm-dept-badge">{{ d.name }}</span>
+                                    <span v-if="!(vendor.departments || []).length" class="vm-empty" :title="t('vendors.emptyDepartmentsHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
+                                </template>
                             </td>
                         </tr>
                     </tbody>
                 </table>
-                <div v-else class="vm-edit-form">
-                    <h3 class="vm-sec-title vm-sec-title--panel">{{ t('vendors.tabBusiness') }}</h3>
-                    <div class="vm-edit-banner" role="status">
-                        <strong class="vm-edit-banner__title">{{ t('vendors.editModeBanner') }}</strong>
-                        <p class="vm-edit-banner__hint">{{ t('vendors.editModeBannerBusiness') }}</p>
-                    </div>
-                    <section class="vm-form-section">
-                        <h4 class="vm-form-section__title">{{ t('vendors.formSectionBiz') }}</h4>
-                        <div class="vm-form-grid vm-form-grid--3">
-                            <div class="vm-field">
-                                <label class="vm-field__label" for="vm-b-ind">{{ t('vendors.filterIndustry') }}</label>
-                                <p id="vm-b-ind-hint" class="vm-field__hint">{{ t('vendors.detailIndustryHint') }}</p>
-                                <input
-                                    id="vm-b-ind"
-                                    v-model="edit.industry"
-                                    class="ppms-input vm-field__control"
-                                    :placeholder="t('vendors.detailIndustryPlaceholder')"
-                                    aria-describedby="vm-b-ind-hint"
-                                />
-                            </div>
-                            <div class="vm-field">
-                                <label class="vm-field__label" for="vm-b-src">{{ t('vendors.researchSource') }}</label>
-                                <p id="vm-b-src-hint" class="vm-field__hint">{{ t('vendors.detailResearchSourceHint') }}</p>
-                                <input
-                                    id="vm-b-src"
-                                    v-model="edit.research_source"
-                                    class="ppms-input vm-field__control"
-                                    :placeholder="t('vendors.detailResearchSourcePlaceholder')"
-                                    aria-describedby="vm-b-src-hint"
-                                />
-                            </div>
-                            <div class="vm-field">
-                                <label class="vm-field__label" for="vm-b-fit">{{ t('vendors.fitScore') }}</label>
-                                <p id="vm-b-fit-hint" class="vm-field__hint">{{ t('vendors.detailFitScoreHint') }}</p>
-                                <input
-                                    id="vm-b-fit"
-                                    v-model.number="edit.fit_score"
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    class="ppms-input vm-field__control"
-                                    :placeholder="t('vendors.detailFitScorePlaceholder')"
-                                    aria-describedby="vm-b-fit-hint"
-                                />
-                            </div>
-                        </div>
-                    </section>
-                    <section class="vm-form-section">
-                        <h4 class="vm-form-section__title">{{ t('vendors.formSectionBizValue') }}</h4>
-                        <div class="vm-form-grid vm-form-grid--3">
-                            <div class="vm-field">
-                                <label class="vm-field__label" for="vm-b-cv">{{ t('vendors.contractValue') }}</label>
-                                <p id="vm-b-cv-hint" class="vm-field__hint">{{ t('vendors.detailContractValueHint') }}</p>
-                                <input
-                                    id="vm-b-cv"
-                                    v-model="edit.contract_value"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    class="ppms-input vm-field__control"
-                                    :placeholder="t('vendors.detailContractValuePlaceholder')"
-                                    inputmode="decimal"
-                                    aria-describedby="vm-b-cv-hint"
-                                />
-                            </div>
-                            <div class="vm-field">
-                                <label class="vm-field__label" for="vm-b-ec">{{ t('vendors.estimatedCost') }}</label>
-                                <p id="vm-b-ec-hint" class="vm-field__hint">{{ t('vendors.detailEstimatedCostHint') }}</p>
-                                <input
-                                    id="vm-b-ec"
-                                    v-model="edit.estimated_cost"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    class="ppms-input vm-field__control"
-                                    :placeholder="t('vendors.detailEstimatedCostPlaceholder')"
-                                    inputmode="decimal"
-                                    aria-describedby="vm-b-ec-hint"
-                                />
-                            </div>
-                            <div class="vm-field">
-                                <label class="vm-field__label" for="vm-b-rp">{{ t('vendors.referencePrice') }}</label>
-                                <p id="vm-b-rp-hint" class="vm-field__hint">{{ t('vendors.detailReferencePriceHint') }}</p>
-                                <input
-                                    id="vm-b-rp"
-                                    v-model="edit.reference_price"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    class="ppms-input vm-field__control"
-                                    :placeholder="t('vendors.detailReferencePricePlaceholder')"
-                                    inputmode="decimal"
-                                    aria-describedby="vm-b-rp-hint"
-                                />
-                            </div>
-                        </div>
-                    </section>
-                    <section class="vm-form-section">
-                        <h4 class="vm-form-section__title">{{ t('vendors.formSectionBizNarrative') }}</h4>
-                        <div class="vm-field vm-field--full">
-                            <label class="vm-field__label" for="vm-b-mp">{{ t('vendors.mainProducts') }}</label>
-                            <p id="vm-b-mp-hint" class="vm-field__hint">{{ t('vendors.detailMainProductsHint') }}</p>
-                            <textarea
-                                id="vm-b-mp"
-                                v-model="edit.main_products"
-                                rows="3"
-                                class="ppms-input vm-field__control"
-                                :placeholder="t('vendors.detailMainProductsPlaceholder')"
-                                aria-describedby="vm-b-mp-hint"
-                            />
-                        </div>
-                        <div class="vm-form-grid vm-form-grid--2">
-                            <div class="vm-field">
-                                <label class="vm-field__label" for="vm-b-pros">{{ t('vendors.pros') }}</label>
-                                <textarea
-                                    id="vm-b-pros"
-                                    v-model="edit.pros"
-                                    rows="4"
-                                    class="ppms-input vm-field__control"
-                                    :placeholder="t('vendors.detailProsPlaceholder')"
-                                />
-                            </div>
-                            <div class="vm-field">
-                                <label class="vm-field__label" for="vm-b-cons">{{ t('vendors.cons') }}</label>
-                                <textarea
-                                    id="vm-b-cons"
-                                    v-model="edit.cons"
-                                    rows="4"
-                                    class="ppms-input vm-field__control"
-                                    :placeholder="t('vendors.detailConsPlaceholder')"
-                                />
-                            </div>
-                        </div>
-                        <div class="vm-field vm-field--full">
-                            <label class="vm-field__label" for="vm-b-rn">{{ t('vendors.researchNote') }}</label>
-                            <p id="vm-b-rn-hint" class="vm-field__hint">{{ t('vendors.detailResearchNoteHint') }}</p>
-                            <textarea
-                                id="vm-b-rn"
-                                v-model="edit.research_note"
-                                rows="3"
-                                class="ppms-input vm-field__control"
-                                :placeholder="t('vendors.detailResearchNotePlaceholder')"
-                                aria-describedby="vm-b-rn-hint"
-                            />
-                        </div>
-                    </section>
-                    <section class="vm-form-section">
-                        <h4 class="vm-form-section__title">{{ t('vendors.formSectionBizCriteria') }}</h4>
-                        <p class="vm-form-section__intro">{{ t('vendors.formSectionBizCriteriaHint') }}</p>
-                        <div class="vm-form-grid vm-form-grid--4">
-                            <div class="vm-field">
-                                <label class="vm-field__label" for="vm-b-sp">{{ t('vendors.scorePrice') }}</label>
-                                <p class="vm-field__hint">{{ t('vendors.detailScorePriceHint') }}</p>
-                                <input
-                                    id="vm-b-sp"
-                                    v-model="edit.score_price"
-                                    type="number"
-                                    min="0"
-                                    max="5"
-                                    step="0.1"
-                                    class="ppms-input vm-field__control"
-                                    placeholder="0–5"
-                                />
-                            </div>
-                            <div class="vm-field">
-                                <label class="vm-field__label" for="vm-b-sq">{{ t('vendors.scoreQuality') }}</label>
-                                <p class="vm-field__hint">{{ t('vendors.detailScoreQualityHint') }}</p>
-                                <input
-                                    id="vm-b-sq"
-                                    v-model="edit.score_quality"
-                                    type="number"
-                                    min="0"
-                                    max="5"
-                                    step="0.1"
-                                    class="ppms-input vm-field__control"
-                                    placeholder="0–5"
-                                />
-                            </div>
-                            <div class="vm-field">
-                                <label class="vm-field__label" for="vm-b-ss">{{ t('vendors.scoreSla') }}</label>
-                                <p class="vm-field__hint">{{ t('vendors.detailScoreSlaHint') }}</p>
-                                <input
-                                    id="vm-b-ss"
-                                    v-model="edit.score_sla"
-                                    type="number"
-                                    min="0"
-                                    max="5"
-                                    step="0.1"
-                                    class="ppms-input vm-field__control"
-                                    placeholder="0–5"
-                                />
-                            </div>
-                            <div class="vm-field">
-                                <label class="vm-field__label" for="vm-b-su">{{ t('vendors.scoreSupport') }}</label>
-                                <p class="vm-field__hint">{{ t('vendors.detailScoreSupportHint') }}</p>
-                                <input
-                                    id="vm-b-su"
-                                    v-model="edit.score_support"
-                                    type="number"
-                                    min="0"
-                                    max="5"
-                                    step="0.1"
-                                    class="ppms-input vm-field__control"
-                                    placeholder="0–5"
-                                />
-                            </div>
-                        </div>
-                    </section>
-                    <section class="vm-form-section">
-                        <h4 class="vm-form-section__title">{{ t('vendors.formSectionDepartments') }}</h4>
-                        <p id="vm-b-dept-hint" class="vm-field__hint vm-field__hint--block">{{ t('vendors.detailDepartmentsHint') }}</p>
-                        <div class="vm-field vm-field--full">
-                            <label class="vm-field__label" for="vm-b-dept">{{ t('vendors.departments') }}</label>
-                            <select
-                                id="vm-b-dept"
-                                v-model="editDepartmentIds"
-                                class="ppms-input vm-field__control vm-field__control--multiselect"
-                                multiple
-                                size="6"
-                                aria-describedby="vm-b-dept-hint"
-                            >
-                                <option v-for="d in lookups.departments" :key="d.id" :value="d.id">{{ d.name }}</option>
-                            </select>
-                        </div>
-                        <p class="vm-form-footnote">{{ t('contracts.addDepartment') }}</p>
-                    </section>
-                </div>
                 <div v-if="vendor.products?.length" class="ppms-mt">
                     <h4>{{ t('vendors.productLines') }}</h4>
                     <ul class="vm-product-list">
@@ -607,27 +633,39 @@
                 role="tabpanel"
                 aria-labelledby="vm-tab-contracts"
             >
-                <table v-if="vendor.contracts?.length" class="ppms-table">
-                    <thead>
-                        <tr>
-                            <th>{{ t('vendors.contractCode') }}</th>
-                            <th>{{ t('contracts.tableStatus') }}</th>
-                            <th>{{ t('vendors.contractDept') }}</th>
-                            <th>{{ t('contracts.tableValue') }}</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="c in vendor.contracts" :key="c.id">
-                            <td>{{ c.code }}</td>
-                            <td>{{ c.status }}</td>
-                            <td>{{ c.department?.name || '—' }}</td>
-                            <td>{{ c.total_value }}</td>
-                            <td><router-link class="ppms-btn-ghost ppms-btn-sm" :to="`/contracts/${c.id}`">{{ t('vendors.goContract') }}</router-link></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p v-else class="ppms-muted">{{ t('vendors.contractsEmpty') }}</p>
+                <h3 class="vm-sec-title">{{ t('vendors.tabContracts') }}</h3>
+                <p class="vm-contracts-intro">{{ t('vendors.contractsTabIntro') }}</p>
+                <div v-if="vendor.contracts?.length" class="vm-contracts-table-wrap">
+                    <table class="ppms-table vm-contracts-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">{{ t('vendors.contractCode') }}</th>
+                                <th scope="col">{{ t('contracts.tableStatus') }}</th>
+                                <th scope="col">{{ t('vendors.contractPeriodCol') }}</th>
+                                <th scope="col">{{ t('vendors.contractDept') }}</th>
+                                <th scope="col" class="vm-contracts-table__num">{{ t('vendors.contractValueCol') }}</th>
+                                <th scope="col" class="vm-contracts-table__act">{{ t('vendors.contractActionCol') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="c in vendor.contracts" :key="c.id">
+                                <td>
+                                    <span class="vm-contracts-code">{{ c.code }}</span>
+                                </td>
+                                <td>
+                                    <span class="vm-contracts-status">{{ contractStatusLabel(c.status) }}</span>
+                                </td>
+                                <td class="vm-contracts-period">{{ formatContractPeriod(c.start_date, c.end_date) }}</td>
+                                <td>{{ c.department?.name || '—' }}</td>
+                                <td class="vm-contracts-table__num">{{ formatContractValue(c.total_value) }}</td>
+                                <td class="vm-contracts-table__act">
+                                    <router-link class="ppms-btn-ghost ppms-btn-sm" :to="`/contracts/${c.id}`">{{ t('vendors.goContract') }}</router-link>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p v-else class="vm-contracts-empty ppms-muted">{{ t('vendors.contractsEmpty') }}</p>
             </section>
 
             <section
@@ -637,6 +675,7 @@
                 role="tabpanel"
                 aria-labelledby="vm-tab-reviews"
             >
+                <h3 class="vm-sec-title">{{ t('vendors.tabReviews') }}</h3>
                 <VendorReview
                     :vendor-id="Number(vendor.id)"
                     :items="vendor.reviews || []"
@@ -654,13 +693,14 @@
                 role="tabpanel"
                 aria-labelledby="vm-tab-timeline"
             >
-                <div v-if="canEdit" class="vm-timeline-form vm-edit-form vm-edit-form--compact">
-                    <h2 class="vm-sec-title">{{ t('vendors.timelineAdd') }}</h2>
-                    <div class="vm-form-grid vm-form-grid--2">
+                <div v-if="canEdit" class="vm-timeline-add">
+                    <h3 class="vm-sec-title">{{ t('vendors.timelineAdd') }}</h3>
+                    <p class="vm-timeline-add__intro">{{ t('vendors.timelineAddIntro') }}</p>
+                    <div class="vm-timeline-add__grid">
                         <div class="vm-field">
                             <label class="vm-field__label" for="vm-tl-ph">{{ t('vendors.timelinePhase') }}</label>
                             <p id="vm-tl-ph-hint" class="vm-field__hint">{{ t('vendors.timelinePhaseHint') }}</p>
-                            <select id="vm-tl-ph" v-model="tlForm.phase" class="ppms-input vm-field__control" aria-describedby="vm-tl-ph-hint">
+                            <select id="vm-tl-ph" v-model="tlForm.phase" class="ppms-input vm-kv__control" aria-describedby="vm-tl-ph-hint">
                                 <option v-for="ph in phases" :key="ph" :value="ph">{{ timelinePhaseLabel(ph) }}</option>
                             </select>
                         </div>
@@ -671,44 +711,39 @@
                                 id="vm-tl-when"
                                 v-model="tlForm.occurred_at_local"
                                 type="datetime-local"
-                                class="ppms-input vm-field__control"
+                                class="ppms-input vm-kv__control"
                                 :step="60"
                                 aria-describedby="vm-tl-when-hint"
                             />
                         </div>
-                    </div>
-                    <div class="vm-form-grid vm-form-grid--2">
-                        <div class="vm-field">
-                            <label class="vm-field__label" for="vm-tl-act">{{ t('vendors.timelineActor') }}</label>
-                            <p id="vm-tl-act-hint" class="vm-field__hint">{{ t('vendors.timelineActorHint') }}</p>
-                            <input
-                                id="vm-tl-act"
-                                v-model.number="tlForm.performed_by_user_id"
-                                type="number"
-                                min="1"
-                                class="ppms-input vm-field__control"
-                                :placeholder="t('vendors.timelineActorPlaceholder')"
-                                aria-describedby="vm-tl-act-hint"
-                            />
-                        </div>
-                        <div class="vm-field vm-field--checkbox">
+                        <UserPickerInput
+                            v-model="tlForm.performed_by_user_id"
+                            input-id="vm-tl-actor"
+                            :label="t('vendors.timelineActor')"
+                            :hint="t('vendors.timelineActorHint')"
+                            :placeholder="t('vendors.timelineActorPlaceholder')"
+                        />
+                        <div class="vm-field vm-field--checkbox vm-field--timeline-cb">
                             <label class="vm-field__checkbox">
                                 <input v-model="tlForm.is_current" type="checkbox" />
                                 <span>{{ t('vendors.timelineCurrent') }}</span>
                             </label>
                         </div>
                     </div>
-                    <div class="vm-field vm-field--full">
+                    <div class="vm-field vm-field--full vm-field--timeline-note">
                         <label class="vm-field__label" for="vm-tl-note">{{ t('vendors.timelineNote') }}</label>
+                        <p id="vm-tl-note-hint" class="vm-field__hint">{{ t('vendors.timelineNoteHint') }}</p>
                         <textarea
                             id="vm-tl-note"
                             v-model="tlForm.note"
                             rows="3"
-                            class="ppms-input vm-field__control"
+                            class="ppms-input vm-kv__control vm-kv__control--textarea"
                             :placeholder="t('vendors.timelineNotePlaceholder')"
+                            :title="t('vendors.timelineNoteHint')"
+                            aria-describedby="vm-tl-note-hint"
                         />
                     </div>
-                    <div class="vm-timeline-form__actions">
+                    <div class="vm-timeline-add__actions">
                         <button type="button" class="ppms-btn-primary" :disabled="tlSaving" @click="addTimeline">{{ t('vendors.timelineAdd') }}</button>
                     </div>
                 </div>
@@ -731,6 +766,7 @@ import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 import { getApiErrorMessage } from '@/bootstrap';
 import { ppmsConfirm, ppmsToastSuccess, ppmsToastError } from '@/ppmsUi';
+import UserPickerInput from '@/components/UserPickerInput.vue';
 import VendorTimeline from './components/VendorTimeline.vue';
 import VendorReview from './components/VendorReview.vue';
 
@@ -847,6 +883,47 @@ function formatVendorDateTime(iso) {
     } catch {
         return iso;
     }
+}
+
+function contractStatusLabel(status) {
+    const map = {
+        draft: 'vendors.contractStatusDraft',
+        pending_approval: 'vendors.contractStatusPendingApproval',
+        active: 'vendors.contractStatusActive',
+        expired: 'vendors.contractStatusExpired',
+        terminated: 'vendors.contractStatusTerminated',
+    };
+    const key = map[status];
+    return key ? t(key) : status || '—';
+}
+
+function formatContractPeriod(start, end) {
+    if (!start && !end) {
+        return t('vendors.contractPeriodOpen');
+    }
+    const fmt = (d) => {
+        if (!d) return '';
+        try {
+            const loc = locale.value === 'vi' ? 'vi-VN' : undefined;
+            return new Intl.DateTimeFormat(loc, { dateStyle: 'medium' }).format(new Date(d));
+        } catch {
+            return d;
+        }
+    };
+    const a = fmt(start);
+    const b = fmt(end);
+    if (a && b) return `${a} – ${b}`;
+    if (a) return `${a} …`;
+    if (b) return `… ${b}`;
+    return '—';
+}
+
+function formatContractValue(v) {
+    if (v === null || v === undefined || v === '') return '—';
+    const n = Number(v);
+    if (Number.isNaN(n)) return String(v);
+    const loc = locale.value === 'vi' ? 'vi-VN' : undefined;
+    return new Intl.NumberFormat(loc, { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(n);
 }
 
 function timelinePhaseLabel(ph) {
@@ -1048,71 +1125,162 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* —— Vendor detail: page header (back · title · meta · actions · badges) —— */
 .vm-detail__header {
-    margin-bottom: 1rem;
+    margin: 0 0 1.25rem;
+    padding: 1rem 1.15rem 1rem;
+    border-radius: 14px;
+    border: 1px solid var(--ppms-border, #e2e8f0);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    box-sizing: border-box;
 }
+
 .vm-detail__toprow {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
-    gap: 0.75rem 1rem;
+    gap: 0.75rem 1.25rem;
 }
+
 .vm-detail__back {
     flex-shrink: 0;
     align-self: center;
+    margin-top: 0.2rem;
+    margin-bottom: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--ppms-primary, #2563eb);
+    border-bottom: 1px solid transparent;
+    transition:
+        color 0.15s ease,
+        border-color 0.15s ease;
 }
+
+.vm-detail__back:hover {
+    color: #1d4ed8;
+    border-bottom-color: rgba(37, 99, 235, 0.45);
+}
+
+.vm-detail__back:focus-visible {
+    outline: 2px solid var(--ppms-focus, #2563eb);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
 .vm-detail__head-main {
-    flex: 1 1 14rem;
+    flex: 1 1 16rem;
     min-width: 0;
 }
+
 .vm-detail__toolbar-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
     align-items: center;
+    justify-content: flex-end;
     margin-left: auto;
+    padding: 0.2rem 0;
+    padding-left: 0.5rem;
+    border-left: 1px solid var(--ppms-border-subtle, #e8ecf0);
 }
+
+@media (max-width: 640px) {
+    .vm-detail__toolbar-actions {
+        flex: 1 1 100%;
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+        border-top: 1px solid var(--ppms-border-subtle, #e8ecf0);
+        padding-top: 0.65rem;
+        justify-content: flex-start;
+    }
+}
+
 .vm-detail__title {
-    margin: 0.15rem 0 0.25rem;
-    font-size: 1.5rem;
-    line-height: 1.25;
-}
-.vm-detail__meta {
-    margin: 0;
-    font-size: 0.8125rem;
-    line-height: 1.45;
-    color: var(--ppms-muted, #64748b);
-}
-.vm-detail__meta-time {
-    font-weight: 600;
-    color: var(--ppms-text-muted, #475569);
-}
-.vm-detail__meta-sep {
-    margin: 0 0.35rem;
-    opacity: 0.65;
-}
-.vm-detail__meta-by {
+    margin: 0 0 0.35rem;
+    font-size: clamp(1.35rem, 2.5vw, 1.65rem);
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
     color: var(--ppms-text, #0f172a);
 }
+
+.vm-detail__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.5rem;
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--ppms-muted, #64748b);
+}
+
+.vm-detail__meta-label {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ppms-text-muted, #64748b);
+}
+
+.vm-detail__meta-time {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--ppms-text, #1e293b);
+}
+
+.vm-detail__meta-sep {
+    margin: 0 0.15rem;
+    color: var(--ppms-muted, #94a3b8);
+    font-weight: 400;
+    user-select: none;
+}
+
+.vm-detail__meta-by {
+    font-size: 0.8125rem;
+    color: var(--ppms-text-muted, #475569);
+}
+
 .vm-detail__badges {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 0.5rem;
-    margin: 0.5rem 0;
+    margin: 0.85rem 0 0;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--ppms-border-subtle, #e8ecf0);
 }
+
 .vm-pill {
-    display: inline-block;
-    padding: 0.2rem 0.6rem;
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 0.35rem 0.75rem;
     border-radius: 999px;
-    background: #e2e8f0;
-    font-size: 0.85rem;
-}
-.vm-pill--muted {
+    border: 1px solid #cbd5e1;
     background: #f1f5f9;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--ppms-text, #0f172a);
 }
+
+.vm-pill--muted {
+    border-color: #e2e8f0;
+    background: #fff;
+    color: var(--ppms-text-muted, #475569);
+    font-weight: 500;
+}
+
 .vm-pill--score {
-    background: #dbeafe;
-    color: #1d4ed8;
+    border-color: #93c5fd;
+    background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+    color: #1e40af;
+    font-weight: 700;
 }
 .vm-empty {
     cursor: help;
@@ -1205,6 +1373,49 @@ onMounted(async () => {
 .vm-kv tr:last-child td {
     border-bottom: none;
 }
+.vm-kv--editing td {
+    vertical-align: middle;
+}
+.vm-kv__control {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+.vm-kv__control--textarea {
+    min-height: 4.25rem;
+    resize: vertical;
+    display: block;
+}
+.vm-kv__control--multiselect {
+    min-height: 8rem;
+    padding: 0.55rem 0.5rem;
+    overflow-y: auto;
+}
+.vm-kv__group-title {
+    padding-top: 0.85rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ppms-muted, #64748b);
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.5) 100%);
+    border-bottom: 1px solid var(--ppms-border, #e8ecf0);
+}
+.vm-kv__section-hint {
+    margin: 0;
+    padding: 0.35rem 0.65rem 0.65rem;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--ppms-muted, #64748b);
+    background: rgba(248, 250, 252, 0.65);
+    border-bottom: 1px solid var(--ppms-border, #e8ecf0);
+}
+.vm-kv__foot {
+    margin: 0.45rem 0 0;
+    font-size: 0.75rem;
+    color: var(--ppms-muted, #64748b);
+}
 .vm-pre {
     white-space: pre-wrap;
 }
@@ -1212,24 +1423,85 @@ onMounted(async () => {
     margin: 0 0 0.75rem;
     font-size: 1.05rem;
 }
-.vm-sec-title--panel {
-    margin-top: 0;
-    margin-bottom: 0.65rem;
-}
 .vm-product-list {
     margin: 0.5rem 0 0;
     padding-left: 1.2rem;
 }
-.vm-timeline-form {
-    margin-bottom: 1.25rem;
+.vm-contracts-intro {
+    margin: -0.25rem 0 1rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--ppms-muted, #64748b);
+}
+.vm-contracts-empty {
+    margin: 0.5rem 0 0;
+    font-size: 0.875rem;
+}
+.vm-contracts-table-wrap {
+    overflow-x: auto;
+}
+.vm-contracts-table {
+    font-size: 0.875rem;
+}
+.vm-contracts-table__num {
+    text-align: right;
+    white-space: nowrap;
+}
+.vm-contracts-table__act {
+    width: 1%;
+    white-space: nowrap;
+}
+.vm-contracts-code {
+    font-weight: 600;
+    color: var(--ppms-text, #0f172a);
+}
+.vm-contracts-status {
+    display: inline-block;
+    padding: 0.12rem 0.45rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    background: #f1f5f9;
+    color: #334155;
+}
+.vm-contracts-period {
+    color: var(--ppms-text, #0f172a);
+    white-space: nowrap;
+}
+.vm-timeline-add {
+    margin-bottom: 1.35rem;
     padding: 1rem 1.1rem;
     border-radius: 10px;
-    background: var(--ppms-bg-subtle, rgba(248, 250, 252, 0.95));
-    border: 1px solid var(--ppms-border, #e2e6ea);
-    border-bottom: 1px solid var(--ppms-border, #e2e6ea);
+    background: linear-gradient(180deg, #fafbfc 0%, #f8fafc 100%);
+    border: 1px solid var(--ppms-border, #e2e8f0);
 }
-.vm-timeline-form__actions {
-    margin-top: 0.75rem;
+.vm-timeline-add__intro {
+    margin: -0.15rem 0 1rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--ppms-muted, #64748b);
+}
+.vm-timeline-add__grid {
+    display: grid;
+    gap: 1rem 1.1rem;
+    grid-template-columns: 1fr;
+}
+@media (min-width: 720px) {
+    .vm-timeline-add__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .vm-field--timeline-cb {
+        align-self: end;
+        padding-bottom: 0.35rem;
+    }
+}
+.vm-field--timeline-note {
+    margin-top: 0.25rem;
+}
+.vm-timeline-add__actions {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--ppms-border, #e2e8f0);
 }
 .vm-dept-badge {
     display: inline-block;
