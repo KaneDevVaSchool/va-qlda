@@ -63,6 +63,14 @@
                         <li>{{ t('projects.listGroupByCustomerHint') }}</li>
                     </ul>
                     <div class="ppms-pl-list-meta-actions" role="group" :aria-label="t('projects.listMetaActionsAria')">
+                        <label v-if="canBulk" class="ppms-pl-list-meta-select-all">
+                            <input
+                                type="checkbox"
+                                :checked="allPageSelected"
+                                :aria-label="t('projects.selectAll')"
+                                @change="toggleSelectAll($event)"
+                            />
+                        </label>
                         <button type="button" class="ppms-pl-list-meta-btn" @click="collapseAllCustomerGroups">
                             {{ t('projects.listCollapseAll') }}
                         </button>
@@ -71,34 +79,27 @@
                         </button>
                     </div>
                 </div>
-                <div class="ppms-table-scroll ppms-table-scroll--sticky-head ppms-project-list-table-wrap">
+                <div class="ppms-table-scroll ppms-project-list-table-wrap">
                     <table class="ppms-table ppms-table--project-staging">
                     <caption class="ppms-sr-only">
                         {{ t('projects.listSectionTitle') }}
                     </caption>
-                    <thead>
+                    <thead class="ppms-sr-only">
                         <tr>
-                            <th v-if="canBulk" class="ppms-th-check">
-                                <input
-                                    type="checkbox"
-                                    :checked="allPageSelected"
-                                    :aria-label="t('projects.selectAll')"
-                                    @change="toggleSelectAll($event)"
-                                />
-                            </th>
-                            <th v-if="colVis('admin')" class="ppms-th-admin">{{ t('projects.colAdmin') }}</th>
-                            <th v-if="colVis('code')" class="ppms-th-code">{{ t('projects.colCode') }}</th>
-                            <th v-if="colVis('name')" class="ppms-th-name">{{ t('projects.colName') }}</th>
-                            <th v-if="colVis('phase')" class="ppms-th-phase">{{ t('projects.colPhase') }}</th>
-                            <th v-if="colVis('team')" class="ppms-th-team">{{ t('projects.colTeam') }}</th>
-                            <th v-if="colVis('participants')" class="ppms-th-participants">{{ t('projects.colParticipants') }}</th>
-                            <th v-if="colVis('progress')" class="ppms-th-process">{{ t('projects.colProgress') }}</th>
-                            <th v-if="colVis('tasks')" class="ppms-th-num ppms-th-tasks">{{ t('projects.colTasks') }}</th>
-                            <th v-if="colVis('start')" class="ppms-th-date">{{ t('projects.colStart') }}</th>
-                            <th v-if="colVis('actualStart')" class="ppms-th-date">{{ t('projects.colActualStart') }}</th>
-                            <th v-if="colVis('end')" class="ppms-th-date">{{ t('projects.colEnd') }}</th>
-                            <th v-if="colVis('status')" class="ppms-th-status">{{ t('projects.colStatus') }}</th>
-                            <th v-if="colVis('actions')" class="ppms-th-actions">{{ t('projects.colActions') }}</th>
+                            <th v-if="canBulk" scope="col">{{ t('projects.selectAll') }}</th>
+                            <th v-if="colVis('admin')" scope="col">{{ t('projects.colAdmin') }}</th>
+                            <th v-if="colVis('code')" scope="col">{{ t('projects.colCode') }}</th>
+                            <th v-if="colVis('name')" scope="col">{{ t('projects.colName') }}</th>
+                            <th v-if="colVis('phase')" scope="col">{{ t('projects.colPhase') }}</th>
+                            <th v-if="colVis('team')" scope="col">{{ t('projects.colTeam') }}</th>
+                            <th v-if="colVis('participants')" scope="col">{{ t('projects.colParticipants') }}</th>
+                            <th v-if="colVis('progress')" scope="col">{{ t('projects.colProgress') }}</th>
+                            <th v-if="colVis('tasks')" scope="col">{{ t('projects.colTasks') }}</th>
+                            <th v-if="colVis('start')" scope="col">{{ t('projects.colStart') }}</th>
+                            <th v-if="colVis('actualStart')" scope="col">{{ t('projects.colActualStart') }}</th>
+                            <th v-if="colVis('end')" scope="col">{{ t('projects.colEnd') }}</th>
+                            <th v-if="colVis('status')" scope="col">{{ t('projects.colStatus') }}</th>
+                            <th v-if="colVis('actions')" scope="col">{{ t('projects.colActions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -555,21 +556,6 @@
                             </template>
                         </template>
                     </tbody>
-                    <tfoot>
-                        <tr class="ppms-pl-table-foot-row">
-                            <td :colspan="listTableColspan" class="ppms-pl-table-foot-cell">
-                                <span class="ppms-pl-table-foot-inner">
-                                    <span v-if="rangeFrom != null && rangeTo != null" class="ppms-pl-table-foot-stat">{{
-                                        t('projects.listTableFootRange', { from: rangeFrom, to: rangeTo, total })
-                                    }}</span>
-                                    <span v-else class="ppms-pl-table-foot-stat">{{ t('projects.listTableFootTotal', { total }) }}</span>
-                                    <span v-if="lastPage > 1" class="ppms-pl-table-foot-page">{{
-                                        t('projects.pagination', { current: page, last: lastPage })
-                                    }}</span>
-                                </span>
-                            </td>
-                        </tr>
-                    </tfoot>
                 </table>
                 </div>
             </div>
@@ -789,6 +775,15 @@
 </template>
 
 <style scoped>
+.ppms-pl-list-meta-select-all {
+    display: inline-flex;
+    align-items: center;
+}
+.ppms-pl-list-meta-select-all input {
+    width: 1.1rem;
+    height: 1.1rem;
+    cursor: pointer;
+}
 .ppms-pl-data-row--inline {
     background: rgba(238, 242, 255, 0.42);
 }
