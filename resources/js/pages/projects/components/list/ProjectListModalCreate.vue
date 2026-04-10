@@ -117,30 +117,6 @@
                             </label>
                         </div>
 
-                        <div v-if="form.editingId" class="ppms-pc-row">
-                            <div class="ppms-field ppms-pc-col ppms-pc-col--4">
-                                <div class="ppms-pc-label-row">
-                                    <span>{{ t('projects.colProgress') }}</span>
-                                </div>
-                                <input :value="progressPctDisplay" type="text" readonly tabindex="-1" name="progress_readonly" />
-                                <p class="ppms-pc-field-hint">{{ t('projects.createFieldProgressReadonlyHint') }}</p>
-                            </div>
-                            <label class="ppms-field ppms-pc-col ppms-pc-col--4">
-                                <div class="ppms-pc-label-row">
-                                    <span>{{ t('projects.createFieldEstimatedValue') }}</span>
-                                </div>
-                                <input
-                                    v-model="form.estimated_value"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    name="estimated_value"
-                                    autocomplete="off"
-                                />
-                                <p class="ppms-pc-field-hint">{{ t('projects.createFieldEstimatedValueHint') }}</p>
-                            </label>
-                        </div>
-
                         <h4 class="ppms-pc-subsection-title">{{ t('projects.createSectionSchedule') }}</h4>
                         <div class="ppms-pc-row">
                             <div class="ppms-field ppms-pc-col ppms-pc-col--5">
@@ -185,25 +161,30 @@
                             </div>
                         </div>
 
-                        <template v-if="!form.editingId">
-                            <h4 class="ppms-pc-subsection-title">{{ t('projects.createSectionFinance') }}</h4>
-                            <div class="ppms-pc-row">
-                                <label class="ppms-field ppms-pc-col ppms-pc-col--6">
-                                    <div class="ppms-pc-label-row">
-                                        <span>{{ t('projects.createFieldEstimatedValue') }}</span>
-                                    </div>
-                                    <input
-                                        v-model="form.estimated_value"
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        name="estimated_value"
-                                        autocomplete="off"
-                                    />
-                                    <p class="ppms-pc-field-hint">{{ t('projects.createFieldEstimatedValueHint') }}</p>
-                                </label>
+                        <h4 class="ppms-pc-subsection-title">{{ t('projects.createSectionFinance') }}</h4>
+                        <div class="ppms-pc-row">
+                            <div v-if="form.editingId" class="ppms-field ppms-pc-col ppms-pc-col--6">
+                                <div class="ppms-pc-label-row">
+                                    <span>{{ t('projects.colProgress') }}</span>
+                                </div>
+                                <input :value="progressPctDisplay" type="text" readonly tabindex="-1" name="progress_readonly" />
+                                <p class="ppms-pc-field-hint">{{ t('projects.createFieldProgressReadonlyHint') }}</p>
                             </div>
-                        </template>
+                            <label class="ppms-field ppms-pc-col ppms-pc-col--6">
+                                <div class="ppms-pc-label-row">
+                                    <span>{{ t('projects.createFieldEstimatedValue') }}</span>
+                                </div>
+                                <input
+                                    v-model="form.estimated_value"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    name="estimated_value"
+                                    autocomplete="off"
+                                />
+                                <p class="ppms-pc-field-hint">{{ t('projects.createFieldEstimatedValueHint') }}</p>
+                            </label>
+                        </div>
 
                         <h4 class="ppms-pc-subsection-title">
                             {{ t('projects.createFieldProgressCalc') }}
