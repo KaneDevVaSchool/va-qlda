@@ -4,36 +4,36 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\Vendor;
+use App\Services\UserRbacService;
 
 class VendorPolicy
 {
-    private function canBrowse(User $user): bool
-    {
-        return in_array($user->role, ['admin', 'pm', 'tl', 'hr', 'developer'], true);
-    }
+    public function __construct(
+        private UserRbacService $rbac
+    ) {}
 
     public function viewAny(User $user): bool
     {
-        return $this->canBrowse($user);
+        return $this->rbac->can($user, 'vendors.view');
     }
 
     public function view(User $user, Vendor $vendor): bool
     {
-        return $this->canBrowse($user);
+        return $this->rbac->can($user, 'vendors.view');
     }
 
     public function create(User $user): bool
     {
-        return $this->canBrowse($user);
+        return $this->rbac->can($user, 'vendors.create');
     }
 
     public function update(User $user, Vendor $vendor): bool
     {
-        return $this->canBrowse($user);
+        return $this->rbac->can($user, 'vendors.update');
     }
 
     public function delete(User $user, Vendor $vendor): bool
     {
-        return in_array($user->role, ['admin', 'pm', 'tl'], true);
+        return $this->rbac->can($user, 'vendors.delete');
     }
 }

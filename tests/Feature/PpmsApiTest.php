@@ -530,4 +530,91 @@ class PpmsApiTest extends TestCase
             ->assertOk()
             ->assertJsonStructure(['scope', 'person']);
     }
+
+    public function test_bootstrap_returns_module_catalog_and_rbac(): void
+    {
+        Sanctum::actingAs($this->pmUser);
+
+        $this->getJson('/api/bootstrap')
+            ->assertOk()
+            ->assertJsonStructure([
+                'module_maintenance',
+                'module_catalog',
+                'maintenance_bypass_roles',
+                'rbac' => ['role', 'effective', 'can_manage'],
+            ]);
+    }
+
+    public function test_admin_system_modules_index_forbidden_for_non_admin(): void
+    {
+        Sanctum::actingAs($this->pmUser);
+
+        $this->getJson('/api/admin/system/modules')
+            ->assertForbidden();
+    }
+
+    public function test_admin_system_modules_index_ok_for_admin(): void
+    {
+        $admin = User::factory()->create([
+            'email' => 'admin-sys@va-schools.vn',
+            'password' => 'password',
+            'role' => 'admin',
+        ]);
+        Sanctum::actingAs($admin);
+
+        $this->getJson('/api/admin/system/modules')
+            ->assertOk()
+            ->assertJsonStructure(['modules', 'maintenance_bypass_roles']);
+    }
+
+    public function test_admin_system_modules_update_sets_maintenance(): void
+    {
+        $admin = User::factory()->create([
+            'email' => 'admin-sys2@va-schools.vn',
+            'password' => 'password',
+            'role' => 'admin',
+        ]);
+        Sanctum::actingAs($admin);
+
+        $this->patchJson('/api/admin/system/modules/projects', [
+            'maintenance' => true,
+            'message' => 'Upgrading.',
+        ])->assertOk()
+            ->assertJsonPath('module_maintenance.projects.maintenance', true)
+            ->assertJsonPath('module_maintenance.projects.message', 'Upgrading.');
+    }
+
+    public function test_projects_api_returns_503_when_module_in_maintenance_for_non_bypass_user(): void
+    {
+        $admin = User::factory()->create([
+            'email' => 'admin-maint@va-schools.vn',
+            'password' => 'password',
+            'role' => 'admin',
+        ]);
+        Sanctum::actingAs($admin);
+        $this->patchJson('/api/admin/system/modules/projects', [
+            'maintenance' => true,
+            'message' => 'Offline.',
+        ])->assertOk();
+
+        Sanctum::actingAs($this->pmUser);
+        $this->getJson('/api/projects')->assertStatus(503)->assertJsonPath('code', 'MODULE_MAINTENANCE');
+    }
+
+    public function test_projects_api_ok_for_bypass_role_when_module_in_maintenance(): void
+    {
+        $admin = User::factory()->create([
+            'email' => 'admin-maint2@va-schools.vn',
+            'password' => 'password',
+            'role' => 'admin',
+        ]);
+        Sanctum::actingAs($admin);
+        $this->patchJson('/api/admin/system/modules/projects', [
+            'maintenance' => true,
+            'message' => 'Offline.',
+        ])->assertOk();
+
+        Sanctum::actingAs($admin);
+        $this->getJson('/api/projects')->assertOk();
+    }
 }

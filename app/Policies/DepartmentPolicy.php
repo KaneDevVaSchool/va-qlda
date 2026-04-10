@@ -4,21 +4,21 @@ namespace App\Policies;
 
 use App\Models\Department;
 use App\Models\User;
+use App\Services\UserRbacService;
 
 class DepartmentPolicy
 {
-    private function canBrowseContracts(User $user): bool
-    {
-        return in_array($user->role, ['admin', 'pm', 'tl', 'hr', 'developer'], true);
-    }
+    public function __construct(
+        private UserRbacService $rbac
+    ) {}
 
     public function create(User $user): bool
     {
-        return $this->canBrowseContracts($user);
+        return $this->rbac->can($user, 'vendors.update');
     }
 
     public function update(User $user, Department $department): bool
     {
-        return $this->canBrowseContracts($user);
+        return $this->rbac->can($user, 'vendors.update');
     }
 }

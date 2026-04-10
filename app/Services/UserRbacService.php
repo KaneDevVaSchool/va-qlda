@@ -83,9 +83,10 @@ class UserRbacService
      */
     public function baseRoleMatrix(string $role): array
     {
+        $cfg = config('ppms_rbac.roles.'.$role, []);
         $rows = RbacRolePermission::query()->where('role', $role)->get();
         if ($rows->isEmpty()) {
-            return config('ppms_rbac.roles.'.$role, []);
+            return $cfg;
         }
 
         $out = [];
@@ -95,6 +96,14 @@ class UserRbacService
 
         if (($out['*'] ?? false) === true) {
             return ['*' => true];
+        }
+
+        // DB overrides; keys missing from saved matrix inherit from config (new modules).
+        $keys = $this->allPermissionKeys();
+        foreach ($keys as $k) {
+            if (! array_key_exists($k, $out)) {
+                $out[$k] = $this->roleAllows($cfg, $k);
+            }
         }
 
         return $out;
@@ -215,7 +224,7 @@ class UserRbacService
             }
         }
 
-        return $keys;
+        return array_values(array_unique($keys));
     }
 
     /**

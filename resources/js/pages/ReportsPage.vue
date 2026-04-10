@@ -1,37 +1,54 @@
 <template>
-    <div class="ppms-page">
-        <section class="ppms-card">
-            <ul class="ppms-report-actions">
-                <li v-if="canPdf">
-                    <button type="button" class="ppms-btn-primary" @click="dlPdf">Tải Weekly Status PDF</button>
-                </li>
-                <li v-if="canCsv">
-                    <button type="button" class="ppms-btn-primary" @click="dlCsv">Export projects.csv</button>
-                </li>
-                <li v-if="canImpact">
-                    <button type="button" class="ppms-btn-ghost" @click="loadImpact">Xem Kaizen impact (JSON)</button>
-                </li>
-            </ul>
-            <pre v-if="impactJson" class="ppms-pre">{{ impactJson }}</pre>
+    <div class="ppms-page ppms-reports-page">
+        <section
+            v-if="canPdf"
+            class="ppms-card ppms-reports-section"
+            :aria-labelledby="'reports-pdf-' + uid"
+        >
+            <h2 :id="'reports-pdf-' + uid" class="ppms-reports-section-title">{{ t('reportsPage.sectionPdfTitle') }}</h2>
+            <p class="ppms-reports-section-lead">{{ t('reportsPage.sectionPdfLead') }}</p>
+            <button type="button" class="ppms-btn-primary" @click="dlPdf">{{ t('reportsPage.btnPdf') }}</button>
         </section>
+
+        <section
+            v-if="canCsv"
+            class="ppms-card ppms-reports-section"
+            :aria-labelledby="'reports-csv-' + uid"
+        >
+            <h2 :id="'reports-csv-' + uid" class="ppms-reports-section-title">{{ t('reportsPage.sectionCsvTitle') }}</h2>
+            <p class="ppms-reports-section-lead">{{ t('reportsPage.sectionCsvLead') }}</p>
+            <button type="button" class="ppms-btn-primary" @click="dlCsv">{{ t('reportsPage.btnCsv') }}</button>
+        </section>
+
+        <section
+            v-if="canImpact"
+            class="ppms-card ppms-reports-section"
+            :aria-labelledby="'reports-impact-' + uid"
+        >
+            <h2 :id="'reports-impact-' + uid" class="ppms-reports-section-title">{{ t('reportsPage.sectionImpactTitle') }}</h2>
+            <p class="ppms-reports-section-lead">{{ t('reportsPage.sectionImpactLead') }}</p>
+            <button type="button" class="ppms-btn-ghost" @click="loadImpact">{{ t('reportsPage.btnImpact') }}</button>
+            <pre v-if="impactJson" class="ppms-pre ppms-reports-impact-pre">{{ impactJson }}</pre>
+        </section>
+
+        <p v-if="!canPdf && !canCsv && !canImpact" class="ppms-reports-empty">{{ t('reportsPage.noActions') }}</p>
     </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import axios from 'axios';
+import { useI18n } from 'vue-i18n';
+import { usePermissions } from '../composables/usePermissions';
 
-const me = ref(null);
+const { t } = useI18n();
+const { can } = usePermissions();
+const uid = `r${Math.random().toString(36).slice(2, 9)}`;
 const impactJson = ref('');
 
-const canPdf = computed(() => ['admin', 'pm', 'tl'].includes(me.value?.role));
-const canCsv = computed(() => ['admin', 'pm', 'hr'].includes(me.value?.role));
-const canImpact = computed(() => ['admin', 'pm', 'tl', 'hr'].includes(me.value?.role));
-
-onMounted(async () => {
-    const { data } = await axios.get('/api/user');
-    me.value = data;
-});
+const canPdf = computed(() => can('reports.create'));
+const canCsv = computed(() => can('reports.update'));
+const canImpact = computed(() => can('reports.create') || can('reports.update'));
 
 async function dlPdf() {
     const res = await axios.get('/api/reports/weekly-status.pdf', { responseType: 'blob' });
@@ -58,3 +75,41 @@ async function loadImpact() {
     impactJson.value = JSON.stringify(data, null, 2);
 }
 </script>
+
+<style scoped>
+.ppms-reports-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.ppms-reports-section {
+    padding: 1.25rem 1.35rem;
+}
+
+.ppms-reports-section-title {
+    margin: 0 0 0.35rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.ppms-reports-section-lead {
+    margin: 0 0 1rem;
+    font-size: 0.95rem;
+    color: var(--ppms-text-muted, #64748b);
+    line-height: 1.45;
+}
+
+.ppms-reports-impact-pre {
+    margin-top: 1rem;
+    max-height: 50vh;
+    overflow: auto;
+}
+
+.ppms-reports-empty {
+    margin: 0;
+    padding: 1rem;
+    color: var(--ppms-text-muted, #64748b);
+    font-size: 0.95rem;
+}
+</style>

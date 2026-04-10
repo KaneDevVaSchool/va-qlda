@@ -677,27 +677,44 @@
         role="presentation"
         @click.self="vendorPickOpen = false"
     >
-        <div class="ppms-modal ppms-pc-submodal" role="dialog" aria-modal="true" @click.stop>
-            <h3 class="ppms-modal-title">{{ t('projects.createPickVendorTitle') }}</h3>
-            <input
-                v-model="vendorPickFilter"
-                type="search"
-                class="ppms-pc-input ppms-pc-submodal-search"
-                :placeholder="t('projects.createVendorSearchPh')"
-                autocomplete="off"
-            />
-            <ul class="ppms-pc-vendor-pick-list" role="listbox">
-                <li v-for="v in vendorPickFiltered" :key="'vp-' + v.id">
-                    <button type="button" class="ppms-pc-vendor-pick-btn" @click="appendVendorLine(v)">
-                        <span class="ppms-pc-vendor-pick-name">{{ v.name }}</span>
-                        <span v-if="v.tax_code" class="ppms-pc-vendor-pick-meta">{{ v.tax_code }}</span>
-                    </button>
-                </li>
-            </ul>
-            <p v-if="vendorPickFiltered.length === 0" class="ppms-muted ppms-pc-submodal-empty">{{ t('projects.createVendorPickEmpty') }}</p>
-            <div class="ppms-modal-actions">
-                <button type="button" class="ppms-btn-ghost" @click="vendorPickOpen = false">{{ t('common.cancel') }}</button>
+        <div
+            class="ppms-modal ppms-pc-submodal ppms-pc-submodal--polish"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ppms-pc-vpick-title"
+            @click.stop
+        >
+            <header class="ppms-pc-submodal-head">
+                <p class="ppms-pc-submodal-kicker">{{ t('projects.createPickVendor') }}</p>
+                <h3 id="ppms-pc-vpick-title" class="ppms-pc-submodal-title">{{ t('projects.createPickVendorTitle') }}</h3>
+                <p class="ppms-pc-submodal-lead">{{ t('projects.createPickVendorLead') }}</p>
+            </header>
+            <div class="ppms-pc-submodal-body">
+                <label class="ppms-pc-submodal-field">
+                    <span class="ppms-pc-submodal-label">{{ t('common.search') }}</span>
+                    <input
+                        id="ppms-pc-vpick-search"
+                        v-model="vendorPickFilter"
+                        type="search"
+                        class="ppms-pc-input ppms-pc-input--emphasis"
+                        :placeholder="t('projects.createVendorSearchPh')"
+                        autocomplete="off"
+                        :aria-label="t('projects.createVendorSearchPh')"
+                    />
+                </label>
+                <ul class="ppms-pc-vendor-pick-list" role="listbox" :aria-label="t('projects.createPickVendorTitle')">
+                    <li v-for="v in vendorPickFiltered" :key="'vp-' + v.id">
+                        <button type="button" class="ppms-pc-vendor-pick-btn" @click="appendVendorLine(v)">
+                            <span class="ppms-pc-vendor-pick-name">{{ v.name }}</span>
+                            <span v-if="v.tax_code" class="ppms-pc-vendor-pick-meta">{{ v.tax_code }}</span>
+                        </button>
+                    </li>
+                </ul>
+                <p v-if="vendorPickFiltered.length === 0" class="ppms-pc-submodal-empty">{{ t('projects.createVendorPickEmpty') }}</p>
             </div>
+            <footer class="ppms-pc-submodal-foot">
+                <button type="button" class="ppms-btn-ghost" @click="vendorPickOpen = false">{{ t('common.cancel') }}</button>
+            </footer>
         </div>
     </div>
 
@@ -707,20 +724,39 @@
         role="presentation"
         @click.self="vendorQuickOpen = false"
     >
-        <div class="ppms-modal ppms-pc-submodal" role="dialog" aria-modal="true" @click.stop>
-            <h3 class="ppms-modal-title">{{ t('projects.createQuickVendorTitle') }}</h3>
-            <p class="ppms-modal-msg">{{ t('projects.createQuickVendorHint') }}</p>
-            <label class="ppms-field ppms-pc-full">
-                <span>{{ t('vendors.fieldName') }} *</span>
-                <input v-model="quickVendorForm.name" type="text" class="ppms-pc-input" maxlength="255" autocomplete="off" />
-            </label>
-            <p v-if="quickVendorErr" class="ppms-error">{{ quickVendorErr }}</p>
-            <div class="ppms-modal-actions">
+        <div
+            class="ppms-modal ppms-pc-submodal ppms-pc-submodal--polish"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ppms-pc-vquick-title"
+            @click.stop
+        >
+            <header class="ppms-pc-submodal-head">
+                <p class="ppms-pc-submodal-kicker">{{ t('projects.createQuickVendor') }}</p>
+                <h3 id="ppms-pc-vquick-title" class="ppms-pc-submodal-title">{{ t('projects.createQuickVendorTitle') }}</h3>
+                <p class="ppms-pc-submodal-lead">{{ t('projects.createQuickVendorHint') }}</p>
+            </header>
+            <div class="ppms-pc-submodal-body">
+                <label class="ppms-pc-submodal-field">
+                    <span class="ppms-pc-submodal-label">{{ t('vendors.fieldName') }} <abbr class="ppms-pc-req" :title="t('vendors.requiredField')">*</abbr></span>
+                    <input
+                        v-model="quickVendorForm.name"
+                        type="text"
+                        class="ppms-pc-input ppms-pc-input--emphasis"
+                        maxlength="255"
+                        autocomplete="organization"
+                        :placeholder="t('projects.createQuickVendorNamePh')"
+                        :aria-invalid="!!quickVendorErr"
+                    />
+                </label>
+                <p v-if="quickVendorErr" class="ppms-error ppms-pc-submodal-err" role="alert">{{ quickVendorErr }}</p>
+            </div>
+            <footer class="ppms-pc-submodal-foot">
                 <button type="button" class="ppms-btn-ghost" @click="vendorQuickOpen = false">{{ t('common.cancel') }}</button>
                 <button type="button" class="ppms-btn-primary" :disabled="vendorQuickSaving" @click="submitQuickVendor">
                     {{ t('vendors.modalCreateSave') }}
                 </button>
-            </div>
+            </footer>
         </div>
     </div>
 
@@ -730,23 +766,50 @@
         role="presentation"
         @click.self="deptQuickOpen = false"
     >
-        <div class="ppms-modal ppms-pc-submodal" role="dialog" aria-modal="true" @click.stop>
-            <h3 class="ppms-modal-title">{{ t('projects.createQuickDepartmentTitle') }}</h3>
-            <label class="ppms-field ppms-pc-full">
-                <span>{{ t('projects.createDeptNameLabel') }}</span>
-                <input v-model="newDeptName" type="text" class="ppms-pc-input" maxlength="255" autocomplete="off" />
-            </label>
-            <label class="ppms-field ppms-pc-full">
-                <span>{{ t('projects.createDeptCodeLabel') }}</span>
-                <input v-model="newDeptCode" type="text" class="ppms-pc-input" maxlength="64" autocomplete="off" />
-            </label>
-            <p v-if="deptQuickErr" class="ppms-error">{{ deptQuickErr }}</p>
-            <div class="ppms-modal-actions">
+        <div
+            class="ppms-modal ppms-pc-submodal ppms-pc-submodal--polish"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ppms-pc-dept-quick-title"
+            @click.stop
+        >
+            <header class="ppms-pc-submodal-head">
+                <p class="ppms-pc-submodal-kicker">{{ t('projects.createQuickDepartment') }}</p>
+                <h3 id="ppms-pc-dept-quick-title" class="ppms-pc-submodal-title">{{ t('projects.createQuickDepartmentTitle') }}</h3>
+                <p class="ppms-pc-submodal-lead">{{ t('projects.createQuickDepartmentLead') }}</p>
+            </header>
+            <div class="ppms-pc-submodal-body">
+                <label class="ppms-pc-submodal-field">
+                    <span class="ppms-pc-submodal-label">{{ t('projects.createDeptNameLabel') }} *</span>
+                    <input
+                        v-model="newDeptName"
+                        type="text"
+                        class="ppms-pc-input ppms-pc-input--emphasis"
+                        maxlength="255"
+                        autocomplete="organization"
+                        :placeholder="t('projects.createDeptNamePh')"
+                        :aria-invalid="!!deptQuickErr"
+                    />
+                </label>
+                <label class="ppms-pc-submodal-field">
+                    <span class="ppms-pc-submodal-label">{{ t('projects.createDeptCodeLabel') }}</span>
+                    <input
+                        v-model="newDeptCode"
+                        type="text"
+                        class="ppms-pc-input"
+                        maxlength="64"
+                        autocomplete="off"
+                        :placeholder="t('projects.createDeptCodePh')"
+                    />
+                </label>
+                <p v-if="deptQuickErr" class="ppms-error ppms-pc-submodal-err" role="alert">{{ deptQuickErr }}</p>
+            </div>
+            <footer class="ppms-pc-submodal-foot">
                 <button type="button" class="ppms-btn-ghost" @click="deptQuickOpen = false">{{ t('common.cancel') }}</button>
                 <button type="button" class="ppms-btn-primary" :disabled="deptQuickSaving" @click="submitQuickDepartment">
                     {{ t('projects.createQuickDepartmentSave') }}
                 </button>
-            </div>
+            </footer>
         </div>
     </div>
 
@@ -756,23 +819,50 @@
         role="presentation"
         @click.self="blockQuickOpen = false"
     >
-        <div class="ppms-modal ppms-pc-submodal" role="dialog" aria-modal="true" @click.stop>
-            <h3 class="ppms-modal-title">{{ t('projects.createQuickBlockTitle') }}</h3>
-            <label class="ppms-field ppms-pc-full">
-                <span>{{ t('projects.createBlockNameLabel') }}</span>
-                <input v-model="newBlockName" type="text" class="ppms-pc-input" maxlength="255" autocomplete="off" />
-            </label>
-            <label class="ppms-field ppms-pc-full">
-                <span>{{ t('projects.createBlockCodeLabel') }}</span>
-                <input v-model="newBlockCode" type="text" class="ppms-pc-input" maxlength="64" autocomplete="off" />
-            </label>
-            <p v-if="blockQuickErr" class="ppms-error">{{ blockQuickErr }}</p>
-            <div class="ppms-modal-actions">
+        <div
+            class="ppms-modal ppms-pc-submodal ppms-pc-submodal--polish"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ppms-pc-block-quick-title"
+            @click.stop
+        >
+            <header class="ppms-pc-submodal-head">
+                <p class="ppms-pc-submodal-kicker">{{ t('projects.createQuickBlock') }}</p>
+                <h3 id="ppms-pc-block-quick-title" class="ppms-pc-submodal-title">{{ t('projects.createQuickBlockTitle') }}</h3>
+                <p class="ppms-pc-submodal-lead">{{ t('projects.createQuickBlockLead') }}</p>
+            </header>
+            <div class="ppms-pc-submodal-body">
+                <label class="ppms-pc-submodal-field">
+                    <span class="ppms-pc-submodal-label">{{ t('projects.createBlockNameLabel') }} *</span>
+                    <input
+                        v-model="newBlockName"
+                        type="text"
+                        class="ppms-pc-input ppms-pc-input--emphasis"
+                        maxlength="255"
+                        autocomplete="off"
+                        :placeholder="t('projects.createBlockNamePh')"
+                        :aria-invalid="!!blockQuickErr"
+                    />
+                </label>
+                <label class="ppms-pc-submodal-field">
+                    <span class="ppms-pc-submodal-label">{{ t('projects.createBlockCodeLabel') }}</span>
+                    <input
+                        v-model="newBlockCode"
+                        type="text"
+                        class="ppms-pc-input"
+                        maxlength="64"
+                        autocomplete="off"
+                        :placeholder="t('projects.createBlockCodePh')"
+                    />
+                </label>
+                <p v-if="blockQuickErr" class="ppms-error ppms-pc-submodal-err" role="alert">{{ blockQuickErr }}</p>
+            </div>
+            <footer class="ppms-pc-submodal-foot">
                 <button type="button" class="ppms-btn-ghost" @click="blockQuickOpen = false">{{ t('common.cancel') }}</button>
                 <button type="button" class="ppms-btn-primary" :disabled="blockQuickSaving" @click="submitQuickBlock">
                     {{ t('projects.createQuickBlockSave') }}
                 </button>
-            </div>
+            </footer>
         </div>
     </div>
 </template>
@@ -1687,36 +1777,145 @@ defineExpose({ handleDocumentClick, closeProgressCalc, closeOwnerLookup, clearCr
 
 .ppms-pc-input {
     width: 100%;
-    padding: 0.45rem 0.55rem;
-    border-radius: 6px;
-    border: 1px solid var(--ppms-border-subtle, rgba(0, 0, 0, 0.12));
+    padding: 0.5rem 0.65rem;
+    border-radius: 8px;
+    border: 1px solid var(--ppms-border-subtle, rgba(0, 0, 0, 0.14));
     font: inherit;
+    font-size: 0.9rem;
     background: var(--ppms-surface, #fff);
+    color: var(--ppms-text);
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.ppms-pc-input::placeholder {
+    color: var(--ppms-muted);
+    opacity: 0.9;
+}
+
+.ppms-pc-input:hover {
+    border-color: rgba(37, 99, 235, 0.35);
+}
+
+.ppms-pc-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+.ppms-pc-input--emphasis {
+    min-height: 2.65rem;
+}
+
+.ppms-pc-req {
+    text-decoration: none;
+    color: #b91c1c;
+    font-weight: 700;
 }
 
 .ppms-pc-submodal-backdrop {
     z-index: 10002;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(3px);
 }
 
 .ppms-pc-submodal {
     max-width: 420px;
+    width: 100%;
     max-height: min(90vh, 640px);
     display: flex;
     flex-direction: column;
+    padding: 0;
+    overflow: hidden;
 }
 
-.ppms-pc-submodal-search {
-    margin-bottom: 0.75rem;
+.ppms-pc-submodal--polish {
+    border-radius: 12px;
+    box-shadow:
+        0 24px 48px rgba(15, 23, 42, 0.12),
+        0 0 0 1px rgba(148, 163, 184, 0.2);
+}
+
+.ppms-pc-submodal-head {
+    padding: 1rem 1.15rem 0.75rem;
+    border-bottom: 1px solid var(--ppms-border-subtle, rgba(0, 0, 0, 0.08));
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.06) 0%, transparent 100%);
+}
+
+.ppms-pc-submodal-kicker {
+    margin: 0 0 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #2563eb;
+}
+
+.ppms-pc-submodal-title {
+    margin: 0 0 0.4rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ppms-text);
+    line-height: 1.25;
+}
+
+.ppms-pc-submodal-lead {
+    margin: 0;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    color: var(--ppms-muted);
+}
+
+.ppms-pc-submodal-body {
+    padding: 1rem 1.15rem;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+.ppms-pc-submodal-field {
+    display: block;
+    margin-bottom: 0.85rem;
+}
+
+.ppms-pc-submodal-field:last-child {
+    margin-bottom: 0;
+}
+
+.ppms-pc-submodal-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    color: var(--ppms-text);
+}
+
+.ppms-pc-submodal-foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.85rem 1.15rem 1rem;
+    border-top: 1px solid var(--ppms-border-subtle, rgba(0, 0, 0, 0.08));
+    background: var(--ppms-surface-muted, rgba(248, 250, 252, 0.85));
+}
+
+.ppms-pc-submodal-err {
+    margin: 0.35rem 0 0;
+    font-size: 0.86rem;
 }
 
 .ppms-pc-vendor-pick-list {
     list-style: none;
-    margin: 0 0 0.75rem;
+    margin: 0.5rem 0 0;
     padding: 0;
     max-height: 240px;
     overflow: auto;
     border: 1px solid var(--ppms-border-subtle, rgba(0, 0, 0, 0.12));
     border-radius: 8px;
+    background: var(--ppms-surface, #fff);
 }
 
 .ppms-pc-vendor-pick-btn {
@@ -1751,7 +1950,13 @@ defineExpose({ handleDocumentClick, closeProgressCalc, closeOwnerLookup, clearCr
 }
 
 .ppms-pc-submodal-empty {
-    margin: 0 0 0.75rem;
-    font-size: 0.88rem;
+    margin: 0.75rem 0 0;
+    font-size: 0.86rem;
+    text-align: center;
+    padding: 1rem 0.5rem;
+    color: var(--ppms-muted);
+    border: 1px dashed var(--ppms-border-subtle, rgba(0, 0, 0, 0.18));
+    border-radius: 8px;
+    background: rgba(248, 250, 252, 0.6);
 }
 </style>

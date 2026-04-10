@@ -55,6 +55,12 @@
                                 <router-link to="/profile">{{ t('layout.navAccount') }}</router-link>
                             </div>
                         </div>
+                        <div v-if="showAdminFooter" class="va-site-footer-module">
+                            <div class="va-site-footer-module-title">{{ t('layout.footerColSystem') }}</div>
+                            <div class="va-site-footer-module-links">
+                                <router-link to="/admin">{{ t('layout.navAdmin') }}</router-link>
+                            </div>
+                        </div>
                     </nav>
                 </template>
                 <nav v-else class="va-site-footer-nav va-site-footer-nav--compact" :aria-label="t('layout.footerResources')">
@@ -82,6 +88,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { appBootstrapState } from '../appBootstrap';
 import VaFooterWordmark from './VaFooterWordmark.vue';
 import VaMascotImg from './VaMascotImg.vue';
 
@@ -94,4 +101,7 @@ defineProps({
 
 const { t } = useI18n();
 const year = computed(() => new Date().getFullYear());
+
+const bootstrap = appBootstrapState();
+const showAdminFooter = computed(() => !!bootstrap.rbac?.can_manage);
 </script>

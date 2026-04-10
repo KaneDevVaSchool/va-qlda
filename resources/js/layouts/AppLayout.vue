@@ -72,6 +72,7 @@
                                 </svg>
                             </span>
                             <span class="ppms-nav-text">{{ t('layout.navDashboard') }}</span>
+                            <span v-if="navMaint('dashboard')" class="ppms-nav-maint-pill">{{ t('layout.moduleMaintBadge') }}</span>
                         </router-link>
                     </div>
                     <div class="ppms-nav-group">
@@ -85,6 +86,7 @@
                                 </svg>
                             </span>
                             <span class="ppms-nav-text">{{ t('layout.navProjects') }}</span>
+                            <span v-if="navMaint('projects')" class="ppms-nav-maint-pill">{{ t('layout.moduleMaintBadge') }}</span>
                         </router-link>
                         <router-link to="/kpi" :title="t('layout.navKpi')">
                             <span class="ppms-nav-ico-wrap" aria-hidden="true">
@@ -95,6 +97,7 @@
                                 </svg>
                             </span>
                             <span class="ppms-nav-text">{{ t('layout.navKpi') }}</span>
+                            <span v-if="navMaint('kpi')" class="ppms-nav-maint-pill">{{ t('layout.moduleMaintBadge') }}</span>
                         </router-link>
                         <router-link to="/teams" :title="t('layout.navTeams')">
                             <span class="ppms-nav-ico-wrap" aria-hidden="true">
@@ -106,6 +109,7 @@
                                 </svg>
                             </span>
                             <span class="ppms-nav-text">{{ t('layout.navTeams') }}</span>
+                            <span v-if="navMaint('teams')" class="ppms-nav-maint-pill">{{ t('layout.moduleMaintBadge') }}</span>
                         </router-link>
                         <router-link to="/reports" :title="t('layout.navReports')">
                             <span class="ppms-nav-ico-wrap" aria-hidden="true">
@@ -117,6 +121,7 @@
                                 </svg>
                             </span>
                             <span class="ppms-nav-text">{{ t('layout.navReports') }}</span>
+                            <span v-if="navMaint('reports')" class="ppms-nav-maint-pill">{{ t('layout.moduleMaintBadge') }}</span>
                         </router-link>
                     </div>
                     <div class="ppms-nav-group">
@@ -131,6 +136,7 @@
                                 </svg>
                             </span>
                             <span class="ppms-nav-text">{{ t('layout.navVendors') }}</span>
+                            <span v-if="navMaint('vendors')" class="ppms-nav-maint-pill">{{ t('layout.moduleMaintBadge') }}</span>
                         </router-link>
                         <router-link to="/contracts" :title="t('layout.navContracts')">
                             <span class="ppms-nav-ico-wrap" aria-hidden="true">
@@ -143,6 +149,7 @@
                                 </svg>
                             </span>
                             <span class="ppms-nav-text">{{ t('layout.navContracts') }}</span>
+                            <span v-if="navMaint('contracts')" class="ppms-nav-maint-pill">{{ t('layout.moduleMaintBadge') }}</span>
                         </router-link>
                     </div>
                     <div class="ppms-nav-group">
@@ -155,6 +162,7 @@
                                 </svg>
                             </span>
                             <span class="ppms-nav-text">{{ t('layout.navKaizen') }}</span>
+                            <span v-if="navMaint('kaizens')" class="ppms-nav-maint-pill">{{ t('layout.moduleMaintBadge') }}</span>
                         </router-link>
                         <router-link to="/innovation" :title="t('layout.navInnovation')">
                             <span class="ppms-nav-ico-wrap" aria-hidden="true">
@@ -164,6 +172,7 @@
                                 </svg>
                             </span>
                             <span class="ppms-nav-text">{{ t('layout.navInnovation') }}</span>
+                            <span v-if="navMaint('innovation')" class="ppms-nav-maint-pill">{{ t('layout.moduleMaintBadge') }}</span>
                         </router-link>
                     </div>
                     <div class="ppms-nav-group">
@@ -177,6 +186,7 @@
                                 </svg>
                             </span>
                             <span class="ppms-nav-text">{{ t('layout.navEvaluations') }}</span>
+                            <span v-if="navMaint('evaluations')" class="ppms-nav-maint-pill">{{ t('layout.moduleMaintBadge') }}</span>
                         </router-link>
                         <router-link to="/notifications" :title="t('layout.navNotifications')">
                             <span class="ppms-nav-ico-wrap" aria-hidden="true">
@@ -186,7 +196,19 @@
                                 </svg>
                             </span>
                             <span class="ppms-nav-text">{{ t('layout.navNotifications') }}</span>
+                            <span v-if="navMaint('notifications')" class="ppms-nav-maint-pill">{{ t('layout.moduleMaintBadge') }}</span>
                             <span v-if="unread > 0" class="ppms-badge">{{ unread > 9 ? '9+' : String(unread) }}</span>
+                        </router-link>
+                        <router-link v-if="canManageAdmin" to="/admin" :title="t('layout.navAdmin')">
+                            <span class="ppms-nav-ico-wrap" aria-hidden="true">
+                                <svg class="ppms-nav-ico-svg" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="3" />
+                                    <path
+                                        d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+                                    />
+                                </svg>
+                            </span>
+                            <span class="ppms-nav-text">{{ t('layout.navAdmin') }}</span>
                         </router-link>
                         <router-link to="/profile" :title="t('layout.navAccount')">
                             <span class="ppms-nav-ico-wrap" aria-hidden="true">
@@ -351,6 +373,7 @@ import { useRoute, useRouter } from 'vue-router';
 import VaMascotImg from '../components/VaMascotImg.vue';
 import VaSiteFooter from '../components/VaSiteFooter.vue';
 import { useI18n } from 'vue-i18n';
+import { appBootstrapState, isModuleUnderMaintenance, resetAppBootstrap } from '../appBootstrap';
 import { setAuthToken } from '../bootstrap';
 import { persistLocale } from '../i18n';
 import { ppmsConfirm } from '../ppmsUi';
@@ -359,6 +382,13 @@ const { locale, t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
+const bootstrap = appBootstrapState();
+const canManageAdmin = computed(() => !!bootstrap.rbac.can_manage);
+
+function navMaint(moduleKey) {
+    return isModuleUnderMaintenance(moduleKey);
+}
+
 const user = ref(null);
 const unread = ref(0);
 const PPMS_SIDEBAR_COLLAPSED = 'ppms-sidebar-collapsed';
@@ -507,6 +537,7 @@ async function logout() {
     } catch {
         /* ignore */
     }
+    resetAppBootstrap();
     setAuthToken(null);
     router.push({ name: 'login' });
 }

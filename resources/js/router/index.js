@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { getStoredToken } from '../bootstrap';
+import { appBootstrapState, loadAppBootstrap, shouldBlockModuleRoute } from '../appBootstrap';
 import { i18n } from '../i18n';
 
 const bc = (items) => items;
@@ -21,6 +22,7 @@ const routes = [
                 name: 'dashboard',
                 component: () => import('../pages/Dashboard.vue'),
                 meta: {
+                    moduleKey: 'dashboard',
                     titleKey: 'dashboard.pageTitle',
                     pageTitleKey: 'dashboard.pageTitle',
                     pageDescriptionKey: 'dashboard.pageDescription',
@@ -28,10 +30,44 @@ const routes = [
                 },
             },
             {
+                path: 'maintenance',
+                name: 'module-maintenance',
+                component: () => import('../pages/ModuleMaintenancePage.vue'),
+                meta: {
+                    skipMaintenanceGuard: true,
+                    titleKey: 'maintenance.pageTitle',
+                    pageTitleKey: 'maintenance.pageTitle',
+                    pageDescriptionKey: 'maintenance.pageDescription',
+                    hideLayoutTitle: true,
+                    flushContent: true,
+                    breadcrumb: bc([
+                        { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'maintenance.breadcrumb' },
+                    ]),
+                },
+            },
+            {
+                path: 'admin',
+                name: 'admin-system',
+                component: () => import('../pages/admin/AdminSystemPage.vue'),
+                meta: {
+                    skipMaintenanceGuard: true,
+                    titleKey: 'admin.system.pageTitle',
+                    pageTitleKey: 'admin.system.pageTitle',
+                    pageDescriptionKey: 'admin.system.pageDescription',
+                    flushContent: true,
+                    breadcrumb: bc([
+                        { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'admin.system.breadcrumb' },
+                    ]),
+                },
+            },
+            {
                 path: 'projects',
                 name: 'projects',
                 component: () => import('../pages/projects/ProjectList.vue'),
                 meta: {
+                    moduleKey: 'projects',
                     titleKey: 'projects.pageTitle',
                     pageTitleKey: 'projects.pageTitle',
                     breadcrumb: bc([
@@ -46,6 +82,7 @@ const routes = [
                 component: () => import('../pages/projects/ProjectDetail.vue'),
                 props: true,
                 meta: {
+                    moduleKey: 'projects',
                     titleKey: 'projects.detailTitle',
                     hideLayoutTitle: true,
                     breadcrumb: bc([
@@ -60,6 +97,7 @@ const routes = [
                 name: 'kpi',
                 component: () => import('../pages/KpiPage.vue'),
                 meta: {
+                    moduleKey: 'kpi',
                     titleKey: 'layout.navKpi',
                     pageTitleKey: 'layout.navKpi',
                     pageDescriptionKey: 'kpiPage.scopeHint',
@@ -74,6 +112,7 @@ const routes = [
                 name: 'teams',
                 component: () => import('../pages/TeamsPage.vue'),
                 meta: {
+                    moduleKey: 'teams',
                     titleKey: 'layout.navTeams',
                     pageTitleKey: 'teams.title',
                     pageDescriptionKey: 'teams.subtitle',
@@ -88,6 +127,7 @@ const routes = [
                 name: 'vendors',
                 component: () => import('../pages/vendors/VendorList.vue'),
                 meta: {
+                    moduleKey: 'vendors',
                     titleKey: 'vendors.pageTitle',
                     pageTitleKey: 'vendors.pageTitle',
                     pageDescriptionKey: 'vendors.pageDescription',
@@ -104,6 +144,7 @@ const routes = [
                 component: () => import('../pages/vendors/VendorDetail.vue'),
                 props: true,
                 meta: {
+                    moduleKey: 'vendors',
                     titleKey: 'vendors.detailTitle',
                     hideLayoutTitle: true,
                     breadcrumb: bc([
@@ -119,6 +160,7 @@ const routes = [
                 name: 'contracts',
                 component: () => import('../pages/contracts/ContractList.vue'),
                 meta: {
+                    moduleKey: 'contracts',
                     titleKey: 'contracts.pageTitle',
                     pageTitleKey: 'contracts.pageTitle',
                     pageDescriptionKey: 'contracts.pageDescription',
@@ -135,6 +177,7 @@ const routes = [
                 component: () => import('../pages/contracts/ContractDetail.vue'),
                 props: true,
                 meta: {
+                    moduleKey: 'contracts',
                     titleKey: 'contracts.detailTitle',
                     hideLayoutTitle: true,
                     breadcrumb: bc([
@@ -150,10 +193,14 @@ const routes = [
                 name: 'kaizens',
                 component: () => import('../pages/kaizen/KaizenList.vue'),
                 meta: {
-                    title: 'Kaizen',
-                    pageTitle: 'Kaizen',
-                    pageDescription: 'Cải tiến liên tục, leaderboard và nhắc tuần.',
-                    breadcrumb: bc([{ label: 'Trang chủ', to: '/' }, { label: 'Kaizen' }]),
+                    moduleKey: 'kaizens',
+                    titleKey: 'kaizenPage.pageTitle',
+                    pageTitleKey: 'kaizenPage.pageTitle',
+                    pageDescriptionKey: 'kaizenPage.pageDescription',
+                    breadcrumb: bc([
+                        { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'layout.navKaizen' },
+                    ]),
                 },
             },
             {
@@ -161,10 +208,14 @@ const routes = [
                 name: 'innovation',
                 component: () => import('../pages/InnovationList.vue'),
                 meta: {
-                    title: 'Innovation',
-                    pageTitle: 'Innovation (R&D)',
-                    pageDescription: 'Ý tưởng Type 3 — funnel Submitted → POC → Applied.',
-                    breadcrumb: bc([{ label: 'Trang chủ', to: '/' }, { label: 'Innovation' }]),
+                    moduleKey: 'innovation',
+                    titleKey: 'innovationPage.pageTitle',
+                    pageTitleKey: 'innovationPage.pageTitle',
+                    pageDescriptionKey: 'innovationPage.pageDescription',
+                    breadcrumb: bc([
+                        { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'layout.navInnovation' },
+                    ]),
                 },
             },
             {
@@ -172,10 +223,14 @@ const routes = [
                 name: 'evaluations',
                 component: () => import('../pages/evaluations/EvaluationList.vue'),
                 meta: {
-                    title: 'Đánh giá 3P',
-                    pageTitle: 'Đánh giá 3P',
-                    pageDescription: 'P1 / P2 / P3, peer review và xuất PDF.',
-                    breadcrumb: bc([{ label: 'Trang chủ', to: '/' }, { label: 'Đánh giá 3P' }]),
+                    moduleKey: 'evaluations',
+                    titleKey: 'evaluationsPage.pageTitle',
+                    pageTitleKey: 'evaluationsPage.pageTitle',
+                    pageDescriptionKey: 'evaluationsPage.pageDescription',
+                    breadcrumb: bc([
+                        { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'layout.navEvaluations' },
+                    ]),
                 },
             },
             {
@@ -183,10 +238,14 @@ const routes = [
                 name: 'reports',
                 component: () => import('../pages/ReportsPage.vue'),
                 meta: {
-                    title: 'Báo cáo',
-                    pageTitle: 'Báo cáo & export',
-                    pageDescription: 'Weekly PDF, CSV dự án và tổng hợp Kaizen impact.',
-                    breadcrumb: bc([{ label: 'Trang chủ', to: '/' }, { label: 'Báo cáo' }]),
+                    moduleKey: 'reports',
+                    titleKey: 'reportsPage.pageTitle',
+                    pageTitleKey: 'reportsPage.pageTitle',
+                    pageDescriptionKey: 'reportsPage.pageDescription',
+                    breadcrumb: bc([
+                        { labelKey: 'common.home', to: '/' },
+                        { labelKey: 'layout.navReports' },
+                    ]),
                 },
             },
             {
@@ -194,6 +253,7 @@ const routes = [
                 name: 'notifications',
                 component: () => import('../pages/Notifications.vue'),
                 meta: {
+                    moduleKey: 'notifications',
                     titleKey: 'activityFeed.pageTitle',
                     pageTitleKey: 'activityFeed.pageTitle',
                     pageDescriptionKey: 'activityFeed.pageDescription',
@@ -230,7 +290,7 @@ const router = createRouter({
     },
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
     const token = getStoredToken();
     if (to.meta.requiresAuth && !token) {
         next({ name: 'login', query: { redirect: to.fullPath } });
@@ -242,6 +302,36 @@ router.beforeEach((to, from, next) => {
 
         return;
     }
+
+    if (token && to.meta.requiresAuth) {
+        try {
+            await loadAppBootstrap();
+        } catch {
+            next({ name: 'login', query: { redirect: to.fullPath } });
+
+            return;
+        }
+
+        if (to.name === 'admin-system') {
+            const s = appBootstrapState();
+            if (!s.rbac.can_manage) {
+                next({ name: 'dashboard' });
+
+                return;
+            }
+        }
+
+        if (!to.meta.skipMaintenanceGuard && shouldBlockModuleRoute(to.meta.moduleKey)) {
+            next({
+                name: 'module-maintenance',
+                query: { module: to.meta.moduleKey || '' },
+                replace: true,
+            });
+
+            return;
+        }
+    }
+
     next();
 });
 

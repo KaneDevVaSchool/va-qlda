@@ -782,6 +782,26 @@
     min-width: 0;
 }
 
+.ppms-nav-maint-pill {
+    margin-left: auto;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.1rem 0.32rem;
+    border-radius: 4px;
+    background: rgba(245, 158, 11, 0.28);
+    color: #fde68a;
+    flex-shrink: 0;
+    line-height: 1.2;
+}
+
+@media (min-width: 1024px) {
+    .ppms-sidebar--collapsed .ppms-nav-maint-pill {
+        display: none;
+    }
+}
+
 .ppms-sidebar-logout-btn .ppms-nav-ico-wrap {
     display: none;
 }

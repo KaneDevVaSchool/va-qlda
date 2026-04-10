@@ -4,44 +4,36 @@ namespace App\Policies;
 
 use App\Models\Project;
 use App\Models\User;
+use App\Services\UserRbacService;
 
 class ProjectPolicy
 {
-    /** Roles that can browse project lists and open project detail. */
-    private function canBrowse(User $user): bool
-    {
-        return in_array($user->role, ['admin', 'pm', 'tl', 'hr', 'developer'], true);
-    }
-
-    /** Roles that can create / change project records (not delete). */
-    private function canManage(User $user): bool
-    {
-        return in_array($user->role, ['admin', 'pm', 'tl'], true);
-    }
+    public function __construct(
+        private UserRbacService $rbac
+    ) {}
 
     public function viewAny(User $user): bool
     {
-        return $this->canBrowse($user);
+        return $this->rbac->can($user, 'projects.view');
     }
 
     public function view(User $user, Project $project): bool
     {
-        return $this->canBrowse($user);
+        return $this->rbac->can($user, 'projects.view');
     }
 
-    /** Any role that may browse projects may create them (not restricted to PM/TL/Admin). */
     public function create(User $user): bool
     {
-        return $this->canBrowse($user);
+        return $this->rbac->can($user, 'projects.create');
     }
 
     public function update(User $user, Project $project): bool
     {
-        return $this->canManage($user);
+        return $this->rbac->can($user, 'projects.update');
     }
 
     public function delete(User $user, Project $project): bool
     {
-        return in_array($user->role, ['admin', 'pm'], true);
+        return $this->rbac->can($user, 'projects.delete');
     }
 }

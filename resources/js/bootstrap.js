@@ -111,6 +111,9 @@ export function getApiErrorMessage(error, fallback = 'Đã xảy ra lỗi.') {
     if (status === 401) {
         return 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn.';
     }
+    if (status === 503 && data?.code === 'MODULE_MAINTENANCE' && typeof data?.message === 'string' && data.message.length) {
+        return data.message;
+    }
     if (status === 403) {
         return 'Bạn không có quyền thực hiện thao tác này.';
     }
