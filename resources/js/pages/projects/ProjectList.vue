@@ -8,26 +8,29 @@
         <ProjectListSavedViews :saved-views="savedViews" @apply="applySavedView($event)" @remove="removeSavedView" />
 
         <div class="ppms-pl-phase-filter ppms-mt">
-            <button
-                type="button"
-                class="ppms-pl-phase-filter-head"
-                :aria-expanded="phaseFilterExpanded"
-                :aria-label="phaseFilterExpanded ? t('projects.phaseFilterCollapse') : t('projects.phaseFilterExpand')"
-                @click="phaseFilterExpanded = !phaseFilterExpanded"
-            >
-                <svg
-                    class="ppms-pl-phase-filter-chev"
-                    :class="{ 'ppms-pl-phase-filter-chev--collapsed': !phaseFilterExpanded }"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    aria-hidden="true"
+            <div class="ppms-pl-customer-group-cell">
+                <button
+                    type="button"
+                    class="ppms-pl-customer-group-head"
+                    :aria-expanded="phaseFilterExpanded"
+                    :aria-label="phaseFilterExpanded ? t('projects.phaseFilterCollapse') : t('projects.phaseFilterExpand')"
+                    @click="phaseFilterExpanded = !phaseFilterExpanded"
                 >
-                    <polyline points="6 9 12 15 18 9" />
-                </svg>
-                <span class="ppms-pl-phase-filter-title">{{ t('projects.phaseFilterTitle') }}</span>
-            </button>
+                    <svg
+                        class="ppms-pl-customer-group-chevron"
+                        :class="{ 'ppms-pl-customer-group-chevron--collapsed': !phaseFilterExpanded }"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        aria-hidden="true"
+                    >
+                        <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                    <span class="ppms-pl-customer-group-title">{{ t('projects.phaseFilterTitle') }}</span>
+                    <span v-if="total > 0" class="ppms-pl-customer-group-count">{{ total }}</span>
+                </button>
+            </div>
             <p v-show="phaseFilterExpanded" class="ppms-muted ppms-pl-phase-filter-hint">{{ t('projects.phaseFilterHint') }}</p>
             <div v-show="phaseFilterExpanded" class="ppms-pl-phase-filter-body">
                 <div class="ppms-pl-phase-filter-chips" role="group" :aria-label="t('projects.phaseFilterTitle')">
@@ -987,49 +990,10 @@
     font-size: 0.85rem;
     line-height: 1;
 }
-.ppms-pl-phase-filter {
-    border: 1px solid var(--ppms-border, #e2e8f0);
-    border-radius: 12px;
-    padding: 0.65rem 0.85rem 0.75rem;
-    background: linear-gradient(165deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%);
-}
-.ppms-pl-phase-filter-head {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    width: 100%;
-    margin: 0;
-    padding: 0.15rem 0;
-    border: none;
-    border-radius: 8px;
-    background: transparent;
-    font: inherit;
-    font-weight: 700;
-    font-size: 0.9rem;
-    color: var(--ppms-text, #0f172a);
-    cursor: pointer;
-    text-align: left;
-    transition: background 0.15s ease;
-}
-.ppms-pl-phase-filter-head:hover {
-    background: rgba(15, 23, 42, 0.04);
-}
-.ppms-pl-phase-filter-head:focus-visible {
-    outline: 2px solid #6366f1;
-    outline-offset: 2px;
-}
-.ppms-pl-phase-filter-chev {
-    flex-shrink: 0;
-    width: 1.1rem;
-    height: 1.1rem;
-    color: var(--ppms-muted, #64748b);
-    transition: transform 0.2s ease;
-}
-.ppms-pl-phase-filter-chev--collapsed {
-    transform: rotate(-90deg);
-}
+/* Thanh collapse giai đoạn: cùng ppms-pl-customer-group-* với nhóm khách hàng (theme). */
 .ppms-pl-phase-filter-hint {
-    margin: 0.35rem 0 0.55rem;
+    margin: 0.35rem 0 0.5rem;
+    padding: 0 0.75rem;
     font-size: 0.8125rem;
     line-height: 1.45;
 }
@@ -1038,6 +1002,7 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem 0.65rem;
+    padding: 0 0.75rem 0.5rem;
 }
 .ppms-pl-phase-filter-chips {
     display: flex;
