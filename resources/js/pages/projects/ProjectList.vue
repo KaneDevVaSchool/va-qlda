@@ -71,18 +71,6 @@
                         </button>
                     </div>
                 </div>
-                <div v-if="canEditProject && projects.length && viewMode === 'list'" class="ppms-pl-task-hint">
-                    <p class="ppms-pl-task-hint__title">{{ t('projects.taskQuickHintTitle') }}</p>
-                    <p class="ppms-pl-task-hint__lead">{{ t('projects.taskQuickHintLead') }}</p>
-                    <div class="ppms-pl-task-hint__rows">
-                        <div v-for="(ex, ei) in taskExampleRows" :key="'tex-' + ei" class="ppms-pl-task-hint__row">
-                            <button type="button" class="ppms-pl-task-hint__btn" @click="onTaskExampleClick(ex)">
-                                {{ t('projects.taskQuickEnter') }}
-                            </button>
-                            <span class="ppms-pl-task-hint__ex">{{ ex }}</span>
-                        </div>
-                    </div>
-                </div>
                 <div class="ppms-table-scroll ppms-table-scroll--sticky-head ppms-project-list-table-wrap">
                     <table class="ppms-table ppms-table--project-staging">
                     <caption class="ppms-sr-only">
@@ -372,80 +360,140 @@
                                 <td v-if="colVis('actions')" class="ppms-td-actions">
                                     <div class="ppms-pl-actions-cell">
                                         <template v-if="canEditProject && isInlineEditing(p)">
-                                            <button
-                                                type="button"
-                                                class="ppms-btn-ghost ppms-pl-page-btn ppms-pl-inline-ok"
-                                                :disabled="inlineSaving"
-                                                :title="t('projects.inlineSave')"
-                                                :aria-label="t('projects.inlineSave')"
-                                                @click.stop="saveInlineEdit"
-                                            >
-                                                ✓
-                                            </button>
-                                            <button
-                                                type="button"
-                                                class="ppms-btn-ghost ppms-pl-page-btn ppms-pl-inline-cancel"
-                                                :disabled="inlineSaving"
-                                                :title="t('projects.inlineCancel')"
-                                                :aria-label="t('projects.inlineCancel')"
-                                                @click.stop="cancelInlineEdit"
-                                            >
-                                                ✕
-                                            </button>
+                                            <div class="ppms-pl-inline-actions-bar">
+                                                <button
+                                                    type="button"
+                                                    class="ppms-pl-inline-icon-btn ppms-pl-inline-icon-btn--ok"
+                                                    :disabled="inlineSaving"
+                                                    :title="t('projects.inlineSave')"
+                                                    :aria-label="t('projects.inlineSave')"
+                                                    @click.stop="saveInlineEdit"
+                                                >
+                                                    <svg
+                                                        class="ppms-pl-inline-icon-svg"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        stroke-width="2.25"
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <path d="M20 6 9 17l-5-5" />
+                                                    </svg>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="ppms-pl-inline-icon-btn ppms-pl-inline-icon-btn--cancel"
+                                                    :disabled="inlineSaving"
+                                                    :title="t('projects.inlineCancel')"
+                                                    :aria-label="t('projects.inlineCancel')"
+                                                    @click.stop="cancelInlineEdit"
+                                                >
+                                                    <svg
+                                                        class="ppms-pl-inline-icon-svg"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        stroke-width="2.25"
+                                                        stroke-linecap="round"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <path d="M18 6 6 18M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
                                         </template>
-                                        <template v-else>
-                                        <router-link
-                                            :to="'/projects/' + p.id"
-                                            class="ppms-btn-ghost ppms-pl-page-btn"
-                                            :title="t('projects.openDetail')"
-                                            :aria-label="t('projects.openDetail')"
+                                        <div
+                                            v-else
+                                            class="ppms-pl-actions-dd"
+                                            :class="{ 'ppms-pl-actions-dd--open': actionsMenuOpenId === p.id }"
                                         >
-                                            <svg
-                                                class="ppms-pl-ico-svg"
-                                                viewBox="0 0 24 24"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                stroke-width="2"
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                aria-hidden="true"
+                                            <button
+                                                :id="'pl-actions-trigger-' + p.id"
+                                                type="button"
+                                                class="ppms-pl-actions-dd__trigger"
+                                                :aria-controls="'pl-actions-menu-' + p.id"
+                                                :aria-expanded="actionsMenuOpenId === p.id"
+                                                :aria-haspopup="true"
+                                                :aria-label="t('projects.actionsMenuAria')"
+                                                @click.stop="toggleActionsMenu(p.id)"
                                             >
-                                                <path d="M5 12h14M12 5l7 7-7 7" />
-                                            </svg>
-                                        </router-link>
-                                        <button
-                                            v-if="canEditProject"
-                                            type="button"
-                                            class="ppms-btn-ghost ppms-pl-page-btn"
-                                            :title="t('projects.inlineOpen')"
-                                            :aria-label="t('projects.inlineOpen')"
-                                            @click.stop="startInlineEdit(p)"
-                                        >
-                                            <span class="ppms-pl-inline-ico" aria-hidden="true">⚡</span>
-                                        </button>
-                                        <button
-                                            v-if="canEditProject"
-                                            type="button"
-                                            class="ppms-btn-ghost ppms-pl-page-btn"
-                                            :title="t('common.edit')"
-                                            :aria-label="t('common.edit')"
-                                            @click.stop="openEditModal(p)"
-                                        >
-                                            <svg
-                                                class="ppms-pl-ico-svg"
-                                                viewBox="0 0 24 24"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                stroke-width="2"
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                aria-hidden="true"
+                                                <svg
+                                                    class="ppms-pl-actions-dd__trigger-ico"
+                                                    viewBox="0 0 24 24"
+                                                    fill="currentColor"
+                                                    aria-hidden="true"
+                                                >
+                                                    <circle cx="12" cy="5" r="2" />
+                                                    <circle cx="12" cy="12" r="2" />
+                                                    <circle cx="12" cy="19" r="2" />
+                                                </svg>
+                                            </button>
+                                            <div
+                                                v-show="actionsMenuOpenId === p.id"
+                                                :id="'pl-actions-menu-' + p.id"
+                                                class="ppms-pl-actions-dd__panel"
+                                                role="menu"
+                                                :aria-labelledby="'pl-actions-trigger-' + p.id"
+                                                @click.stop
                                             >
-                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                            </svg>
-                                        </button>
-                                        </template>
+                                                <router-link
+                                                    role="menuitem"
+                                                    class="ppms-pl-actions-dd__item"
+                                                    :to="'/projects/' + p.id"
+                                                    @click="closeActionsMenu"
+                                                >
+                                                    <svg
+                                                        class="ppms-pl-actions-dd__item-ico"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        stroke-width="2"
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <path d="M5 12h14M12 5l7 7-7 7" />
+                                                    </svg>
+                                                    <span>{{ t('projects.openDetail') }}</span>
+                                                </router-link>
+                                                <button
+                                                    v-if="canEditProject"
+                                                    type="button"
+                                                    role="menuitem"
+                                                    class="ppms-pl-actions-dd__item"
+                                                    @click="onActionInlineEdit(p)"
+                                                >
+                                                    <span class="ppms-pl-actions-dd__item-ico ppms-pl-actions-dd__item-ico--text" aria-hidden="true"
+                                                        >⚡</span
+                                                    >
+                                                    <span>{{ t('projects.inlineOpen') }}</span>
+                                                </button>
+                                                <button
+                                                    v-if="canEditProject"
+                                                    type="button"
+                                                    role="menuitem"
+                                                    class="ppms-pl-actions-dd__item"
+                                                    @click="onActionOpenEditModal(p)"
+                                                >
+                                                    <svg
+                                                        class="ppms-pl-actions-dd__item-ico"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        stroke-width="2"
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                                    </svg>
+                                                    <span>{{ t('common.edit') }}</span>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </td>
                                 </tr>
@@ -696,59 +744,26 @@
 </template>
 
 <style scoped>
-.ppms-pl-task-hint {
-    margin: 0.75rem 0 1rem;
-    padding: 0.75rem 1rem;
-    border-radius: 10px;
-    border: 1px dashed var(--ppms-border, #cbd5e1);
-    background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.65) 100%);
-}
-.ppms-pl-task-hint__title {
-    margin: 0 0 0.35rem;
-    font-size: 0.8125rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--ppms-muted, #64748b);
-}
-.ppms-pl-task-hint__lead {
-    margin: 0 0 0.65rem;
-    font-size: 0.875rem;
-    line-height: 1.45;
-    color: var(--ppms-text, #0f172a);
-}
-.ppms-pl-task-hint__rows {
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
-}
-.ppms-pl-task-hint__row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem 0.75rem;
-}
-.ppms-pl-task-hint__btn {
-    flex-shrink: 0;
-    padding: 0.2rem 0.55rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    border-radius: 6px;
-    border: 1px solid var(--ppms-border, #e2e8f0);
-    background: #fff;
-    color: var(--ppms-text, #0f172a);
-    cursor: pointer;
-}
-.ppms-pl-task-hint__btn:hover {
-    border-color: #c7d2fe;
-    background: #eef2ff;
-}
-.ppms-pl-task-hint__ex {
-    font-size: 0.8125rem;
-    color: var(--ppms-muted, #64748b);
-}
 .ppms-pl-data-row--inline {
-    background: rgba(238, 242, 255, 0.35);
+    background: rgba(238, 242, 255, 0.42);
+}
+.ppms-pl-data-row--inline .ppms-input,
+.ppms-pl-data-row--inline .ppms-pl-inline-select,
+.ppms-pl-data-row--inline .ppms-pl-inline-date {
+    border-radius: 8px;
+    border-color: rgba(148, 163, 184, 0.85);
+    padding: 0.35rem 0.5rem;
+    min-height: 2rem;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+.ppms-pl-data-row--inline .ppms-input:focus,
+.ppms-pl-data-row--inline .ppms-pl-inline-select:focus,
+.ppms-pl-data-row--inline .ppms-pl-inline-date:focus {
+    border-color: var(--ppms-primary, #2563eb);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    outline: none;
 }
 .ppms-pl-inline-input,
 .ppms-pl-inline-select,
@@ -762,23 +777,161 @@
 .ppms-pl-inline-type-status {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.4rem;
     min-width: 8rem;
 }
 .ppms-pl-inline-select--sm {
     font-size: 0.75rem;
     min-height: 2rem;
 }
-.ppms-pl-inline-ok {
-    color: #047857 !important;
-    font-weight: 700;
+.ppms-pl-inline-actions-bar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.15rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
 }
-.ppms-pl-inline-cancel {
-    color: #b91c1c !important;
-    font-weight: 700;
+.ppms-pl-inline-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--ppms-muted, #64748b);
+    transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        transform 0.1s ease;
 }
-.ppms-pl-inline-ico {
-    font-size: 1rem;
+.ppms-pl-inline-icon-btn:hover:not(:disabled) {
+    transform: scale(1.05);
+}
+.ppms-pl-inline-icon-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.ppms-pl-inline-icon-btn--ok {
+    color: #047857;
+    background: rgba(16, 185, 129, 0.12);
+}
+.ppms-pl-inline-icon-btn--ok:hover:not(:disabled) {
+    background: rgba(16, 185, 129, 0.22);
+    color: #065f46;
+}
+.ppms-pl-inline-icon-btn--cancel {
+    color: #b91c1c;
+    background: rgba(248, 113, 113, 0.12);
+}
+.ppms-pl-inline-icon-btn--cancel:hover:not(:disabled) {
+    background: rgba(248, 113, 113, 0.22);
+    color: #991b1b;
+}
+.ppms-pl-inline-icon-svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    flex-shrink: 0;
+}
+.ppms-pl-actions-cell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2rem;
+}
+.ppms-pl-actions-dd {
+    position: relative;
+    display: inline-flex;
+    justify-content: center;
+}
+.ppms-pl-actions-dd__trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    margin: 0;
+    border: 1px solid var(--ppms-border, #e2e8f0);
+    border-radius: 10px;
+    background: var(--ppms-surface, #fff);
+    color: var(--ppms-muted, #64748b);
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+.ppms-pl-actions-dd__trigger:hover {
+    border-color: #c7d2fe;
+    background: #f8fafc;
+    color: var(--ppms-primary, #2563eb);
+}
+.ppms-pl-actions-dd--open .ppms-pl-actions-dd__trigger {
+    border-color: var(--ppms-primary, #2563eb);
+    color: var(--ppms-primary, #2563eb);
+    background: rgba(238, 242, 255, 0.9);
+}
+.ppms-pl-actions-dd__trigger-ico {
+    width: 1.1rem;
+    height: 1.1rem;
+    opacity: 0.9;
+}
+.ppms-pl-actions-dd__panel {
+    position: absolute;
+    z-index: 50;
+    right: 0;
+    top: calc(100% + 4px);
+    min-width: 12rem;
+    padding: 0.35rem;
+    border-radius: 10px;
+    border: 1px solid var(--ppms-border, #e2e8f0);
+    background: var(--ppms-surface, #fff);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+    text-align: left;
+}
+.ppms-pl-actions-dd__item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.45rem 0.55rem;
+    margin: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--ppms-text, #0f172a);
+    text-decoration: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s ease;
+}
+.ppms-pl-actions-dd__item:hover {
+    background: var(--ppms-primary-soft, #eef2ff);
+}
+.ppms-pl-actions-dd__item-ico {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    opacity: 0.85;
+}
+.ppms-pl-actions-dd__item-ico--text {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    font-size: 0.85rem;
     line-height: 1;
 }
 </style>
@@ -839,6 +992,8 @@ const contractLookups = ref({ departments: [], blocks: [], vendors: [] });
 
 const inlineEditingId = ref(null);
 const inlineSaving = ref(false);
+/** Một hàng: menu thao tác (⋯) đang mở */
+const actionsMenuOpenId = ref(null);
 const inlineDraft = reactive({
     id: null,
     code: '',
@@ -964,7 +1119,26 @@ function dateToInputValue(d) {
     return '';
 }
 
+function closeActionsMenu() {
+    actionsMenuOpenId.value = null;
+}
+
+function toggleActionsMenu(id) {
+    actionsMenuOpenId.value = actionsMenuOpenId.value === id ? null : id;
+}
+
+function onActionInlineEdit(p) {
+    closeActionsMenu();
+    startInlineEdit(p);
+}
+
+function onActionOpenEditModal(p) {
+    closeActionsMenu();
+    openEditModal(p);
+}
+
 function startInlineEdit(p) {
+    closeActionsMenu();
     if (inlineEditingId.value && inlineEditingId.value !== p.id) {
         cancelInlineEdit();
     }
@@ -1139,14 +1313,8 @@ const canEditProject = computed(() => {
     return r && ['admin', 'pm', 'tl'].includes(r);
 });
 
-const taskExampleRows = computed(() => [t('projects.taskExample1'), t('projects.taskExample2'), t('projects.taskExample3')]);
-
 function isInlineEditing(p) {
     return inlineEditingId.value === p.id;
-}
-
-function onTaskExampleClick(ex) {
-    ppmsToastSuccess(t('projects.taskExampleToast', { ex }));
 }
 
 const canBulkDelete = computed(() => {
@@ -2153,6 +2321,11 @@ function onDocumentClickOutside(e) {
     if (toolbarMenuOpen.value && toolbarMenuEl && !toolbarMenuEl.contains(target)) {
         toolbarMenuOpen.value = false;
     }
+    if (actionsMenuOpenId.value != null && target instanceof Element) {
+        if (!target.closest('.ppms-pl-actions-dd')) {
+            closeActionsMenu();
+        }
+    }
     createModalRef.value?.handleDocumentClick?.(target);
     if (userPopover.open) {
         const popEl = unref(userPopoverRef.value?.rootEl);
@@ -2171,6 +2344,7 @@ function onDocumentClickOutside(e) {
 function onGlobalKeydown(e) {
     if (e.key === 'Escape') {
         toolbarMenuOpen.value = false;
+        closeActionsMenu();
         createModalRef.value?.closeProgressCalc?.();
         createModalRef.value?.closeOwnerLookup?.();
         closeUserPopover();

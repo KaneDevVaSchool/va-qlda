@@ -4965,8 +4965,13 @@ body.ppms-drawer-open {
 
 .ppms-table--project-staging .ppms-th-actions,
 .ppms-table--project-staging .ppms-td-actions {
-    width: 5.25rem;
+    width: 3.5rem;
+    min-width: 3.25rem;
+    max-width: 4rem;
     text-align: center;
+    position: relative;
+    overflow: visible;
+    vertical-align: middle;
 }
 
 .ppms-table--project-staging tbody tr.ppms-pl-data-row:hover td {

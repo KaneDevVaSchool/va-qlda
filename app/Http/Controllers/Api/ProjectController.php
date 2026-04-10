@@ -13,6 +13,7 @@ use App\Models\TaskParticipant;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\ProjectCodeGenerator;
 use App\Services\ProjectListQueryService;
 use App\Services\ProjectMediaService;
 use App\Services\ProjectProgressService;
@@ -244,8 +245,7 @@ class ProjectController extends Controller
         ], $data));
 
         if (trim((string) $project->code) === '') {
-            $project->code = 'PRJ-'.str_pad((string) $project->id, 6, '0', STR_PAD_LEFT);
-            $project->save();
+            ProjectCodeGenerator::assignIfEmpty($project);
         }
 
         AuditLogger::log('project.created', $project, null, $project->only(array_keys($data)));
@@ -637,8 +637,7 @@ class ProjectController extends Controller
             $np->csat_survey_sent_at = null;
             $np->save();
             if (trim((string) $np->code) === '') {
-                $np->code = 'PRJ-'.str_pad((string) $np->id, 6, '0', STR_PAD_LEFT);
-                $np->save();
+                ProjectCodeGenerator::assignIfEmpty($np);
             }
 
             $phaseMap = [];
