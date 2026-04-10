@@ -29,13 +29,8 @@ class ProjectListQueryService
         return $q;
     }
 
-    /**
-     * @param  array{skip_phase?: bool}  $options  When skip_phase is true, phase / active_phase query params are ignored (for aggregate counts by phase).
-     */
-    public function applyFilters(Builder $q, Request $request, array $options = []): void
+    public function applyFilters(Builder $q, Request $request): void
     {
-        $skipPhase = $options['skip_phase'] ?? false;
-
         if ($type = $request->query('type')) {
             if (in_array($type, ['maintenance', 'delivery', 'rnd'], true)) {
                 $q->where('type', $type);
@@ -48,15 +43,13 @@ class ProjectListQueryService
             }
         }
 
-        if (! $skipPhase) {
-            if ($request->filled('phase')) {
-                $phase = (string) $request->query('phase');
-                if (in_array($phase, ['planning', 'development', 'uat', 'done', 'maintenance', 'rnd'], true)) {
-                    $q->where('phase', $phase);
-                }
-            } elseif ($request->boolean('active_phase')) {
-                $q->where('phase', '!=', 'done');
+        if ($request->filled('phase')) {
+            $phase = (string) $request->query('phase');
+            if (in_array($phase, ['planning', 'development', 'uat', 'done', 'maintenance', 'rnd'], true)) {
+                $q->where('phase', $phase);
             }
+        } elseif ($request->boolean('active_phase')) {
+            $q->where('phase', '!=', 'done');
         }
 
         if ($request->filled('owner_id')) {

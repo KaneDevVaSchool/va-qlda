@@ -149,7 +149,6 @@ Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
         Route::post('projects/bulk', [ProjectController::class, 'bulk']);
         Route::post('projects/bulk-destroy', [ProjectController::class, 'bulkDestroy']);
         Route::get('projects/tab-counts', [ProjectController::class, 'tabCounts']);
-        Route::get('projects/phase-counts', [ProjectController::class, 'phaseCounts']);
         Route::get('projects/label-suggestions', [ProjectController::class, 'labelSuggestions']);
         Route::get('projects/{project}/activities', [ProjectController::class, 'activities']);
         Route::post('projects/{project}/join', [ProjectController::class, 'joinStakeholder']);
