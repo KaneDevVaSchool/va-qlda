@@ -1,6 +1,6 @@
 <template>
-    <div class="ppms-profile-access">
-        <header class="ppms-profile-access-head">
+    <div class="ppms-profile-access" :class="{ 'ppms-profile-access--embedded': embedded }">
+        <header v-if="!embedded" class="ppms-profile-access-head">
             <h2 class="ppms-profile-access-title">{{ t('profile.accessTabTitle') }}</h2>
             <p class="ppms-profile-access-lead">{{ t('profile.accessTabLead') }}</p>
         </header>
@@ -323,6 +323,11 @@ import ProfileRbacAdmin from './ProfileRbacAdmin.vue';
 import ProfileTabPermissions from './ProfileTabPermissions.vue';
 
 const emit = defineEmits(['refresh']);
+
+defineProps({
+    /** Hide page heading when embedded in System admin */
+    embedded: { type: Boolean, default: false },
+});
 
 const { t, locale } = useI18n();
 
@@ -731,6 +736,11 @@ onUnmounted(() => {
     flex-direction: column;
     gap: 1.25rem;
     max-width: 56rem;
+}
+
+.ppms-profile-access--embedded {
+    max-width: none;
+    gap: 1rem;
 }
 
 .ppms-profile-access-head {

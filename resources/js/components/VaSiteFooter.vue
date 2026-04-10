@@ -48,10 +48,15 @@
                             </div>
                         </div>
                         <div class="va-site-footer-module">
-                            <div class="va-site-footer-module-title">{{ t('layout.footerColPersonal') }}</div>
+                            <div class="va-site-footer-module-title">{{ t('layout.footerColReviewsComms') }}</div>
                             <div class="va-site-footer-module-links">
                                 <router-link to="/evaluations">{{ t('layout.navEvaluations') }}</router-link>
                                 <router-link to="/notifications">{{ t('layout.navNotifications') }}</router-link>
+                            </div>
+                        </div>
+                        <div class="va-site-footer-module">
+                            <div class="va-site-footer-module-title">{{ t('layout.footerColAccount') }}</div>
+                            <div class="va-site-footer-module-links">
                                 <router-link to="/profile">{{ t('layout.navAccount') }}</router-link>
                             </div>
                         </div>

@@ -75,7 +75,6 @@ const tabs = computed(() => [
     { id: 'profile', label: t('profile.navProfile') },
     { id: 'security', label: t('profile.navSecurity') },
     { id: 'devices', label: t('profile.navDevices') },
-    { id: 'access', label: t('profile.navAccessDelegation') },
     { id: 'activity', label: t('profile.navActivity') },
 ]);
 
@@ -85,7 +84,6 @@ const tabLoaders = {
     profile: () => import('./ProfileTabProfile.vue'),
     security: () => import('./ProfileTabSecurity.vue'),
     devices: () => import('./ProfileTabDevices.vue'),
-    access: () => import('./ProfileTabAccessDelegation.vue'),
     activity: () => import('./ProfileTabActivity.vue'),
 };
 
@@ -145,6 +143,10 @@ watch(
     (tab) => {
         const raw = typeof tab === 'string' ? tab : '';
         const id = TAB_ALIAS[raw] || raw;
+        if (id === 'access' || raw === 'permissions') {
+            router.replace({ path: '/admin', query: { tab: 'access' } });
+            return;
+        }
         if (id && tabLoaders[id]) {
             activeTab.value = id;
             tabComponent.value = defineAsyncComponent({
