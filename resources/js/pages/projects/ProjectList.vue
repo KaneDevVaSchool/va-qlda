@@ -7,7 +7,10 @@
 
         <ProjectListSavedViews :saved-views="savedViews" @apply="applySavedView($event)" @remove="removeSavedView" />
 
-        <div class="ppms-pl-phase-filter ppms-mt">
+        <div
+            v-if="!loading && (viewMode === 'kanban' || (viewMode === 'list' && !projects.length))"
+            class="ppms-pl-phase-filter ppms-mt"
+        >
             <div class="ppms-pl-customer-group-cell">
                 <button
                     type="button"
@@ -30,30 +33,30 @@
                     <span class="ppms-pl-customer-group-title">{{ t('projects.phaseFilterTitle') }}</span>
                     <span v-if="total > 0" class="ppms-pl-customer-group-count">{{ total }}</span>
                 </button>
-            </div>
-            <p v-show="phaseFilterExpanded" class="ppms-muted ppms-pl-phase-filter-hint">{{ t('projects.phaseFilterHint') }}</p>
-            <div v-show="phaseFilterExpanded" class="ppms-pl-phase-filter-body">
-                <div class="ppms-pl-phase-filter-chips" role="group" :aria-label="t('projects.phaseFilterTitle')">
+                <p v-show="phaseFilterExpanded" class="ppms-muted ppms-pl-phase-filter-hint">{{ t('projects.phaseFilterHint') }}</p>
+                <div v-show="phaseFilterExpanded" class="ppms-pl-phase-filter-body">
+                    <div class="ppms-pl-phase-filter-chips" role="group" :aria-label="t('projects.phaseFilterTitle')">
+                        <button
+                            v-for="ph in KANBAN_PHASE_ORDER"
+                            :key="'phf-empty-' + ph"
+                            type="button"
+                            class="ppms-pl-phase-filter-chip"
+                            :class="{ 'ppms-pl-phase-filter-chip--active': filters.phase === ph }"
+                            @click="setPhaseFilter(ph)"
+                        >
+                            <span class="ppms-pl-phase-filter-label">{{ t(`projects.phase.${ph}`) }}</span>
+                            <span class="ppms-pl-phase-filter-num">{{ phaseCountDisplay(ph) }}</span>
+                        </button>
+                    </div>
                     <button
-                        v-for="ph in KANBAN_PHASE_ORDER"
-                        :key="'phf-' + ph"
+                        v-if="filters.phase"
                         type="button"
-                        class="ppms-pl-phase-filter-chip"
-                        :class="{ 'ppms-pl-phase-filter-chip--active': filters.phase === ph }"
-                        @click="setPhaseFilter(ph)"
+                        class="ppms-btn-ghost ppms-pl-phase-filter-clear"
+                        @click="clearPhaseFilter"
                     >
-                        <span class="ppms-pl-phase-filter-label">{{ t(`projects.phase.${ph}`) }}</span>
-                        <span class="ppms-pl-phase-filter-num">{{ phaseCountDisplay(ph) }}</span>
+                        {{ t('projects.phaseFilterClear') }}
                     </button>
                 </div>
-                <button
-                    v-if="filters.phase"
-                    type="button"
-                    class="ppms-btn-ghost ppms-pl-phase-filter-clear"
-                    @click="clearPhaseFilter"
-                >
-                    {{ t('projects.phaseFilterClear') }}
-                </button>
             </div>
         </div>
 
@@ -152,6 +155,55 @@
                         </tr>
                     </thead>
                     <tbody>
+                        <tr v-if="projects.length" class="ppms-pl-customer-group-row ppms-pl-phase-filter-embed-row">
+                            <td :colspan="listTableColspan" class="ppms-pl-customer-group-cell">
+                                <button
+                                    type="button"
+                                    class="ppms-pl-customer-group-head"
+                                    :aria-expanded="phaseFilterExpanded"
+                                    :aria-label="phaseFilterExpanded ? t('projects.phaseFilterCollapse') : t('projects.phaseFilterExpand')"
+                                    @click="phaseFilterExpanded = !phaseFilterExpanded"
+                                >
+                                    <svg
+                                        class="ppms-pl-customer-group-chevron"
+                                        :class="{ 'ppms-pl-customer-group-chevron--collapsed': !phaseFilterExpanded }"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        aria-hidden="true"
+                                    >
+                                        <polyline points="9 18 15 12 9 6" />
+                                    </svg>
+                                    <span class="ppms-pl-customer-group-title">{{ t('projects.phaseFilterTitle') }}</span>
+                                    <span v-if="total > 0" class="ppms-pl-customer-group-count">{{ total }}</span>
+                                </button>
+                                <p v-show="phaseFilterExpanded" class="ppms-muted ppms-pl-phase-filter-hint">{{ t('projects.phaseFilterHint') }}</p>
+                                <div v-show="phaseFilterExpanded" class="ppms-pl-phase-filter-body">
+                                    <div class="ppms-pl-phase-filter-chips" role="group" :aria-label="t('projects.phaseFilterTitle')">
+                                        <button
+                                            v-for="ph in KANBAN_PHASE_ORDER"
+                                            :key="'phf-tbl-' + ph"
+                                            type="button"
+                                            class="ppms-pl-phase-filter-chip"
+                                            :class="{ 'ppms-pl-phase-filter-chip--active': filters.phase === ph }"
+                                            @click="setPhaseFilter(ph)"
+                                        >
+                                            <span class="ppms-pl-phase-filter-label">{{ t(`projects.phase.${ph}`) }}</span>
+                                            <span class="ppms-pl-phase-filter-num">{{ phaseCountDisplay(ph) }}</span>
+                                        </button>
+                                    </div>
+                                    <button
+                                        v-if="filters.phase"
+                                        type="button"
+                                        class="ppms-btn-ghost ppms-pl-phase-filter-clear"
+                                        @click="clearPhaseFilter"
+                                    >
+                                        {{ t('projects.phaseFilterClear') }}
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                         <template v-for="group in listGroupsByCustomer" :key="'cust-' + group.key">
                             <tr class="ppms-pl-customer-group-row">
                                 <td :colspan="listTableColspan" class="ppms-pl-customer-group-cell">
@@ -990,7 +1042,12 @@
     font-size: 0.85rem;
     line-height: 1;
 }
-/* Thanh collapse giai đoạn: cùng ppms-pl-customer-group-* với nhóm khách hàng (theme). */
+/* Hàng giai đoạn đầu tbody: cùng nhóm với Phòng / khách hàng */
+.ppms-pl-phase-filter-embed-row .ppms-pl-phase-filter-body {
+    padding-bottom: 0.35rem;
+}
+
+/* Thanh collapse giai đoạn (kanban / list rỗng): cùng ppms-pl-customer-group-* (theme). */
 .ppms-pl-phase-filter-hint {
     margin: 0.35rem 0 0.5rem;
     padding: 0 0.75rem;
