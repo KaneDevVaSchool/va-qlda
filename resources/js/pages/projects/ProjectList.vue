@@ -79,26 +79,172 @@
                     <thead>
                         <tr>
                             <th v-if="canBulk" class="ppms-th-check">
-                                <input
-                                    type="checkbox"
-                                    :checked="allPageSelected"
-                                    :aria-label="t('projects.selectAll')"
-                                    @change="toggleSelectAll($event)"
-                                />
+                                <div class="ppms-pl-th-stack ppms-pl-th-stack--check">
+                                    <input
+                                        type="checkbox"
+                                        :checked="allPageSelected"
+                                        :aria-label="t('projects.selectAll')"
+                                        @change="toggleSelectAll($event)"
+                                    />
+                                </div>
                             </th>
-                            <th v-if="colVis('admin')" class="ppms-th-admin">{{ t('projects.colAdmin') }}</th>
-                            <th v-if="colVis('code')" class="ppms-th-code">{{ t('projects.colCode') }}</th>
-                            <th v-if="colVis('name')" class="ppms-th-name">{{ t('projects.colName') }}</th>
-                            <th v-if="colVis('phase')" class="ppms-th-phase">{{ t('projects.colPhase') }}</th>
-                            <th v-if="colVis('team')" class="ppms-th-team">{{ t('projects.colTeam') }}</th>
-                            <th v-if="colVis('participants')" class="ppms-th-participants">{{ t('projects.colParticipants') }}</th>
-                            <th v-if="colVis('progress')" class="ppms-th-process">{{ t('projects.colProgress') }}</th>
-                            <th v-if="colVis('tasks')" class="ppms-th-num ppms-th-tasks">{{ t('projects.colTasks') }}</th>
-                            <th v-if="colVis('start')" class="ppms-th-date">{{ t('projects.colStart') }}</th>
-                            <th v-if="colVis('actualStart')" class="ppms-th-date">{{ t('projects.colActualStart') }}</th>
-                            <th v-if="colVis('end')" class="ppms-th-date">{{ t('projects.colEnd') }}</th>
-                            <th v-if="colVis('status')" class="ppms-th-status">{{ t('projects.colStatus') }}</th>
-                            <th v-if="colVis('actions')" class="ppms-th-actions">{{ t('projects.colActions') }}</th>
+                            <th v-if="colVis('admin')" class="ppms-th-admin">
+                                <div class="ppms-pl-th-stack">
+                                    <span class="ppms-pl-th-caption">{{ t('projects.colAdmin') }}</span>
+                                    <div class="ppms-pl-th-filter ppms-pl-th-filter-user">
+                                        <UserPickerInput
+                                            :model-value="ownerFilterPickerValue"
+                                            input-id="ppms-pl-filter-owner"
+                                            :placeholder="t('projects.filterOwnerComboboxPh')"
+                                            @update:model-value="onOwnerFilterUpdate"
+                                        />
+                                    </div>
+                                </div>
+                            </th>
+                            <th v-if="colVis('code')" class="ppms-th-code">
+                                <div class="ppms-pl-th-stack">
+                                    <span class="ppms-pl-th-caption">{{ t('projects.colCode') }}</span>
+                                    <span class="ppms-muted ppms-pl-th-filter-empty" aria-hidden="true">—</span>
+                                </div>
+                            </th>
+                            <th v-if="colVis('name')" class="ppms-th-name">
+                                <div class="ppms-pl-th-stack">
+                                    <span class="ppms-pl-th-caption">{{ t('projects.colName') }}</span>
+                                    <div class="ppms-pl-th-filter ppms-pl-th-filter-stack-tight">
+                                        <input
+                                            v-model="filters.search"
+                                            type="search"
+                                            class="ppms-input ppms-pl-th-filter-input"
+                                            :placeholder="t('projects.filterSearchPh')"
+                                            @input="onListFilterSearchInput"
+                                        />
+                                        <input
+                                            v-model="filters.label"
+                                            type="text"
+                                            class="ppms-input ppms-pl-th-filter-input"
+                                            list="ppms-pl-label-datalist"
+                                            autocomplete="off"
+                                            :placeholder="t('projects.colLabels')"
+                                            @change="onFilterChange"
+                                        />
+                                    </div>
+                                </div>
+                            </th>
+                            <th v-if="colVis('phase')" class="ppms-th-phase">
+                                <div class="ppms-pl-th-stack">
+                                    <span class="ppms-pl-th-caption">{{ t('projects.colPhase') }}</span>
+                                    <div class="ppms-pl-th-filter ppms-pl-th-filter-stack-tight">
+                                        <select v-model="filters.phase" class="ppms-select ppms-pl-th-filter-select" @change="onPhaseFilterChange">
+                                            <option value="">{{ t('projects.filterAll') }}</option>
+                                            <option v-for="ph in KANBAN_PHASE_ORDER" :key="'pl-th-ph-' + ph" :value="ph">
+                                                {{ t(`projects.phase.${ph}`) }}
+                                            </option>
+                                        </select>
+                                        <label v-if="!filters.phase" class="ppms-pl-th-filter-active">
+                                            <input v-model="filters.activePhase" type="checkbox" @change="onFilterChange" />
+                                            <span>{{ t('projects.filterScopeActiveChip') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </th>
+                            <th v-if="colVis('team')" class="ppms-th-team">
+                                <div class="ppms-pl-th-stack">
+                                    <span class="ppms-pl-th-caption">{{ t('projects.colTeam') }}</span>
+                                    <select v-model="filters.team_id" class="ppms-select ppms-pl-th-filter-select" @change="onFilterChange">
+                                        <option value="">{{ t('projects.filterTeamAll') }}</option>
+                                        <option v-for="tm in teamOptions" :key="'pl-th-tm-' + tm.id" :value="String(tm.id)">{{ tm.name }}</option>
+                                    </select>
+                                </div>
+                            </th>
+                            <th v-if="colVis('participants')" class="ppms-th-participants">
+                                <div class="ppms-pl-th-stack">
+                                    <span class="ppms-pl-th-caption">{{ t('projects.colParticipants') }}</span>
+                                    <span class="ppms-muted ppms-pl-th-filter-empty" aria-hidden="true">—</span>
+                                </div>
+                            </th>
+                            <th v-if="colVis('progress')" class="ppms-th-process">
+                                <div class="ppms-pl-th-stack">
+                                    <span class="ppms-pl-th-caption">{{ t('projects.colProgress') }}</span>
+                                    <div class="ppms-pl-th-filter ppms-pl-th-filter-progress">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            class="ppms-input ppms-pl-th-filter-input"
+                                            :value="progressFilterInputValue(filters.progress_min)"
+                                            :aria-label="t('projects.filterProgressMin')"
+                                            @change="onProgressMinFilterChange"
+                                        />
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            class="ppms-input ppms-pl-th-filter-input"
+                                            :value="progressFilterInputValue(filters.progress_max)"
+                                            :aria-label="t('projects.filterProgressMax')"
+                                            @change="onProgressMaxFilterChange"
+                                        />
+                                    </div>
+                                </div>
+                            </th>
+                            <th v-if="colVis('tasks')" class="ppms-th-num ppms-th-tasks">
+                                <div class="ppms-pl-th-stack">
+                                    <span class="ppms-pl-th-caption">{{ t('projects.colTasks') }}</span>
+                                    <span class="ppms-muted ppms-pl-th-filter-empty" aria-hidden="true">—</span>
+                                </div>
+                            </th>
+                            <th v-if="colVis('start')" class="ppms-th-date">
+                                <div class="ppms-pl-th-stack">
+                                    <span class="ppms-pl-th-caption">{{ t('projects.colStart') }}</span>
+                                    <span class="ppms-muted ppms-pl-th-filter-empty" aria-hidden="true">—</span>
+                                </div>
+                            </th>
+                            <th v-if="colVis('actualStart')" class="ppms-th-date">
+                                <div class="ppms-pl-th-stack">
+                                    <span class="ppms-pl-th-caption">{{ t('projects.colActualStart') }}</span>
+                                    <span class="ppms-muted ppms-pl-th-filter-empty" aria-hidden="true">—</span>
+                                </div>
+                            </th>
+                            <th v-if="colVis('end')" class="ppms-th-date">
+                                <div class="ppms-pl-th-stack">
+                                    <span class="ppms-pl-th-caption">{{ t('projects.colEnd') }}</span>
+                                    <span class="ppms-muted ppms-pl-th-filter-empty" aria-hidden="true">—</span>
+                                </div>
+                            </th>
+                            <th v-if="colVis('status')" class="ppms-th-status">
+                                <div class="ppms-pl-th-stack">
+                                    <span class="ppms-pl-th-caption">{{ t('projects.colStatus') }}</span>
+                                    <div class="ppms-pl-th-filter ppms-pl-th-filter-stack-tight">
+                                        <select v-model="filters.type" class="ppms-select ppms-pl-th-filter-select" @change="onFilterChange">
+                                            <option value="">{{ t('projects.filterType') }}: {{ t('projects.filterAll') }}</option>
+                                            <option value="maintenance">{{ t('projects.typeShort.maintenance') }}</option>
+                                            <option value="delivery">{{ t('projects.typeShort.delivery') }}</option>
+                                            <option value="rnd">{{ t('projects.typeShort.rnd') }}</option>
+                                        </select>
+                                        <select v-model="filters.status" class="ppms-select ppms-pl-th-filter-select" @change="onFilterChange">
+                                            <option value="">{{ t('projects.filterStatus') }}: {{ t('projects.filterAll') }}</option>
+                                            <option value="on_track">{{ t('projects.status.on_track') }}</option>
+                                            <option value="at_risk">{{ t('projects.status.at_risk') }}</option>
+                                            <option value="delayed">{{ t('projects.status.delayed') }}</option>
+                                            <option value="blocked">{{ t('projects.status.blocked') }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </th>
+                            <th v-if="colVis('actions')" class="ppms-th-actions">
+                                <div class="ppms-pl-th-stack ppms-pl-th-stack--actions">
+                                    <span class="ppms-pl-th-caption">{{ t('projects.colActions') }}</span>
+                                    <div class="ppms-pl-th-filter ppms-pl-th-filter-actions">
+                                        <button type="button" class="ppms-btn-ghost ppms-btn-sm ppms-pl-th-filter-reset" @click="clearListHeaderFilters">
+                                            {{ t('projects.filterReset') }}
+                                        </button>
+                                        <label class="ppms-pl-th-filter-archived">
+                                            <input v-model="filters.archived" type="checkbox" @change="onFilterChange" />
+                                            <span>{{ t('projects.filterArchived') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -940,12 +1086,107 @@
     font-size: 0.85rem;
     line-height: 1;
 }
-.ppms-th-phase,
-.ppms-td-phase {
-    white-space: nowrap;
+.ppms-th-phase {
+    white-space: normal;
+    vertical-align: top;
 }
 .ppms-td-phase {
+    white-space: nowrap;
     max-width: 12rem;
+}
+.ppms-pl-th-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+    min-width: 0;
+    max-width: 100%;
+}
+.ppms-pl-th-stack--check {
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+}
+.ppms-pl-th-stack--actions {
+    align-items: stretch;
+}
+.ppms-pl-th-caption {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--ppms-text, #0f172a);
+    line-height: 1.35;
+}
+.ppms-pl-th-filter-input,
+.ppms-pl-th-filter-select {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.4rem;
+    min-height: 2rem;
+    box-sizing: border-box;
+}
+.ppms-pl-th-filter-stack-tight {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+    width: 100%;
+}
+.ppms-pl-th-filter-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+.ppms-pl-th-filter-active {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    line-height: 1.35;
+    color: var(--ppms-muted, #64748b);
+}
+.ppms-pl-th-filter-active input {
+    margin-top: 0.15rem;
+    flex-shrink: 0;
+}
+.ppms-pl-th-filter-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+}
+.ppms-pl-th-filter-reset {
+    white-space: nowrap;
+    justify-content: center;
+}
+.ppms-pl-th-filter-archived {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    line-height: 1.35;
+    cursor: pointer;
+}
+.ppms-pl-th-filter-archived input {
+    margin-top: 0.15rem;
+    flex-shrink: 0;
+}
+.ppms-pl-th-filter-user :deep(.vm-user-picker) {
+    margin: 0;
+}
+.ppms-pl-th-filter-user :deep(.ppms-input) {
+    font-size: 0.75rem;
+}
+.ppms-pl-th-filter-empty {
+    font-size: 0.75rem;
+    align-self: flex-start;
+}
+:deep(.ppms-project-list-table-wrap .ppms-table thead th) {
+    white-space: normal;
+    vertical-align: top;
 }
 .ppms-pl-phase-pill {
     display: inline-block;
@@ -1020,6 +1261,7 @@ import ProjectListSavedViews from './components/list/ProjectListSavedViews.vue';
 import ProjectListToolbar from './components/list/ProjectListToolbar.vue';
 import ProjectListUserPopover from './components/list/ProjectListUserPopover.vue';
 import ProjectListInlineEditBar from './components/list/ProjectListInlineEditBar.vue';
+import UserPickerInput from '@/components/UserPickerInput.vue';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -1096,6 +1338,15 @@ const filters = reactive({
     team_id: '',
     archived: false,
     activePhase: false,
+});
+
+const ownerFilterPickerValue = computed(() => {
+    if (filters.owner_id === '' || filters.owner_id == null) {
+        return null;
+    }
+    const n = Number(filters.owner_id);
+
+    return Number.isNaN(n) ? null : n;
 });
 
 const form = reactive({
@@ -2337,6 +2588,62 @@ function onFilterChange() {
         load();
     }
     scheduleUrlReplace();
+}
+
+let listSearchDebounceTimer = null;
+function onListFilterSearchInput() {
+    clearTimeout(listSearchDebounceTimer);
+    listSearchDebounceTimer = setTimeout(() => {
+        onFilterChange();
+    }, 400);
+}
+
+function onPhaseFilterChange() {
+    if (filters.phase) {
+        filters.activePhase = false;
+    }
+    onFilterChange();
+}
+
+function onOwnerFilterUpdate(id) {
+    filters.owner_id = id == null ? '' : String(id);
+    onFilterChange();
+}
+
+function progressFilterInputValue(v) {
+    if (v === null || v === '' || v === undefined) {
+        return '';
+    }
+    const n = Number(v);
+
+    return Number.isNaN(n) ? '' : n;
+}
+
+function onProgressMinFilterChange(e) {
+    const raw = e?.target?.value;
+    filters.progress_min = raw === '' || raw === undefined ? null : Number(raw);
+    onFilterChange();
+}
+
+function onProgressMaxFilterChange(e) {
+    const raw = e?.target?.value;
+    filters.progress_max = raw === '' || raw === undefined ? null : Number(raw);
+    onFilterChange();
+}
+
+function clearListHeaderFilters() {
+    filters.search = '';
+    filters.type = '';
+    filters.phase = '';
+    filters.status = '';
+    filters.label = '';
+    filters.progress_min = null;
+    filters.progress_max = null;
+    filters.owner_id = '';
+    filters.team_id = '';
+    filters.archived = false;
+    filters.activePhase = false;
+    onFilterChange();
 }
 
 function goPage(p) {

@@ -60,7 +60,10 @@
             </div>
         </div>
         <div v-if="!loading" class="ppms-pl-subtoolbar-right ppms-pl-subtoolbar-right--fill">
-            <label class="ppms-field ppms-field--inline ppms-pl-team-filter-field ppms-pl-subtoolbar-team">
+            <label
+                v-if="viewMode === 'kanban'"
+                class="ppms-field ppms-field--inline ppms-pl-team-filter-field ppms-pl-subtoolbar-team"
+            >
                 <span>{{ t('projects.filterTeam') }}</span>
                 <select v-model="filters.team_id" class="ppms-select ppms-pl-team-select" @change="$emit('filter-change')">
                     <option value="">{{ t('projects.filterTeamAll') }}</option>
