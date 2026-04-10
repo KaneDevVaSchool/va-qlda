@@ -24,19 +24,120 @@
             >
                 <h2 class="vm-sec-title vm-sec-title--main">{{ t('vendors.tabOverview') }}</h2>
                 <div class="vm-overview-surface">
+                    <div
+                        v-if="vendor.pros && String(vendor.pros).trim()"
+                        class="vm-overview-note vm-overview-note--inline"
+                    >
+                        <span class="vm-overview-note__inline-k">{{ t('vendors.overviewNoteLabel') }}:</span>
+                        <span class="vm-overview-note__inline-t">{{ vendor.pros }}</span>
+                    </div>
                     <div v-if="overviewFeaturesList.length || overviewServicesList.length" class="vm-overview-grid">
-                        <div v-if="overviewFeaturesList.length" class="vm-overview-card vm-overview-card--features">
-                            <h3 class="vm-overview-card__title">{{ t('vendors.overviewFeaturesTitle') }}</h3>
+                        <article
+                            v-if="overviewFeaturesList.length"
+                            class="vm-overview-card vm-overview-card--features"
+                            :aria-label="t('vendors.overviewFeaturesTitle')"
+                        >
+                            <div class="vm-overview-card__head">
+                                <div class="vm-overview-card__badge" aria-hidden="true">
+                                    <svg class="vm-overview-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 2L2 7l10 5 10-5-10-5z" stroke-linejoin="round" />
+                                        <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </div>
+                                <div class="vm-overview-card__head-text">
+                                    <h3 class="vm-overview-card__title">{{ t('vendors.overviewFeaturesTitle') }}</h3>
+                                    <p class="vm-overview-card__hint">{{ t('vendors.overviewFeaturesHint') }}</p>
+                                </div>
+                            </div>
                             <ul class="vm-overview-card__list">
-                                <li v-for="(item, idx) in overviewFeaturesList" :key="'ov-f-' + idx">{{ item }}</li>
+                                <li v-for="(item, idx) in pagedOverviewFeatures" :key="'ov-f-' + overviewFeaturesPage + '-' + idx" class="vm-overview-card__li">
+                                    <span class="vm-overview-card__check" aria-hidden="true" />
+                                    <span class="vm-overview-card__txt">{{ item }}</span>
+                                </li>
                             </ul>
-                        </div>
-                        <div v-if="overviewServicesList.length" class="vm-overview-card vm-overview-card--services">
-                            <h3 class="vm-overview-card__title">{{ t('vendors.overviewServicesTitle') }}</h3>
-                            <ul class="vm-overview-card__list">
-                                <li v-for="(item, idx) in overviewServicesList" :key="'ov-s-' + idx">{{ item }}</li>
+                            <nav v-if="overviewFeaturesList.length" class="vm-overview-pager" :aria-label="t('vendors.overviewPagerFeaturesAria')">
+                                <div class="vm-overview-pager__row">
+                                    <label class="vm-overview-pager__pp">
+                                        <span class="vm-overview-pager__pp-lbl">{{ t('vendors.overviewPerPage') }}</span>
+                                        <select v-model.number="overviewFeaturesPerPage" class="vm-overview-pager__select" @change="overviewFeaturesPage = 1">
+                                            <option v-for="n in overviewPerPageOptions" :key="'fpp-' + n" :value="n">{{ n }}</option>
+                                        </select>
+                                    </label>
+                                    <span class="vm-overview-pager__range">{{ overviewFeaturesRangeText }}</span>
+                                    <div class="vm-overview-pager__nav">
+                                        <button
+                                            type="button"
+                                            class="vm-overview-pager__btn"
+                                            :disabled="overviewFeaturesPage <= 1"
+                                            @click="overviewFeaturesPage = Math.max(1, overviewFeaturesPage - 1)"
+                                        >
+                                            {{ t('vendors.overviewPrev') }}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="vm-overview-pager__btn"
+                                            :disabled="overviewFeaturesPage >= overviewFeaturesTotalPages"
+                                            @click="overviewFeaturesPage = Math.min(overviewFeaturesTotalPages, overviewFeaturesPage + 1)"
+                                        >
+                                            {{ t('vendors.overviewNext') }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </nav>
+                        </article>
+                        <article
+                            v-if="overviewServicesList.length"
+                            class="vm-overview-card vm-overview-card--services"
+                            :aria-label="t('vendors.overviewServicesTitle')"
+                        >
+                            <div class="vm-overview-card__head">
+                                <div class="vm-overview-card__badge vm-overview-card__badge--svc" aria-hidden="true">
+                                    <svg class="vm-overview-card__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke-linejoin="round" />
+                                        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke-linecap="round" />
+                                    </svg>
+                                </div>
+                                <div class="vm-overview-card__head-text">
+                                    <h3 class="vm-overview-card__title">{{ t('vendors.overviewServicesTitle') }}</h3>
+                                    <p class="vm-overview-card__hint">{{ t('vendors.overviewServicesHint') }}</p>
+                                </div>
+                            </div>
+                            <ul class="vm-overview-card__list vm-overview-card__list--services">
+                                <li v-for="(item, idx) in pagedOverviewServices" :key="'ov-s-' + overviewServicesPage + '-' + idx" class="vm-overview-card__li">
+                                    <span class="vm-overview-card__dot" aria-hidden="true" />
+                                    <span class="vm-overview-card__txt">{{ item }}</span>
+                                </li>
                             </ul>
-                        </div>
+                            <nav v-if="overviewServicesList.length" class="vm-overview-pager" :aria-label="t('vendors.overviewPagerServicesAria')">
+                                <div class="vm-overview-pager__row">
+                                    <label class="vm-overview-pager__pp">
+                                        <span class="vm-overview-pager__pp-lbl">{{ t('vendors.overviewPerPage') }}</span>
+                                        <select v-model.number="overviewServicesPerPage" class="vm-overview-pager__select" @change="overviewServicesPage = 1">
+                                            <option v-for="n in overviewPerPageOptions" :key="'spp-' + n" :value="n">{{ n }}</option>
+                                        </select>
+                                    </label>
+                                    <span class="vm-overview-pager__range">{{ overviewServicesRangeText }}</span>
+                                    <div class="vm-overview-pager__nav">
+                                        <button
+                                            type="button"
+                                            class="vm-overview-pager__btn"
+                                            :disabled="overviewServicesPage <= 1"
+                                            @click="overviewServicesPage = Math.max(1, overviewServicesPage - 1)"
+                                        >
+                                            {{ t('vendors.overviewPrev') }}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="vm-overview-pager__btn"
+                                            :disabled="overviewServicesPage >= overviewServicesTotalPages"
+                                            @click="overviewServicesPage = Math.min(overviewServicesTotalPages, overviewServicesPage + 1)"
+                                        >
+                                            {{ t('vendors.overviewNext') }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </nav>
+                        </article>
                     </div>
                     <div
                         v-if="normalizeHttpUrl(vendor.website) || vendor.kind !== 'research'"
@@ -89,10 +190,6 @@
                                 {{ t('vendors.linkReview') }}
                             </button>
                         </div>
-                    </div>
-                    <div v-if="vendor.pros && String(vendor.pros).trim()" class="vm-overview-note">
-                        <span class="vm-overview-note__k">{{ t('vendors.overviewNoteLabel') }}</span>
-                        <p class="vm-overview-note__txt">{{ vendor.pros }}</p>
                     </div>
                 </div>
                 <table class="vm-kv vm-kv--comfort" :class="{ 'vm-kv--editing': isEditing }">
@@ -910,6 +1007,72 @@ function splitVendorList(text) {
 
 const overviewFeaturesList = computed(() => splitVendorList(vendor.value?.main_products));
 const overviewServicesList = computed(() => splitVendorList(vendor.value?.services_offered));
+
+const overviewPerPageOptions = [5, 8, 12, 20];
+const overviewFeaturesPage = ref(1);
+const overviewServicesPage = ref(1);
+const overviewFeaturesPerPage = ref(5);
+const overviewServicesPerPage = ref(5);
+
+const overviewFeaturesTotalPages = computed(() => {
+    const n = overviewFeaturesList.value.length;
+    if (n === 0) return 1;
+    return Math.max(1, Math.ceil(n / overviewFeaturesPerPage.value));
+});
+
+const overviewServicesTotalPages = computed(() => {
+    const n = overviewServicesList.value.length;
+    if (n === 0) return 1;
+    return Math.max(1, Math.ceil(n / overviewServicesPerPage.value));
+});
+
+const pagedOverviewFeatures = computed(() => {
+    const list = overviewFeaturesList.value;
+    const page = Math.min(Math.max(1, overviewFeaturesPage.value), overviewFeaturesTotalPages.value);
+    const start = (page - 1) * overviewFeaturesPerPage.value;
+    return list.slice(start, start + overviewFeaturesPerPage.value);
+});
+
+const pagedOverviewServices = computed(() => {
+    const list = overviewServicesList.value;
+    const page = Math.min(Math.max(1, overviewServicesPage.value), overviewServicesTotalPages.value);
+    const start = (page - 1) * overviewServicesPerPage.value;
+    return list.slice(start, start + overviewServicesPerPage.value);
+});
+
+const overviewFeaturesRangeText = computed(() => {
+    const total = overviewFeaturesList.value.length;
+    if (total === 0) return '';
+    const page = Math.min(Math.max(1, overviewFeaturesPage.value), overviewFeaturesTotalPages.value);
+    const start = (page - 1) * overviewFeaturesPerPage.value + 1;
+    const end = Math.min(page * overviewFeaturesPerPage.value, total);
+    return t('vendors.overviewRangeOf', { start, end, total });
+});
+
+const overviewServicesRangeText = computed(() => {
+    const total = overviewServicesList.value.length;
+    if (total === 0) return '';
+    const page = Math.min(Math.max(1, overviewServicesPage.value), overviewServicesTotalPages.value);
+    const start = (page - 1) * overviewServicesPerPage.value + 1;
+    const end = Math.min(page * overviewServicesPerPage.value, total);
+    return t('vendors.overviewRangeOf', { start, end, total });
+});
+
+watch(
+    () => vendor.value?.id,
+    () => {
+        overviewFeaturesPage.value = 1;
+        overviewServicesPage.value = 1;
+    },
+);
+
+watch(overviewFeaturesTotalPages, (tp) => {
+    if (overviewFeaturesPage.value > tp) overviewFeaturesPage.value = tp;
+});
+
+watch(overviewServicesTotalPages, (tp) => {
+    if (overviewServicesPage.value > tp) overviewServicesPage.value = tp;
+});
 
 function normalizeHttpUrl(url) {
     if (!url || typeof url !== 'string') {
@@ -2074,60 +2237,342 @@ textarea.vm-field__control {
     margin: 0 0 1.35rem;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.15rem;
+}
+
+.vm-overview-note--inline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 0.6rem;
+    padding: 0.95rem 1.1rem 0.95rem 1rem;
+    border-radius: 14px;
+    border: 1px solid rgba(251, 191, 36, 0.45);
+    background:
+        linear-gradient(135deg, rgba(255, 251, 235, 0.98) 0%, rgba(254, 243, 199, 0.55) 42%, rgba(255, 255, 255, 0.92) 100%);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.85) inset,
+        0 8px 24px rgba(146, 64, 14, 0.07);
+    border-left: 4px solid #f59e0b;
+}
+
+.vm-overview-note__inline-k {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #b45309;
+}
+
+.vm-overview-note__inline-t {
+    flex: 1 1 12rem;
+    min-width: 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: #78350f;
+    white-space: pre-wrap;
 }
 
 .vm-overview-grid {
     display: grid;
-    gap: 1rem;
+    gap: 1.15rem;
     grid-template-columns: 1fr;
 }
 
 @media (min-width: 720px) {
     .vm-overview-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: stretch;
     }
 }
 
 .vm-overview-card {
-    border-radius: 14px;
-    padding: 1rem 1.15rem;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    background: linear-gradient(165deg, #ffffff 0%, #f8fafc 100%);
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-radius: 18px;
+    padding: 1.15rem 1.2rem 1rem;
+    border: 1px solid rgba(15, 23, 42, 0.07);
+    background:
+        linear-gradient(155deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 55%, rgba(241, 245, 249, 0.88) 100%);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.9) inset,
+        0 12px 32px rgba(15, 23, 42, 0.06),
+        0 2px 6px rgba(15, 23, 42, 0.04);
+    overflow: hidden;
+}
+
+.vm-overview-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 3px;
+    border-radius: 18px 18px 0 0;
+    pointer-events: none;
+}
+
+.vm-overview-card--features::before {
+    background: linear-gradient(90deg, #2563eb, #38bdf8, #0ea5e9);
+}
+
+.vm-overview-card--services::before {
+    background: linear-gradient(90deg, #7c3aed, #a78bfa, #c084fc);
 }
 
 .vm-overview-card--features {
-    border-left: 4px solid #3b82f6;
+    border-color: rgba(37, 99, 235, 0.14);
 }
 
 .vm-overview-card--services {
-    border-left: 4px solid #8b5cf6;
+    border-color: rgba(124, 58, 237, 0.14);
+}
+
+.vm-overview-card__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.vm-overview-card__badge {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.65rem;
+    height: 2.65rem;
+    border-radius: 14px;
+    background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    color: #1d4ed8;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
+}
+
+.vm-overview-card__badge--svc {
+    background: linear-gradient(145deg, #f5f3ff 0%, #ede9fe 100%);
+    border-color: rgba(124, 58, 237, 0.28);
+    color: #6d28d9;
+    box-shadow: 0 4px 12px rgba(109, 40, 217, 0.12);
+}
+
+.vm-overview-card__ico {
+    width: 1.35rem;
+    height: 1.35rem;
+}
+
+.vm-overview-card__head-text {
+    flex: 1;
+    min-width: 0;
 }
 
 .vm-overview-card__title {
-    margin: 0 0 0.65rem;
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    color: #0f172a;
+}
+
+.vm-overview-card__hint {
+    margin: 0.35rem 0 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
     color: #64748b;
 }
 
 .vm-overview-card__list {
+    list-style: none;
     margin: 0;
-    padding-left: 1.2rem;
-    color: #1e293b;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.vm-overview-card__li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.55rem 0.65rem;
+    border-radius: 11px;
     font-size: 0.9rem;
-    line-height: 1.55;
+    line-height: 1.5;
+    color: #1e293b;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(15, 23, 42, 0.05);
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
 }
 
-.vm-overview-card__list li {
-    margin-bottom: 0.35rem;
+.vm-overview-card__li:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(15, 23, 42, 0.08);
 }
 
-.vm-overview-card__list li:last-child {
-    margin-bottom: 0;
+.vm-overview-card--features .vm-overview-card__li:nth-child(even) {
+    background: rgba(239, 246, 255, 0.45);
+}
+
+.vm-overview-card--services .vm-overview-card__li:nth-child(even) {
+    background: rgba(245, 243, 255, 0.5);
+}
+
+.vm-overview-card__txt {
+    flex: 1;
+    min-width: 0;
+}
+
+.vm-overview-card__check {
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 999px;
+    background: linear-gradient(145deg, #3b82f6, #2563eb);
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+    position: relative;
+}
+
+.vm-overview-card__check::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0.35rem;
+    height: 0.2rem;
+    border: 2px solid #fff;
+    border-top: none;
+    border-right: none;
+    transform: translate(-50%, -60%) rotate(-45deg);
+}
+
+.vm-overview-card__dot {
+    flex-shrink: 0;
+    margin-top: 0.45rem;
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: linear-gradient(145deg, #8b5cf6, #6d28d9);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+.vm-overview-pager {
+    margin-top: 0.85rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed rgba(15, 23, 42, 0.1);
+}
+
+.vm-overview-pager__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem 0.85rem;
+}
+
+.vm-overview-pager__pp {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.vm-overview-pager__pp-lbl {
+    white-space: nowrap;
+}
+
+.vm-overview-pager__select {
+    appearance: none;
+    cursor: pointer;
+    padding: 0.35rem 1.75rem 0.35rem 0.6rem;
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #0f172a;
+    border-radius: 9px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background:
+        #fff
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
+        no-repeat right 0.45rem center;
+    background-size: 12px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+.vm-overview-pager__select:hover {
+    border-color: rgba(37, 99, 235, 0.35);
+}
+
+.vm-overview-pager__select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.vm-overview-pager__range {
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: #64748b;
+    letter-spacing: 0.02em;
+}
+
+.vm-overview-pager__nav {
+    display: inline-flex;
+    gap: 0.35rem;
+}
+
+.vm-overview-pager__btn {
+    cursor: pointer;
+    padding: 0.4rem 0.85rem;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+    color: #334155;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        color 0.15s ease;
+}
+
+.vm-overview-pager__btn:hover:not(:disabled) {
+    border-color: rgba(37, 99, 235, 0.4);
+    color: #1d4ed8;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+}
+
+.vm-overview-pager__btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.42;
+    box-shadow: none;
+}
+
+@media (max-width: 520px) {
+    .vm-overview-pager__row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .vm-overview-pager__nav {
+        justify-content: flex-end;
+    }
 }
 
 .vm-overview-quicklinks {
@@ -2182,7 +2627,7 @@ textarea.vm-field__control {
     color: #4f46e5;
 }
 
-.vm-overview-note {
+.vm-overview-note:not(.vm-overview-note--inline) {
     padding: 0.85rem 1rem;
     border-radius: 12px;
     border: 1px solid #fde68a;
