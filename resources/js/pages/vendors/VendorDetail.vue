@@ -139,58 +139,6 @@
                             </nav>
                         </article>
                     </div>
-                    <div
-                        v-if="normalizeHttpUrl(vendor.website) || vendor.kind !== 'research'"
-                        class="vm-overview-quicklinks"
-                    >
-                        <span class="vm-overview-quicklinks__label">{{ t('vendors.overviewQuickLinks') }}</span>
-                        <div class="vm-overview-quicklinks__row">
-                            <a
-                                v-if="normalizeHttpUrl(vendor.website)"
-                                :href="normalizeHttpUrl(vendor.website)"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="vm-overview-quicklinks__pill"
-                                @click.stop
-                                >{{ t('vendors.linkWebsite') }}</a
-                            >
-                            <a
-                                v-if="normalizeHttpUrl(vendor.website)"
-                                :href="vendorPathUrl(vendor.website, '/pricing')"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="vm-overview-quicklinks__pill"
-                                @click.stop
-                                >{{ t('vendors.linkPricing') }}</a
-                            >
-                            <a
-                                v-if="normalizeHttpUrl(vendor.website)"
-                                :href="vendorPathUrl(vendor.website, '/demo')"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="vm-overview-quicklinks__pill"
-                                @click.stop
-                                >{{ t('vendors.linkDemo') }}</a
-                            >
-                            <a
-                                v-if="normalizeHttpUrl(vendor.website)"
-                                :href="vendorPathUrl(vendor.website, '/docs')"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="vm-overview-quicklinks__pill"
-                                @click.stop
-                                >{{ t('vendors.linkDocs') }}</a
-                            >
-                            <button
-                                v-if="vendor.kind !== 'research'"
-                                type="button"
-                                class="vm-overview-quicklinks__pill vm-overview-quicklinks__pill--btn"
-                                @click.stop="scrollToReviews"
-                            >
-                                {{ t('vendors.linkReview') }}
-                            </button>
-                        </div>
-                    </div>
                 </div>
                 <table class="vm-kv vm-kv--comfort" :class="{ 'vm-kv--editing': isEditing }">
                     <tbody>
@@ -246,7 +194,7 @@
                                     />
                                 </template>
                                 <template v-else>
-                                    <a v-if="!isEmptyText(vendor.website)" :href="vendor.website" target="_blank" rel="noopener">{{ vendor.website }}</a>
+                                    <a v-if="!isEmptyText(vendor.website)" :href="normalizeHttpUrl(vendor.website)" target="_blank" rel="noopener">{{ vendor.website }}</a>
                                     <span v-else class="vm-empty" :title="t('vendors.detailWebsiteHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
                                 </template>
                             </td>
@@ -1083,27 +1031,6 @@ function normalizeHttpUrl(url) {
         return '';
     }
     return /^https?:\/\//i.test(u) ? u : `https://${u}`;
-}
-
-function vendorOriginBase(url) {
-    try {
-        return new URL(normalizeHttpUrl(url)).origin;
-    } catch {
-        return '';
-    }
-}
-
-function vendorPathUrl(url, path) {
-    const o = vendorOriginBase(url);
-    if (!o) {
-        return '#';
-    }
-    const p = path.startsWith('/') ? path : `/${path}`;
-    return `${o}${p}`;
-}
-
-function scrollToReviews() {
-    document.getElementById('vm-panel-reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function kindLabel(k) {
@@ -2573,58 +2500,6 @@ textarea.vm-field__control {
     .vm-overview-pager__nav {
         justify-content: flex-end;
     }
-}
-
-.vm-overview-quicklinks {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding: 0.85rem 1rem;
-    border-radius: 14px;
-    border: 1px solid rgba(15, 23, 42, 0.07);
-    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-}
-
-.vm-overview-quicklinks__label {
-    font-size: 0.68rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #64748b;
-}
-
-.vm-overview-quicklinks__row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.45rem;
-    align-items: center;
-}
-
-.vm-overview-quicklinks__pill {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.4rem 0.85rem;
-    border-radius: 999px;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    text-decoration: none;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    color: #2563eb;
-    transition:
-        border-color 0.15s ease,
-        box-shadow 0.15s ease;
-}
-
-.vm-overview-quicklinks__pill:hover {
-    border-color: #93c5fd;
-    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.12);
-}
-
-.vm-overview-quicklinks__pill--btn {
-    font: inherit;
-    cursor: pointer;
-    color: #4f46e5;
 }
 
 .vm-overview-note:not(.vm-overview-note--inline) {
