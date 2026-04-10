@@ -1,5 +1,5 @@
 <template>
-    <div class="ppms-page vm-detail vm-detail--flat">
+    <div class="ppms-page vm-detail vm-detail--surface">
         <div v-if="loading" class="ppms-loading-line" role="status">{{ t('common.loading') }}</div>
         <p v-else-if="err" class="ppms-error">{{ err }}</p>
         <template v-else-if="vendor">
@@ -1644,63 +1644,236 @@ textarea.vm-field__control {
     flex-shrink: 0;
 }
 
-/* Borderless / flat layout */
-.vm-detail--flat .vm-detail__header {
-    border: none;
-    box-shadow: none;
-    background: transparent;
-    padding-left: 0;
-    padding-right: 0;
+/* —— Polished surface (vendor detail) —— */
+.vm-detail--surface {
+    --vm-radius-lg: 16px;
+    --vm-radius-md: 12px;
+    --vm-line: rgba(15, 23, 42, 0.07);
+    --vm-line-soft: rgba(15, 23, 42, 0.045);
+    --vm-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+    --vm-shadow-md: 0 4px 14px rgba(15, 23, 42, 0.07);
+    --vm-input-bg: #f8fafc;
+    --vm-input-border: #e2e8f0;
+    --vm-input-focus: rgba(37, 99, 235, 0.22);
+    max-width: 72rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding-bottom: 2rem;
 }
 
-.vm-detail--flat .vm-detail__badges {
-    border-top: none;
-    padding-top: 0.5rem;
-    margin-top: 0.35rem;
+.vm-detail--surface .vm-detail__header {
+    margin: 0 0 1.5rem;
+    padding: 1.35rem 1.5rem 1.25rem;
+    border-radius: var(--vm-radius-lg);
+    border: 1px solid var(--vm-line);
+    background:
+        radial-gradient(120% 140% at 0% 0%, rgba(59, 130, 246, 0.07) 0%, transparent 55%),
+        radial-gradient(90% 100% at 100% 0%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
+        linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: var(--vm-shadow-sm);
+    position: relative;
+    overflow: hidden;
 }
 
-.vm-detail--flat .ppms-card {
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent;
+.vm-detail--surface .vm-detail__header::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6 0%, #6366f1 42%, #8b5cf6 100%);
+    opacity: 0.85;
+    border-radius: 0 0 var(--vm-radius-lg) var(--vm-radius-lg);
 }
 
-.vm-detail--flat .vm-kv th,
-.vm-detail--flat .vm-kv td {
-    border-bottom: none;
+.vm-detail--surface .vm-detail__title {
+    margin-bottom: 0.5rem;
+    font-size: clamp(1.45rem, 2.8vw, 1.85rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.18;
+    color: #0f172a;
 }
 
-.vm-detail--flat .vm-kv__group-title {
-    border-bottom: none;
-    background: transparent;
+.vm-detail--surface .vm-detail__badges {
+    margin-top: 0.75rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--vm-line-soft);
+    gap: 0.45rem;
 }
 
-.vm-detail--flat .vm-kv__section-hint {
-    border-bottom: none;
-    background: transparent;
+.vm-detail--surface .vm-pill {
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8125rem;
+    letter-spacing: 0.01em;
 }
 
-.vm-detail--flat .ppms-input,
-.vm-detail--flat .vm-kv__select,
-.vm-detail--flat textarea.ppms-input {
-    border: none;
+.vm-detail--surface .vm-pill--muted {
     background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #475569;
 }
 
-.vm-detail--flat .ppms-input:focus,
-.vm-detail--flat .vm-kv__select:focus,
-.vm-detail--flat textarea.ppms-input:focus {
-    outline: 2px solid var(--ppms-focus, #2563eb);
-    outline-offset: 1px;
+.vm-detail--surface .vm-pill--score {
+    border-color: #bfdbfe;
+    background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+    color: #1d4ed8;
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.12);
 }
 
-.vm-detail--flat .vm-dept-multi__trigger {
-    border: none;
-    background: #f1f5f9;
+.vm-detail--surface .ppms-card {
+    border: 1px solid var(--vm-line) !important;
+    border-radius: var(--vm-radius-lg) !important;
+    background: #fff !important;
+    box-shadow: var(--vm-shadow-md) !important;
+    padding: 1.35rem 1.4rem 1.5rem !important;
 }
 
-.vm-detail--flat .vm-detail__inline-actions {
-    border-top: none;
-    padding-top: 0.75rem;
+.vm-detail--surface .vm-sec-title--main {
+    margin: 0 0 1.15rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid var(--vm-line-soft);
+    font-size: clamp(1.15rem, 2vw, 1.35rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #0f172a;
+}
+
+.vm-detail--surface .vm-kv th,
+.vm-detail--surface .vm-kv td {
+    border-bottom: 1px solid var(--vm-line-soft);
+}
+
+.vm-detail--surface .vm-kv th {
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.875rem;
+    letter-spacing: 0.01em;
+}
+
+.vm-detail--surface .vm-kv td {
+    color: #1e293b;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+}
+
+.vm-detail--surface .vm-kv tr:last-child th,
+.vm-detail--surface .vm-kv tr:last-child td {
+    border-bottom: none;
+}
+
+.vm-detail--surface .vm-kv__group-title {
+    padding-top: 1.1rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--vm-line);
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.5) 100%);
+    color: #64748b;
+    letter-spacing: 0.06em;
+}
+
+.vm-detail--surface .vm-kv__section-hint {
+    background: rgba(248, 250, 252, 0.9);
+    border-bottom: 1px solid var(--vm-line-soft);
+    border-radius: 0 0 var(--vm-radius-md) var(--vm-radius-md);
+}
+
+.vm-detail--surface .vm-kv td a {
+    color: #2563eb;
+    font-weight: 500;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(37, 99, 235, 0.35);
+    transition:
+        color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.vm-detail--surface .vm-kv td a:hover {
+    color: #1d4ed8;
+    border-bottom-color: rgba(29, 78, 216, 0.55);
+}
+
+.vm-detail--surface .ppms-input,
+.vm-detail--surface .vm-kv__select,
+.vm-detail--surface textarea.ppms-input {
+    border: 1px solid var(--vm-input-border);
+    background: var(--vm-input-bg);
+    border-radius: var(--vm-radius-md);
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        background 0.15s ease;
+}
+
+.vm-detail--surface .ppms-input:hover,
+.vm-detail--surface .vm-kv__select:hover,
+.vm-detail--surface textarea.ppms-input:hover {
+    border-color: #cbd5e1;
+    background: #fff;
+}
+
+.vm-detail--surface .ppms-input:focus,
+.vm-detail--surface .vm-kv__select:focus,
+.vm-detail--surface textarea.ppms-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: #fff;
+    box-shadow: 0 0 0 3px var(--vm-input-focus);
+}
+
+.vm-detail--surface .vm-dept-multi__trigger {
+    border: 1px solid var(--vm-input-border);
+    background: var(--vm-input-bg);
+    border-radius: var(--vm-radius-md);
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.vm-detail--surface .vm-dept-multi__trigger:hover {
+    border-color: #cbd5e1;
+    background: #fff;
+}
+
+.vm-detail--surface .vm-dept-multi__trigger--open {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px var(--vm-input-focus);
+}
+
+.vm-detail--surface .vm-detail__inline-actions {
+    margin-top: 1.25rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--vm-line-soft);
+}
+
+.vm-detail--surface .vm-empty {
+    border-bottom-color: #cbd5e1;
+    color: #94a3b8;
+}
+
+.vm-detail--surface .vm-timeline-add {
+    border-radius: var(--vm-radius-md);
+    border-color: var(--vm-line);
+    background: linear-gradient(180deg, #fafbfc 0%, #f4f6f9 100%);
+}
+
+.vm-detail--surface .vm-dept-badge {
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    padding: 0.2rem 0.55rem;
+    font-weight: 500;
+}
+
+@media (max-width: 640px) {
+    .vm-detail--surface .vm-detail__header {
+        padding: 1.1rem 1.15rem;
+    }
+
+    .vm-detail--surface .ppms-card {
+        padding: 1.1rem 1rem 1.2rem !important;
+    }
 }
 </style>

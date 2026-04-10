@@ -100,40 +100,18 @@
                                     >{{ statusLabel(v.status) }}</span
                                 >
                             </header>
-                            <p v-if="vendorMetaLine(v)" class="vm-crm-card__meta">{{ vendorMetaLine(v) }}</p>
-                            <p v-if="vendorPriceLine(v)" class="vm-crm-card__price">{{ vendorPriceLine(v) }}</p>
                             <p v-if="vendorFeaturesLine(v)" class="vm-crm-card__features">
-                                <span class="vm-crm-card__features-k">{{ t('vendors.cardFeatures') }}:</span>
-                                {{ vendorFeaturesLine(v) }}
+                                <span class="vm-crm-card__features-k">{{ t('vendors.cardFeatures') }}</span>
+                                <span class="vm-crm-card__features-v">{{ vendorFeaturesLine(v) }}</span>
                             </p>
-                            <div v-if="v.website" class="vm-crm-card__links" @click.stop>
+                            <div class="vm-crm-card__links" @click.stop>
                                 <a
+                                    v-if="normalizeHttpUrl(v.website)"
                                     class="vm-crm-card__link"
                                     :href="normalizeHttpUrl(v.website)"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     >{{ t('vendors.linkWebsite') }}</a
-                                >
-                                <a
-                                    class="vm-crm-card__link"
-                                    :href="vendorPathUrl(v.website, '/pricing')"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    >{{ t('vendors.linkPricing') }}</a
-                                >
-                                <a
-                                    class="vm-crm-card__link"
-                                    :href="vendorPathUrl(v.website, '/demo')"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    >{{ t('vendors.linkDemo') }}</a
-                                >
-                                <a
-                                    class="vm-crm-card__link"
-                                    :href="vendorPathUrl(v.website, '/docs')"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    >{{ t('vendors.linkDocs') }}</a
                                 >
                                 <router-link
                                     class="vm-crm-card__link vm-crm-card__link--int"
@@ -142,21 +120,6 @@
                                     >{{ t('vendors.linkReview') }}</router-link
                                 >
                             </div>
-                            <p v-if="vendorNoteLine(v)" class="vm-crm-card__note">
-                                <span class="vm-crm-card__note-k">{{ t('vendors.cardNote') }}:</span>
-                                {{ vendorNoteLine(v) }}
-                            </p>
-                            <footer class="vm-crm-card__foot">
-                                <span v-if="v.vendor_score != null && v.vendor_score !== ''" class="vm-crm-card__foot-item">{{
-                                    t('vendors.cardFooterScore', { score: v.vendor_score })
-                                }}</span>
-                                <span v-if="v.review_rating_avg != null && v.review_rating_avg !== ''" class="vm-crm-card__foot-item">{{
-                                    t('vendors.cardFooterReviews', { n: v.review_rating_avg })
-                                }}</span>
-                                <span class="vm-crm-card__foot-item vm-crm-card__foot-item--muted">{{
-                                    t('vendors.cardFooterUpdated', { date: formatDate(v.updated_at) })
-                                }}</span>
-                            </footer>
                         </article>
                     </li>
                 </ul>
@@ -235,7 +198,7 @@ import axios from 'axios';
 import { getApiErrorMessage } from '@/bootstrap';
 import { ppmsToastSuccess } from '@/ppmsUi';
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 const router = useRouter();
 
 const loading = ref(true);
@@ -337,12 +300,6 @@ function statusLabel(s) {
     return key ? t(key) : s;
 }
 
-function formatDate(iso) {
-    if (!iso) return '—';
-    const d = new Date(iso);
-    return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(d);
-}
-
 function normalizeHttpUrl(url) {
     if (!url || typeof url !== 'string') {
         return '';
@@ -352,66 +309,6 @@ function normalizeHttpUrl(url) {
         return '';
     }
     return /^https?:\/\//i.test(u) ? u : `https://${u}`;
-}
-
-function vendorOriginBase(url) {
-    try {
-        return new URL(normalizeHttpUrl(url)).origin;
-    } catch {
-        return '';
-    }
-}
-
-function vendorPathUrl(url, path) {
-    const o = vendorOriginBase(url);
-    if (!o) {
-        return '#';
-    }
-    const p = path.startsWith('/') ? path : `/${path}`;
-    return `${o}${p}`;
-}
-
-function vendorMetaLine(v) {
-    const parts = [];
-    if (v.country && String(v.country).trim()) {
-        parts.push(String(v.country).trim());
-    }
-    if (v.industry && String(v.industry).trim()) {
-        String(v.industry)
-            .split(/[,|]/)
-            .map((s) => s.trim())
-            .filter(Boolean)
-            .forEach((seg) => parts.push(seg));
-    }
-    const seen = new Set();
-    const uniq = [];
-    for (const p of parts) {
-        if (!seen.has(p)) {
-            seen.add(p);
-            uniq.push(p);
-        }
-    }
-    return uniq.length ? uniq.join(' | ') : '';
-}
-
-function vendorPriceLine(v) {
-    const ref = v.reference_price != null && v.reference_price !== '' ? Number(v.reference_price) : null;
-    const est = v.estimated_cost != null && v.estimated_cost !== '' ? Number(v.estimated_cost) : null;
-    if ((ref == null || Number.isNaN(ref)) && (est == null || Number.isNaN(est))) {
-        return '';
-    }
-    const a = !Number.isNaN(ref) && ref != null ? ref : est;
-    const b = !Number.isNaN(est) && est != null ? est : ref;
-    const loc = locale.value === 'vi' ? 'vi-VN' : undefined;
-    const fmt = (n) =>
-        new Intl.NumberFormat(loc, { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(n);
-    if (a != null && b != null && a !== b) {
-        const lo = Math.min(a, b);
-        const hi = Math.max(a, b);
-        return `💰 ${fmt(lo)} – ${fmt(hi)}`;
-    }
-    const one = a ?? b;
-    return `💰 ${fmt(one)}`;
 }
 
 function vendorFeaturesLine(v) {
@@ -429,15 +326,6 @@ function vendorFeaturesLine(v) {
         return bits.join(', ');
     }
     return firstLine.length > 180 ? `${firstLine.slice(0, 177)}…` : firstLine;
-}
-
-function vendorNoteLine(v) {
-    const raw = (v.pros || v.research_note || '').trim();
-    if (!raw) {
-        return '';
-    }
-    const line = raw.split(/\n/)[0];
-    return line.length > 220 ? `${line.slice(0, 217)}…` : line;
 }
 
 function goDetail(id) {
@@ -682,27 +570,23 @@ onMounted(load);
     color: #3730a3;
     border-color: #c7d2fe;
 }
-.vm-crm-card__meta,
-.vm-crm-card__price,
 .vm-crm-card__features {
     margin: 0;
-    font-size: 0.8125rem;
-    line-height: 1.45;
-}
-.vm-crm-card__meta {
-    color: var(--ppms-muted, #64748b);
-}
-.vm-crm-card__price {
-    font-weight: 600;
-    color: var(--ppms-text, #0f172a);
-}
-.vm-crm-card__features {
-    color: var(--ppms-text, #334155);
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
 }
 .vm-crm-card__features-k {
+    font-size: 0.68rem;
     font-weight: 700;
-    color: var(--ppms-text-muted, #475569);
-    margin-right: 0.25rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ppms-muted, #64748b);
+}
+.vm-crm-card__features-v {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--ppms-text, #334155);
 }
 .vm-crm-card__links {
     display: flex;
@@ -722,30 +606,6 @@ onMounted(load);
 }
 .vm-crm-card__link--int {
     color: #4f46e5;
-}
-.vm-crm-card__note {
-    margin: 0;
-    font-size: 0.78rem;
-    line-height: 1.45;
-    color: #475569;
-    padding: 0.45rem 0.5rem;
-    border-radius: 8px;
-    background: rgba(248, 250, 252, 0.95);
-    border: 1px dashed #e2e8f0;
-}
-.vm-crm-card__note-k {
-    font-weight: 700;
-    margin-right: 0.25rem;
-}
-.vm-crm-card__foot {
-    margin-top: auto;
-    padding-top: 0.65rem;
-    border-top: 1px solid var(--ppms-border, #e8ecf0);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem 0.75rem;
-    font-size: 0.72rem;
-    color: var(--ppms-muted, #64748b);
 }
 .vm-pagination {
     display: flex;
