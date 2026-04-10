@@ -35,7 +35,6 @@
                         :media-counts="mediaCounts"
                         :project-media="projectMedia"
                         :recent-media-items="recentMediaForInfo"
-                        @edit-stakeholders="openMetaEdit"
                         @go-attachments="activeTab = 'attachments'"
                         @download-media-row="downloadMediaRow"
                         @open-project-doc="openProjectDocumentFromMedia"

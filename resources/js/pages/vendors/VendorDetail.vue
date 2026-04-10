@@ -34,88 +34,18 @@
                 </div>
             </header>
 
-            <nav class="vm-tabs" role="tablist" :aria-label="t('vendors.detailTitle')">
-                <button
-                    id="vm-tab-overview"
-                    type="button"
-                    role="tab"
-                    class="vm-tab"
-                    :class="{ 'vm-tab--active': tab === 'overview' }"
-                    :aria-selected="tab === 'overview'"
-                    :tabindex="tab === 'overview' ? 0 : -1"
-                    @click="tab = 'overview'"
-                >
-                    <span class="vm-tab__label">{{ t('vendors.tabOverview') }}</span>
-                    <span class="vm-tab__hint">{{ t('vendors.tabOverviewHint') }}</span>
-                </button>
-                <button
-                    id="vm-tab-business"
-                    type="button"
-                    role="tab"
-                    class="vm-tab"
-                    :class="{ 'vm-tab--active': tab === 'business' }"
-                    :aria-selected="tab === 'business'"
-                    :tabindex="tab === 'business' ? 0 : -1"
-                    @click="tab = 'business'"
-                >
-                    <span class="vm-tab__label">{{ t('vendors.tabBusiness') }}</span>
-                    <span class="vm-tab__hint">{{ t('vendors.tabBusinessHint') }}</span>
-                </button>
-                <button
-                    id="vm-tab-contracts"
-                    type="button"
-                    role="tab"
-                    class="vm-tab"
-                    :class="{ 'vm-tab--active': tab === 'contracts' }"
-                    :aria-selected="tab === 'contracts'"
-                    :tabindex="tab === 'contracts' ? 0 : -1"
-                    @click="tab = 'contracts'"
-                >
-                    <span class="vm-tab__label">{{ t('vendors.tabContracts') }}</span>
-                    <span class="vm-tab__hint">{{ t('vendors.tabContractsHint') }}</span>
-                </button>
-                <button
-                    id="vm-tab-reviews"
-                    type="button"
-                    role="tab"
-                    class="vm-tab"
-                    :class="{ 'vm-tab--active': tab === 'reviews' }"
-                    :aria-selected="tab === 'reviews'"
-                    :tabindex="tab === 'reviews' ? 0 : -1"
-                    @click="tab = 'reviews'"
-                >
-                    <span class="vm-tab__label">{{ t('vendors.tabReviews') }}</span>
-                    <span class="vm-tab__hint">{{ t('vendors.tabReviewsHint') }}</span>
-                </button>
-                <button
-                    id="vm-tab-timeline"
-                    type="button"
-                    role="tab"
-                    class="vm-tab"
-                    :class="{ 'vm-tab--active': tab === 'timeline' }"
-                    :aria-selected="tab === 'timeline'"
-                    :tabindex="tab === 'timeline' ? 0 : -1"
-                    @click="openTimeline"
-                >
-                    <span class="vm-tab__label">{{ t('vendors.tabTimeline') }}</span>
-                    <span class="vm-tab__hint">{{ t('vendors.tabTimelineHint') }}</span>
-                </button>
-            </nav>
-
+            <div class="vm-detail__full">
             <section
-                v-show="tab === 'overview'"
                 id="vm-panel-overview"
-                class="ppms-card ppms-mt vm-panel"
-                role="tabpanel"
-                aria-labelledby="vm-tab-overview"
+                class="ppms-card ppms-mt vm-panel vm-panel--full"
             >
-                <h3 class="vm-sec-title">{{ t('vendors.tabOverview') }}</h3>
-                <table class="vm-kv" :class="{ 'vm-kv--editing': isOverviewEditing }">
+                <h2 class="vm-sec-title vm-sec-title--main">{{ t('vendors.tabOverview') }}</h2>
+                <table class="vm-kv vm-kv--comfort" :class="{ 'vm-kv--editing': isEditing }">
                     <tbody>
                         <tr>
                             <th scope="row">{{ t('vendors.legalName') }}</th>
                             <td>
-                                <template v-if="isOverviewEditing">
+                                <template v-if="isEditing">
                                     <input
                                         id="vm-o-legal"
                                         v-model="edit.legal_name"
@@ -134,7 +64,7 @@
                         <tr>
                             <th scope="row">{{ t('vendors.country') }}</th>
                             <td>
-                                <template v-if="isOverviewEditing">
+                                <template v-if="isEditing">
                                     <input
                                         id="vm-o-country"
                                         v-model="edit.country"
@@ -153,7 +83,7 @@
                         <tr>
                             <th scope="row">{{ t('vendors.website') }}</th>
                             <td>
-                                <template v-if="isOverviewEditing">
+                                <template v-if="isEditing">
                                     <input
                                         id="vm-o-web"
                                         v-model="edit.website"
@@ -172,7 +102,7 @@
                         <tr>
                             <th scope="row">{{ t('vendors.taxCode') }}</th>
                             <td>
-                                <template v-if="isOverviewEditing">
+                                <template v-if="isEditing">
                                     <input
                                         id="vm-o-tax"
                                         v-model="edit.tax_code"
@@ -189,8 +119,8 @@
                         </tr>
                         <tr>
                             <th scope="row">{{ t('vendors.contactInfo') }}</th>
-                            <td :class="{ 'vm-pre': !isOverviewEditing }">
-                                <template v-if="isOverviewEditing">
+                            <td :class="{ 'vm-pre': !isEditing }">
+                                <template v-if="isEditing">
                                     <textarea
                                         id="vm-o-contact"
                                         v-model="edit.contact_info"
@@ -209,11 +139,11 @@
                         <tr>
                             <th scope="row">{{ t('vendors.riskLevel') }}</th>
                             <td>
-                                <template v-if="isOverviewEditing">
+                                <template v-if="isEditing">
                                     <select
                                         id="vm-o-risk"
                                         v-model="edit.risk_level"
-                                        class="ppms-input vm-kv__control"
+                                        class="ppms-input vm-kv__control vm-kv__select"
                                         :title="t('vendors.detailRiskHint')"
                                     >
                                         <option value="">{{ t('vendors.riskNotSet') }}</option>
@@ -230,8 +160,8 @@
                         </tr>
                         <tr>
                             <th scope="row">{{ t('vendors.internalNote') }}</th>
-                            <td :class="{ 'vm-pre': !isOverviewEditing }">
-                                <template v-if="isOverviewEditing">
+                            <td :class="{ 'vm-pre': !isEditing }">
+                                <template v-if="isEditing">
                                     <textarea
                                         id="vm-o-note"
                                         v-model="edit.internal_note"
@@ -247,39 +177,13 @@
                                 </template>
                             </td>
                         </tr>
-                        <tr>
-                            <th scope="row">{{ t('vendors.departments') }}</th>
-                            <td>
-                                <span v-for="d in vendor.departments || []" :key="d.id" class="vm-dept-badge">{{ d.name }}</span>
-                                <span v-if="!(vendor.departments || []).length" class="vm-empty" :title="t('vendors.emptyDepartmentsHint')">{{ t('vendors.emptyFieldPlaceholder') }}</span>
-                            </td>
+                        <tr class="vm-kv__group">
+                            <th colspan="2" class="vm-kv__group-title">{{ t('vendors.tabBusiness') }}</th>
                         </tr>
-                    </tbody>
-                </table>
-                <div v-if="isOverviewEditing" class="vm-detail__inline-actions">
-                    <button type="button" class="ppms-btn-primary" :disabled="saving" @click="saveTab('overview')">
-                        {{ t('vendors.save') }}
-                    </button>
-                    <button type="button" class="ppms-btn-ghost" :disabled="saving" @click="resetEditFromVendor">
-                        {{ t('vendors.cancel') }}
-                    </button>
-                </div>
-            </section>
-
-            <section
-                v-show="tab === 'business'"
-                id="vm-panel-business"
-                class="ppms-card ppms-mt vm-panel"
-                role="tabpanel"
-                aria-labelledby="vm-tab-business"
-            >
-                <h3 class="vm-sec-title">{{ t('vendors.tabBusiness') }}</h3>
-                <table class="vm-kv" :class="{ 'vm-kv--editing': isBusinessEditing }">
-                    <tbody>
                         <tr>
                             <th scope="row">{{ t('vendors.filterIndustry') }}</th>
                             <td>
-                                <template v-if="isBusinessEditing">
+                                <template v-if="isEditing">
                                     <input
                                         id="vm-b-ind"
                                         v-model="edit.industry"
@@ -296,8 +200,8 @@
                         </tr>
                         <tr>
                             <th scope="row">{{ t('vendors.mainProducts') }}</th>
-                            <td :class="{ 'vm-pre': !isBusinessEditing }">
-                                <template v-if="isBusinessEditing">
+                            <td :class="{ 'vm-pre': !isEditing }">
+                                <template v-if="isEditing">
                                     <textarea
                                         id="vm-b-mp"
                                         v-model="edit.main_products"
@@ -316,7 +220,7 @@
                         <tr>
                             <th scope="row">{{ t('vendors.contractValue') }}</th>
                             <td>
-                                <template v-if="isBusinessEditing">
+                                <template v-if="isEditing">
                                     <input
                                         id="vm-b-cv"
                                         v-model="edit.contract_value"
@@ -338,7 +242,7 @@
                         <tr>
                             <th scope="row">{{ t('vendors.estimatedCost') }}</th>
                             <td>
-                                <template v-if="isBusinessEditing">
+                                <template v-if="isEditing">
                                     <input
                                         id="vm-b-ec"
                                         v-model="edit.estimated_cost"
@@ -360,7 +264,7 @@
                         <tr>
                             <th scope="row">{{ t('vendors.referencePrice') }}</th>
                             <td>
-                                <template v-if="isBusinessEditing">
+                                <template v-if="isEditing">
                                     <input
                                         id="vm-b-rp"
                                         v-model="edit.reference_price"
@@ -382,7 +286,7 @@
                         <tr>
                             <th scope="row">{{ t('vendors.researchSource') }}</th>
                             <td>
-                                <template v-if="isBusinessEditing">
+                                <template v-if="isEditing">
                                     <input
                                         id="vm-b-src"
                                         v-model="edit.research_source"
@@ -400,7 +304,7 @@
                         <tr>
                             <th scope="row">{{ t('vendors.fitScore') }}</th>
                             <td>
-                                <template v-if="isBusinessEditing">
+                                <template v-if="isEditing">
                                     <input
                                         id="vm-b-fit"
                                         v-model.number="edit.fit_score"
@@ -420,8 +324,8 @@
                         </tr>
                         <tr>
                             <th scope="row">{{ t('vendors.pros') }}</th>
-                            <td :class="{ 'vm-pre': !isBusinessEditing }">
-                                <template v-if="isBusinessEditing">
+                            <td :class="{ 'vm-pre': !isEditing }">
+                                <template v-if="isEditing">
                                     <textarea
                                         id="vm-b-pros"
                                         v-model="edit.pros"
@@ -439,8 +343,8 @@
                         </tr>
                         <tr>
                             <th scope="row">{{ t('vendors.cons') }}</th>
-                            <td :class="{ 'vm-pre': !isBusinessEditing }">
-                                <template v-if="isBusinessEditing">
+                            <td :class="{ 'vm-pre': !isEditing }">
+                                <template v-if="isEditing">
                                     <textarea
                                         id="vm-b-cons"
                                         v-model="edit.cons"
@@ -458,8 +362,8 @@
                         </tr>
                         <tr>
                             <th scope="row">{{ t('vendors.researchNote') }}</th>
-                            <td :class="{ 'vm-pre': !isBusinessEditing }">
-                                <template v-if="isBusinessEditing">
+                            <td :class="{ 'vm-pre': !isEditing }">
+                                <template v-if="isEditing">
                                     <textarea
                                         id="vm-b-rn"
                                         v-model="edit.research_note"
@@ -478,13 +382,13 @@
                         <tr class="vm-kv__group">
                             <th colspan="2" class="vm-kv__group-title">{{ t('vendors.formSectionBizCriteria') }}</th>
                         </tr>
-                        <tr v-if="isBusinessEditing">
+                        <tr v-if="isEditing">
                             <td colspan="2" class="vm-kv__section-hint">{{ t('vendors.formSectionBizCriteriaHint') }}</td>
                         </tr>
                         <tr>
                             <th scope="row">{{ t('vendors.scorePrice') }}</th>
                             <td>
-                                <template v-if="isBusinessEditing">
+                                <template v-if="isEditing">
                                     <input
                                         id="vm-b-sp"
                                         v-model="edit.score_price"
@@ -506,7 +410,7 @@
                         <tr>
                             <th scope="row">{{ t('vendors.scoreQuality') }}</th>
                             <td>
-                                <template v-if="isBusinessEditing">
+                                <template v-if="isEditing">
                                     <input
                                         id="vm-b-sq"
                                         v-model="edit.score_quality"
@@ -528,7 +432,7 @@
                         <tr>
                             <th scope="row">{{ t('vendors.scoreSla') }}</th>
                             <td>
-                                <template v-if="isBusinessEditing">
+                                <template v-if="isEditing">
                                     <input
                                         id="vm-b-ss"
                                         v-model="edit.score_sla"
@@ -550,7 +454,7 @@
                         <tr>
                             <th scope="row">{{ t('vendors.scoreSupport') }}</th>
                             <td>
-                                <template v-if="isBusinessEditing">
+                                <template v-if="isEditing">
                                     <input
                                         id="vm-b-su"
                                         v-model="edit.score_support"
@@ -572,23 +476,45 @@
                         <tr class="vm-kv__group">
                             <th colspan="2" class="vm-kv__group-title">{{ t('vendors.formSectionDepartments') }}</th>
                         </tr>
-                        <tr v-if="isBusinessEditing">
+                        <tr v-if="isEditing">
                             <td colspan="2" class="vm-kv__section-hint">{{ t('vendors.detailDepartmentsHint') }}</td>
                         </tr>
                         <tr>
                             <th scope="row">{{ t('vendors.departments') }}</th>
                             <td>
-                                <template v-if="isBusinessEditing">
-                                    <select
-                                        id="vm-b-dept"
-                                        v-model="editDepartmentIds"
-                                        class="ppms-input vm-kv__control vm-kv__control--multiselect"
-                                        multiple
-                                        size="6"
-                                        :title="t('vendors.detailDepartmentsHint')"
-                                    >
-                                        <option v-for="d in lookups.departments" :key="d.id" :value="d.id">{{ d.name }}</option>
-                                    </select>
+                                <template v-if="isEditing">
+                                    <div ref="deptMultiRef" class="vm-dept-multi">
+                                        <button
+                                            id="vm-b-dept"
+                                            type="button"
+                                            class="vm-dept-multi__trigger"
+                                            :class="{ 'vm-dept-multi__trigger--open': deptMenuOpen }"
+                                            :aria-expanded="deptMenuOpen"
+                                            aria-haspopup="listbox"
+                                            @click.stop="deptMenuOpen = !deptMenuOpen"
+                                        >
+                                            <span class="vm-dept-multi__trigger-text">{{ deptSelectionSummary }}</span>
+                                            <span class="vm-dept-multi__chev" aria-hidden="true">▾</span>
+                                        </button>
+                                        <div
+                                            v-show="deptMenuOpen"
+                                            class="vm-dept-multi__panel"
+                                            role="listbox"
+                                            :aria-label="t('vendors.departments')"
+                                        >
+                                            <label
+                                                v-for="d in lookups.departments"
+                                                :key="d.id"
+                                                class="vm-dept-multi__option"
+                                            >
+                                                <input v-model="editDepartmentIds" type="checkbox" :value="d.id" />
+                                                <span>{{ d.name }}</span>
+                                            </label>
+                                            <p v-if="!(lookups.departments || []).length" class="vm-dept-multi__empty">
+                                                {{ t('vendors.deptLookupEmpty') }}
+                                            </p>
+                                        </div>
+                                    </div>
                                     <p class="vm-kv__foot">{{ t('contracts.addDepartment') }}</p>
                                 </template>
                                 <template v-else>
@@ -599,8 +525,8 @@
                         </tr>
                     </tbody>
                 </table>
-                <div v-if="isBusinessEditing" class="vm-detail__inline-actions">
-                    <button type="button" class="ppms-btn-primary" :disabled="saving" @click="saveTab('business')">
+                <div v-if="isEditing" class="vm-detail__inline-actions">
+                    <button type="button" class="ppms-btn-primary" :disabled="saving" @click="saveVendor">
                         {{ t('vendors.save') }}
                     </button>
                     <button type="button" class="ppms-btn-ghost" :disabled="saving" @click="resetEditFromVendor">
@@ -616,11 +542,8 @@
             </section>
 
             <section
-                v-show="tab === 'contracts'"
                 id="vm-panel-contracts"
                 class="ppms-card ppms-mt vm-panel"
-                role="tabpanel"
-                aria-labelledby="vm-tab-contracts"
             >
                 <h3 class="vm-sec-title">{{ t('vendors.tabContracts') }}</h3>
                 <p class="vm-contracts-intro">{{ t('vendors.contractsTabIntro') }}</p>
@@ -658,11 +581,8 @@
             </section>
 
             <section
-                v-show="tab === 'reviews'"
                 id="vm-panel-reviews"
                 class="ppms-card ppms-mt vm-panel"
-                role="tabpanel"
-                aria-labelledby="vm-tab-reviews"
             >
                 <h3 class="vm-sec-title">{{ t('vendors.tabReviews') }}</h3>
                 <VendorReview
@@ -676,11 +596,8 @@
             </section>
 
             <section
-                v-show="tab === 'timeline'"
                 id="vm-panel-timeline"
                 class="ppms-card ppms-mt vm-panel"
-                role="tabpanel"
-                aria-labelledby="vm-tab-timeline"
             >
                 <div v-if="canEdit" class="vm-timeline-add">
                     <h3 class="vm-sec-title">{{ t('vendors.timelineAdd') }}</h3>
@@ -689,7 +606,7 @@
                         <div class="vm-field">
                             <label class="vm-field__label" for="vm-tl-ph">{{ t('vendors.timelinePhase') }}</label>
                             <p id="vm-tl-ph-hint" class="vm-field__hint">{{ t('vendors.timelinePhaseHint') }}</p>
-                            <select id="vm-tl-ph" v-model="tlForm.phase" class="ppms-input vm-kv__control" aria-describedby="vm-tl-ph-hint">
+                            <select id="vm-tl-ph" v-model="tlForm.phase" class="ppms-input vm-kv__control vm-kv__select" aria-describedby="vm-tl-ph-hint">
                                 <option v-for="ph in phases" :key="ph" :value="ph">{{ timelinePhaseLabel(ph) }}</option>
                             </select>
                         </div>
@@ -744,12 +661,13 @@
                     @delete="onDeleteTimeline"
                 />
             </section>
+            </div>
         </template>
     </div>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
@@ -802,8 +720,9 @@ const lookups = ref({ departments: [] });
 
 const edit = reactive({});
 const editDepartmentIds = ref([]);
+const deptMenuOpen = ref(false);
+const deptMultiRef = ref(null);
 
-const tab = ref('overview');
 const timelineEvents = ref([]);
 const timelineLoading = ref(false);
 const timelineErr = ref('');
@@ -829,8 +748,16 @@ const phases = [
 
 const canEdit = computed(() => ['admin', 'pm', 'tl', 'hr', 'developer'].includes(me.value?.role));
 const canDelete = computed(() => ['admin', 'pm', 'tl'].includes(me.value?.role));
-const isOverviewEditing = computed(() => canEdit.value && tab.value === 'overview');
-const isBusinessEditing = computed(() => canEdit.value && tab.value === 'business');
+const isEditing = computed(() => canEdit.value);
+
+const deptSelectionSummary = computed(() => {
+    const ids = editDepartmentIds.value.map(Number);
+    const list = lookups.value.departments || [];
+    const names = list.filter((d) => ids.includes(Number(d.id))).map((d) => d.name);
+    if (!names.length) return t('vendors.deptMultiPlaceholder');
+    if (names.length <= 3) return names.join(', ');
+    return t('vendors.deptMultiNSelected', { n: names.length });
+});
 
 function kindLabel(k) {
     return k === 'research' ? t('vendors.kindResearch') : t('vendors.kindActive');
@@ -940,7 +867,7 @@ function snapshotFromVendor(v) {
     for (const k of keys) {
         edit[k] = v[k] ?? '';
     }
-    editDepartmentIds.value = (v.departments || []).map((d) => d.id);
+    editDepartmentIds.value = (v.departments || []).map((d) => Number(d.id));
 }
 
 async function loadLookups() {
@@ -982,32 +909,31 @@ async function loadTimeline() {
     }
 }
 
-function openTimeline() {
-    tab.value = 'timeline';
-    loadTimeline();
+function onDocClickDept(e) {
+    if (!deptMenuOpen.value) return;
+    const el = deptMultiRef.value;
+    if (el && !el.contains(e.target)) deptMenuOpen.value = false;
 }
 
 function resetEditFromVendor() {
     if (vendor.value) snapshotFromVendor(vendor.value);
 }
 
-async function saveTab(section) {
-    if (section !== 'overview' && section !== 'business') return;
+async function saveVendor() {
+    if (!canEdit.value) return;
     saving.value = true;
     try {
         const body = {};
-        if (section === 'overview') {
-            for (const k of OVERVIEW_FIELD_KEYS) {
-                body[k] = edit[k];
-            }
-        } else {
-            for (const k of BUSINESS_FIELD_KEYS) {
-                body[k] = edit[k];
-            }
-            body.department_ids = editDepartmentIds.value.map((x) => Number(x));
+        for (const k of OVERVIEW_FIELD_KEYS) {
+            body[k] = edit[k];
         }
+        for (const k of BUSINESS_FIELD_KEYS) {
+            body[k] = edit[k];
+        }
+        body.department_ids = editDepartmentIds.value.map((x) => Number(x));
         await axios.patch(`/api/vendors/${route.params.id}`, body);
         ppmsToastSuccess(t('vendors.saved'));
+        deptMenuOpen.value = false;
         await loadVendor();
     } catch (e) {
         ppmsToastError(getApiErrorMessage(e));
@@ -1081,15 +1007,13 @@ async function onDeleteReview(r) {
 watch(
     () => route.params.id,
     () => {
+        deptMenuOpen.value = false;
         loadVendor();
     }
 );
 
-watch(tab, () => {
-    resetEditFromVendor();
-});
-
 onMounted(async () => {
+    document.addEventListener('click', onDocClickDept);
     try {
         const u = await axios.get('/api/user');
         me.value = u.data;
@@ -1098,6 +1022,11 @@ onMounted(async () => {
     }
     await loadLookups();
     await loadVendor();
+    await loadTimeline();
+});
+
+onUnmounted(() => {
+    document.removeEventListener('click', onDocClickDept);
 });
 </script>
 
@@ -1276,67 +1205,161 @@ onMounted(async () => {
     border-bottom: 1px dashed var(--ppms-border, #cbd5e1);
 }
 
-/* —— Tabs —— */
-.vm-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin: 0.5rem 0 0;
-    padding: 0.35rem;
-    border-radius: 12px;
-    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-    border: 1px solid var(--ppms-border, #e2e8f0);
+.vm-panel {
+    scroll-margin-top: 0.5rem;
 }
-.vm-tab {
-    flex: 1 1 9.5rem;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.15rem;
-    padding: 0.55rem 0.75rem 0.6rem;
-    border-radius: 9px;
-    border: 1px solid transparent;
-    background: transparent;
+
+.vm-detail__full {
+    width: 100%;
+    max-width: none;
+}
+
+.vm-sec-title--main {
+    margin: 0 0 1rem;
+    font-size: clamp(1.2rem, 2vw, 1.45rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
     color: var(--ppms-text, #0f172a);
+}
+
+.vm-panel--full {
+    width: 100%;
+}
+
+.vm-kv--comfort th,
+.vm-kv--comfort td {
+    padding: 0.7rem 0.9rem;
+}
+
+.vm-kv--comfort th {
+    width: min(14rem, 34%);
+    font-size: 0.9375rem;
+}
+
+.vm-kv--comfort .ppms-input:not(textarea) {
+    min-height: 2.85rem;
+}
+
+.vm-kv--comfort .ppms-input,
+.vm-kv--comfort .vm-kv__select {
+    font-size: 1rem;
+    border-radius: 10px;
+}
+
+.vm-kv--comfort .vm-kv__control--textarea {
+    min-height: 5.5rem;
+}
+
+.vm-kv__select {
+    appearance: none;
+    cursor: pointer;
+    padding-right: 2.35rem;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 0.65rem;
+}
+
+.vm-dept-multi {
+    position: relative;
+    width: 100%;
+    max-width: 38rem;
+}
+
+.vm-dept-multi__trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    min-height: 2.85rem;
+    padding: 0.55rem 0.85rem;
+    border-radius: 10px;
+    border: 1px solid var(--ppms-border, #e2e8f0);
+    background: #fff;
     font: inherit;
+    font-size: 1rem;
+    line-height: 1.35;
     text-align: left;
+    color: var(--ppms-text, #0f172a);
     cursor: pointer;
     transition:
-        background 0.15s ease,
         border-color 0.15s ease,
         box-shadow 0.15s ease;
 }
-.vm-tab:hover {
-    background: rgba(255, 255, 255, 0.75);
-    border-color: var(--ppms-border, #e2e8f0);
-}
-.vm-tab:focus-visible {
-    outline: 2px solid var(--ppms-accent, #4f46e5);
-    outline-offset: 2px;
-}
-.vm-tab--active {
-    background: #fff;
-    border-color: #c7d2fe;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-}
-.vm-tab__label {
-    font-weight: 700;
-    font-size: 0.9rem;
-    line-height: 1.25;
-}
-.vm-tab__hint {
-    font-size: 0.7rem;
-    line-height: 1.35;
-    color: var(--ppms-muted, #64748b);
-    font-weight: 500;
-}
-.vm-tab--active .vm-tab__hint {
-    color: #475569;
+
+.vm-dept-multi__trigger:hover {
+    border-color: #cbd5e1;
 }
 
-.vm-panel {
-    scroll-margin-top: 0.5rem;
+.vm-dept-multi__trigger:focus-visible {
+    outline: 2px solid var(--ppms-focus, #2563eb);
+    outline-offset: 2px;
+}
+
+.vm-dept-multi__trigger--open {
+    border-color: var(--ppms-primary, #2563eb);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+.vm-dept-multi__trigger-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vm-dept-multi__chev {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    opacity: 0.75;
+}
+
+.vm-dept-multi__panel {
+    position: absolute;
+    z-index: 30;
+    left: 0;
+    right: 0;
+    margin-top: 0.35rem;
+    max-height: 16rem;
+    overflow-y: auto;
+    padding: 0.35rem;
+    border-radius: 10px;
+    border: 1px solid var(--ppms-border, #e2e8f0);
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+}
+
+.vm-dept-multi__option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    padding: 0.5rem 0.55rem;
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    line-height: 1.35;
+    cursor: pointer;
+    color: var(--ppms-text, #0f172a);
+}
+
+.vm-dept-multi__option:hover {
+    background: #f8fafc;
+}
+
+.vm-dept-multi__option input {
+    margin-top: 0.15rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.vm-dept-multi__empty {
+    margin: 0.4rem 0.5rem 0.35rem;
+    font-size: 0.875rem;
+    color: var(--ppms-muted, #64748b);
 }
 
 .vm-kv {

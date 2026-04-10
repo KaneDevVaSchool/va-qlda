@@ -1,7 +1,29 @@
 <!-- eslint-disable vue/no-mutating-props -- parent reactive docForm -->
 <template>
     <div class="ppms-pd-tab-panel">
-        <div class="ppms-pd-stats">
+        <section class="ppms-card ppms-pd-section">
+            <h2>{{ t('projects.timelineTitle') }}</h2>
+            <p class="ppms-muted ppms-mt-sm">{{ t('projects.timelineHint') }}</p>
+            <div class="ppms-process-timeline ppms-mt-sm" role="list">
+                <div
+                    v-for="step in timelineDisplay"
+                    :key="step.phase"
+                    class="ppms-process-step"
+                    :class="{ 'is-current': step.isCurrent, 'is-done': !!step.completed_at }"
+                    role="listitem"
+                >
+                    <span class="ppms-process-dot" aria-hidden="true" />
+                    <div class="ppms-process-body">
+                        <span class="ppms-process-label">{{ t(`projects.phase.${step.phase}`) }}</span>
+                        <span v-if="step.isCurrent" class="ppms-process-badge">{{ t('projects.timelineCurrent') }}</span>
+                        <time v-if="step.completed_at" :datetime="step.completed_at">{{ step.completed_at }}</time>
+                        <span v-else class="ppms-muted">{{ t('projects.timelinePlanned') }}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="ppms-pd-stats ppms-mt">
             <div class="ppms-pd-stat ppms-pd-stat--total">
                 <span class="ppms-pd-stat-ico ppms-pd-stat-ico--total" aria-hidden="true" />
                 <span class="ppms-pd-stat-value">{{ taskStats.total }}</span>
@@ -189,63 +211,6 @@
             <div v-if="project.description" class="ppms-pd-desc">
                 <h3 class="ppms-pd-desc-title">{{ t('projects.fieldDescription') }}</h3>
                 <p class="ppms-pd-desc-body">{{ project.description }}</p>
-            </div>
-        </section>
-
-        <section class="ppms-card ppms-pd-section">
-            <h2>{{ t('projects.timelineTitle') }}</h2>
-            <p class="ppms-muted ppms-mt-sm">{{ t('projects.timelineHint') }}</p>
-            <div class="ppms-process-timeline ppms-mt-sm" role="list">
-                <div
-                    v-for="step in timelineDisplay"
-                    :key="step.phase"
-                    class="ppms-process-step"
-                    :class="{ 'is-current': step.isCurrent, 'is-done': !!step.completed_at }"
-                    role="listitem"
-                >
-                    <span class="ppms-process-dot" aria-hidden="true" />
-                    <div class="ppms-process-body">
-                        <span class="ppms-process-label">{{ t(`projects.phase.${step.phase}`) }}</span>
-                        <span v-if="step.isCurrent" class="ppms-process-badge">{{ t('projects.timelineCurrent') }}</span>
-                        <time v-if="step.completed_at" :datetime="step.completed_at">{{ step.completed_at }}</time>
-                        <span v-else class="ppms-muted">{{ t('projects.timelinePlanned') }}</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="ppms-card ppms-pd-section">
-            <div class="ppms-row ppms-row--spread">
-                <h2>{{ t('projects.stakeholdersTitle') }}</h2>
-                <button type="button" class="ppms-btn-ghost" @click="$emit('edit-stakeholders')">
-                    {{ t('projects.editStakeholders') }}
-                </button>
-            </div>
-            <div class="ppms-split ppms-mt">
-                <div>
-                    <h3 class="ppms-muted ppms-pd-mini-h">{{ t('projects.customer') }}</h3>
-                    <p v-if="project.customer_name" style="margin: 0">{{ project.customer_name }}</p>
-                    <p v-else class="ppms-muted" style="margin: 0">{{ t('projects.customerUnset') }}</p>
-                    <p
-                        v-if="project.customer_email"
-                        class="ppms-muted ppms-mt-sm"
-                        style="margin: 0; font-size: 0.9rem"
-                    >
-                        {{ t('projects.customerEmail') }}: {{ project.customer_email }}
-                    </p>
-                </div>
-                <div>
-                    <h3 class="ppms-muted ppms-pd-mini-h">{{ t('projects.suppliersTitle') }}</h3>
-                    <ul v-if="(project.suppliers || []).length" class="ppms-supplier-list">
-                        <li v-for="(s, i) in project.suppliers" :key="i">
-                            <strong>{{ s.name }}</strong>
-                            <template v-if="s.contact">
-                                <span class="ppms-muted"> — {{ t('projects.supplierContactShort') }}: {{ s.contact }}</span>
-                            </template>
-                        </li>
-                    </ul>
-                    <p v-else class="ppms-muted" style="margin: 0">{{ t('projects.suppliersEmpty') }}</p>
-                </div>
             </div>
         </section>
 
@@ -773,7 +738,6 @@ function taskAttachPayload(row) {
 }
 
 defineEmits([
-    'edit-stakeholders',
     'go-attachments',
     'download-media-row',
     'open-project-doc',
