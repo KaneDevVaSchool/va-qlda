@@ -282,11 +282,10 @@
                                 <th scope="row">{{ t('vendors.mainProducts') }}</th>
                                 <td :class="{ 'vm-pre': !isEditing }">
                                     <template v-if="isEditing">
-                                        <textarea
-                                            id="vm-r-mp"
+                                        <VendorTagInput
+                                            ref="tagMainProductsRef"
                                             v-model="edit.main_products"
-                                            rows="3"
-                                            class="ppms-input vm-kv__control vm-kv__control--textarea"
+                                            input-id="vm-r-mp"
                                             :placeholder="t('vendors.detailMainProductsPlaceholder')"
                                             :title="t('vendors.detailMainProductsHint')"
                                         />
@@ -301,11 +300,10 @@
                                 <th scope="row">{{ t('vendors.servicesOffered') }}</th>
                                 <td :class="{ 'vm-pre': !isEditing }">
                                     <template v-if="isEditing">
-                                        <textarea
-                                            id="vm-r-sv"
+                                        <VendorTagInput
+                                            ref="tagServicesRef"
                                             v-model="edit.services_offered"
-                                            rows="3"
-                                            class="ppms-input vm-kv__control vm-kv__control--textarea"
+                                            input-id="vm-r-sv"
                                             :placeholder="t('vendors.detailServicesOfferedPlaceholder')"
                                             :title="t('vendors.detailServicesOfferedHint')"
                                         />
@@ -362,11 +360,10 @@
                             <th scope="row">{{ t('vendors.mainProducts') }}</th>
                             <td :class="{ 'vm-pre': !isEditing }">
                                 <template v-if="isEditing">
-                                    <textarea
-                                        id="vm-b-mp"
+                                    <VendorTagInput
+                                        ref="tagMainProductsRef"
                                         v-model="edit.main_products"
-                                        rows="3"
-                                        class="ppms-input vm-kv__control vm-kv__control--textarea"
+                                        input-id="vm-b-mp"
                                         :placeholder="t('vendors.detailMainProductsPlaceholder')"
                                         :title="t('vendors.detailMainProductsHint')"
                                     />
@@ -381,11 +378,10 @@
                             <th scope="row">{{ t('vendors.servicesOffered') }}</th>
                             <td :class="{ 'vm-pre': !isEditing }">
                                 <template v-if="isEditing">
-                                    <textarea
-                                        id="vm-b-sv"
+                                    <VendorTagInput
+                                        ref="tagServicesRef"
                                         v-model="edit.services_offered"
-                                        rows="3"
-                                        class="ppms-input vm-kv__control vm-kv__control--textarea"
+                                        input-id="vm-b-sv"
                                         :placeholder="t('vendors.detailServicesOfferedPlaceholder')"
                                         :title="t('vendors.detailServicesOfferedHint')"
                                     />
@@ -857,6 +853,7 @@ import axios from 'axios';
 import { getApiErrorMessage } from '@/bootstrap';
 import { ppmsConfirm, ppmsToastSuccess, ppmsToastError } from '@/ppmsUi';
 import UserPickerInput from '@/components/UserPickerInput.vue';
+import VendorTagInput from '@/components/VendorTagInput.vue';
 import VendorTimeline from './components/VendorTimeline.vue';
 import VendorReview from './components/VendorReview.vue';
 
@@ -870,6 +867,8 @@ const route = useRoute();
 const loading = ref(true);
 const err = ref('');
 const vendor = ref(null);
+const tagMainProductsRef = ref(null);
+const tagServicesRef = ref(null);
 const me = ref(null);
 const saving = ref(false);
 
@@ -1191,6 +1190,8 @@ function resetEditFromVendor() {
 
 async function saveVendor() {
     if (!canEdit.value) return;
+    tagMainProductsRef.value?.flushPending?.();
+    tagServicesRef.value?.flushPending?.();
     saving.value = true;
     try {
         const body = {};

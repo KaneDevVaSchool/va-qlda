@@ -52,6 +52,17 @@
                             :placeholder="t('vendors.searchPlaceholder')"
                         />
                     </label>
+                    <label class="ppms-field ppms-field--compact vm-filters__field vm-filters__field--offerings">
+                        <span>{{ t('vendors.filterOfferings') }}</span>
+                        <input
+                            v-model="filters.q_offerings"
+                            type="search"
+                            class="ppms-input"
+                            autocomplete="off"
+                            :placeholder="t('vendors.filterOfferingsPlaceholder')"
+                            :title="t('vendors.filterOfferingsHint')"
+                        />
+                    </label>
                     <label class="ppms-field ppms-field--compact vm-filters__field">
                         <span>{{ t('vendors.filterStatus') }}</span>
                         <select v-model="filters.status" class="ppms-input" @change="load">
@@ -295,6 +306,7 @@ const paginationRangeText = computed(() => {
 const filters = reactive({
     kind: 'active',
     q: '',
+    q_offerings: '',
     status: '',
     industry: '',
     min_score: '',
@@ -334,7 +346,7 @@ function scheduleVendorFilterReload() {
     }, 350);
 }
 watch(
-    () => [filters.q, filters.industry, filters.min_score],
+    () => [filters.q, filters.q_offerings, filters.industry, filters.min_score],
     () => {
         scheduleVendorFilterReload();
     },
@@ -365,6 +377,7 @@ function setKind(k) {
 function resetFilters() {
     clearTimeout(vendorFilterDebounce);
     filters.q = '';
+    filters.q_offerings = '';
     filters.status = '';
     filters.industry = '';
     filters.min_score = '';
@@ -532,6 +545,7 @@ function buildParams() {
         per_page: perPage.value,
     };
     if (filters.q) p.q = filters.q;
+    if (filters.q_offerings && String(filters.q_offerings).trim()) p.q_offerings = String(filters.q_offerings).trim();
     if (filters.status) p.status = filters.status;
     if (filters.industry) p.industry = filters.industry;
     if (filters.min_score !== '' && filters.min_score !== null) p.min_score = filters.min_score;
@@ -741,6 +755,9 @@ onMounted(load);
     width: 100%;
     min-height: 2.5rem;
     box-sizing: border-box;
+}
+.vm-filters__field--offerings {
+    grid-column: 1 / -1;
 }
 .vm-filters-actions {
     display: flex;

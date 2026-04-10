@@ -137,4 +137,30 @@ class Vendor extends Model
                 });
         });
     }
+
+    /**
+     * Lọc theo giải pháp (main_products) và dịch vụ (services_offered): nhiều từ cách nhau bởi khoảng trắng / phẩy / ; / | —
+     * mỗi từ phải xuất hiện ở ít nhất một trong hai cột (AND giữa các từ).
+     */
+    public function scopeSearchOfferings(Builder $query, ?string $raw): Builder
+    {
+        if ($raw === null || trim($raw) === '') {
+            return $query;
+        }
+
+        $tokens = preg_split('/[\s,;|]+/u', trim($raw), -1, PREG_SPLIT_NO_EMPTY);
+        if ($tokens === []) {
+            return $query;
+        }
+
+        foreach ($tokens as $token) {
+            $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $token).'%';
+            $query->where(function (Builder $w) use ($like) {
+                $w->where('main_products', 'like', $like)
+                    ->orWhere('services_offered', 'like', $like);
+            });
+        }
+
+        return $query;
+    }
 }

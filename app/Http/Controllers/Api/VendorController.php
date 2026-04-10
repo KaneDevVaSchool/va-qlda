@@ -34,6 +34,7 @@ class VendorController extends Controller
                 ->when($request->query('status'), fn($b, $status) => $b->where('status', $status))
                 ->when($request->query('industry'), fn($b, $industry) => $b->where('industry', $industry))
                 ->when($request->query('q'), fn($b, $term) => $b->searchName($term))
+                ->when($request->query('q_offerings'), fn($b, $term) => $b->searchOfferings($term))
                 ->when(
                     $request->query('min_score') !== null && $request->query('min_score') !== '',
                     fn($b) => $b->where('vendor_score', '>=', (float) $request->query('min_score'))
