@@ -40,29 +40,81 @@
             </div>
 
             <div class="vm-filters-panel" role="search" :aria-label="t('vendors.filtersSectionTitle')">
-                <h2 class="vm-filters-panel__title">{{ t('vendors.filtersSectionTitle') }}</h2>
-                <div class="vm-filters-grid">
-                    <label class="ppms-field ppms-field--compact vm-filters__field">
-                        <span>{{ t('common.search') }}</span>
-                        <input
-                            v-model="filters.q"
-                            type="search"
-                            class="ppms-input"
-                            autocomplete="off"
-                            :placeholder="t('vendors.searchPlaceholder')"
-                        />
+                <div class="vm-filters-panel__head">
+                    <h2 class="vm-filters-panel__title">{{ t('vendors.filtersSectionTitle') }}</h2>
+                    <span
+                        v-if="activeFilterChips.length"
+                        class="vm-filters-panel__badge"
+                        :aria-label="t('vendors.filtersActiveLabel')"
+                    >
+                        {{ activeFilterChips.length }}
+                    </span>
+                </div>
+
+                <div class="vm-filters-search-row">
+                    <label class="ppms-field ppms-field--compact vm-filters__field vm-filters__field--grow">
+                        <span class="vm-filters__lbl">{{ t('common.search') }}</span>
+                        <div class="vm-filters__input-wrap">
+                            <input
+                                v-model="filters.q"
+                                type="search"
+                                class="ppms-input"
+                                autocomplete="off"
+                                :placeholder="t('vendors.searchPlaceholder')"
+                                @keydown.enter.prevent="commitSearchFields"
+                                @blur="onSearchFieldBlur"
+                            />
+                            <button
+                                v-if="filters.q"
+                                type="button"
+                                class="vm-filters__input-clear"
+                                :aria-label="t('vendors.filterChipRemove')"
+                                @mousedown.prevent
+                                @click="removeFilterChip('q')"
+                            >
+                                ×
+                            </button>
+                        </div>
                     </label>
-                    <label class="ppms-field ppms-field--compact vm-filters__field vm-filters__field--offerings">
-                        <span>{{ t('vendors.filterOfferings') }}</span>
-                        <input
-                            v-model="filters.q_offerings"
-                            type="search"
-                            class="ppms-input"
-                            autocomplete="off"
-                            :placeholder="t('vendors.filterOfferingsPlaceholder')"
-                            :title="t('vendors.filterOfferingsHint')"
-                        />
+                    <label class="ppms-field ppms-field--compact vm-filters__field vm-filters__field--grow">
+                        <span class="vm-filters__lbl">{{ t('vendors.filterOfferings') }}</span>
+                        <div class="vm-filters__input-wrap">
+                            <input
+                                v-model="filters.q_offerings"
+                                type="search"
+                                class="ppms-input"
+                                autocomplete="off"
+                                :placeholder="t('vendors.filterOfferingsPlaceholder')"
+                                :title="t('vendors.filterOfferingsHint')"
+                                @keydown.enter.prevent="commitSearchFields"
+                                @blur="onSearchFieldBlur"
+                            />
+                            <button
+                                v-if="filters.q_offerings"
+                                type="button"
+                                class="vm-filters__input-clear"
+                                :aria-label="t('vendors.filterChipRemove')"
+                                @mousedown.prevent
+                                @click="removeFilterChip('q_offerings')"
+                            >
+                                ×
+                            </button>
+                        </div>
                     </label>
+                    <div class="vm-filters-search-actions">
+                        <button
+                            type="button"
+                            class="vm-filters__apply ppms-btn-primary"
+                            :disabled="loading"
+                            :aria-label="t('vendors.searchCommitAria')"
+                            @click="commitSearchFields"
+                        >
+                            {{ t('common.search') }}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="vm-filters-refine">
                     <label class="ppms-field ppms-field--compact vm-filters__field">
                         <span>{{ t('vendors.filterStatus') }}</span>
                         <select v-model="filters.status" class="ppms-input" @change="load">
@@ -95,6 +147,54 @@
                     <div class="vm-filters-actions">
                         <button type="button" class="ppms-btn-ghost" @click="resetFilters">{{ t('vendors.resetFilters') }}</button>
                     </div>
+                </div>
+
+                <div v-if="activeFilterChips.length" class="vm-filters-chips" role="group" :aria-label="t('vendors.filtersActiveLabel')">
+                    <span class="vm-filters-chips__k">{{ t('vendors.filtersActiveLabel') }}</span>
+                    <ul class="vm-filters-chips__list">
+                        <li v-for="c in activeFilterChips" :key="c.key" class="vm-filters-chips__item">
+                            <span class="vm-filters-chip">
+                                <span class="vm-filters-chip__k">{{ c.label }}</span>
+                                <span class="vm-filters-chip__v">{{ c.value }}</span>
+                                <button
+                                    type="button"
+                                    class="vm-filters-chip__x"
+                                    :aria-label="t('vendors.filterChipRemove')"
+                                    @click="removeFilterChip(c.key)"
+                                >
+                                    ×
+                                </button>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div v-if="searchHistory.length" class="vm-filters-history">
+                    <div class="vm-filters-history__head">
+                        <div>
+                            <p class="vm-filters-history__title">{{ t('vendors.searchHistoryTitle') }}</p>
+                            <p class="vm-filters-history__hint">{{ t('vendors.searchHistoryHint') }}</p>
+                        </div>
+                        <button type="button" class="ppms-btn-ghost vm-filters-history__clear" @click="clearSearchHistory">
+                            {{ t('vendors.searchHistoryClear') }}
+                        </button>
+                    </div>
+                    <ul class="vm-filters-history__list" role="list">
+                        <li v-for="(h, idx) in searchHistory" :key="historyRowKey(h, idx)" class="vm-filters-history__li">
+                            <button
+                                type="button"
+                                class="vm-filters-history__btn"
+                                @mousedown.prevent="applyHistoryEntry(h)"
+                            >
+                                <span v-if="h.q" class="vm-filters-history__part">{{ h.q }}</span>
+                                <span v-if="h.q && h.q_offerings" class="vm-filters-history__sep" aria-hidden="true">·</span>
+                                <span v-if="h.q_offerings" class="vm-filters-history__part vm-filters-history__part--muted">{{
+                                    h.q_offerings
+                                }}</span>
+                                <span v-if="!h.q && !h.q_offerings" class="vm-filters-history__part ppms-muted">—</span>
+                            </button>
+                        </li>
+                    </ul>
                 </div>
             </div>
 
@@ -271,7 +371,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
@@ -312,6 +412,10 @@ const filters = reactive({
     min_score: '',
 });
 
+const PPMS_VENDOR_SEARCH_HISTORY_KEY = 'ppms-vendor-search-history-v1';
+const PPMS_VENDOR_SEARCH_HISTORY_MAX = 12;
+const searchHistory = ref([]);
+
 const createOpen = ref(false);
 const createSaving = ref(false);
 const createErr = ref('');
@@ -338,6 +442,8 @@ watch(
 
 /** Text/number filters: reload without pressing Enter */
 let vendorFilterDebounce = null;
+let searchHistoryBlurTimer = null;
+const suppressVendorFilterWatch = ref(false);
 function scheduleVendorFilterReload() {
     clearTimeout(vendorFilterDebounce);
     vendorFilterDebounce = setTimeout(() => {
@@ -348,6 +454,9 @@ function scheduleVendorFilterReload() {
 watch(
     () => [filters.q, filters.q_offerings, filters.industry, filters.min_score],
     () => {
+        if (suppressVendorFilterWatch.value) {
+            return;
+        }
         scheduleVendorFilterReload();
     },
 );
@@ -374,15 +483,18 @@ function setKind(k) {
     load();
 }
 
-function resetFilters() {
+async function resetFilters() {
     clearTimeout(vendorFilterDebounce);
+    suppressVendorFilterWatch.value = true;
     filters.q = '';
     filters.q_offerings = '';
     filters.status = '';
     filters.industry = '';
     filters.min_score = '';
     page.value = 1;
-    load();
+    await load();
+    await nextTick();
+    suppressVendorFilterWatch.value = false;
 }
 
 function statusLabel(s) {
@@ -397,6 +509,29 @@ function statusLabel(s) {
     const key = map[s];
     return key ? t(key) : s;
 }
+
+const activeFilterChips = computed(() => {
+    const chips = [];
+    const q = String(filters.q || '').trim();
+    if (q) {
+        chips.push({ key: 'q', label: t('common.search'), value: q });
+    }
+    const qo = String(filters.q_offerings || '').trim();
+    if (qo) {
+        chips.push({ key: 'q_offerings', label: t('vendors.filterOfferings'), value: qo });
+    }
+    if (filters.status) {
+        chips.push({ key: 'status', label: t('vendors.filterStatus'), value: statusLabel(filters.status) });
+    }
+    const ind = String(filters.industry || '').trim();
+    if (ind) {
+        chips.push({ key: 'industry', label: t('vendors.filterIndustry'), value: ind });
+    }
+    if (filters.min_score !== '' && filters.min_score != null && String(filters.min_score).trim() !== '') {
+        chips.push({ key: 'min_score', label: t('vendors.filterMinScore'), value: String(filters.min_score) });
+    }
+    return chips;
+});
 
 function kindLabel(k) {
     return k === 'research' ? t('vendors.kindResearch') : t('vendors.kindActive');
@@ -558,6 +693,115 @@ function onPerPageChange() {
     load();
 }
 
+function readSearchHistory() {
+    try {
+        if (typeof localStorage === 'undefined') {
+            return [];
+        }
+        const raw = localStorage.getItem(PPMS_VENDOR_SEARCH_HISTORY_KEY);
+        if (!raw) {
+            return [];
+        }
+        const arr = JSON.parse(raw);
+        if (!Array.isArray(arr)) {
+            return [];
+        }
+        return arr
+            .filter((x) => x && typeof x === 'object')
+            .map((x) => ({
+                q: typeof x.q === 'string' ? x.q : '',
+                q_offerings: typeof x.q_offerings === 'string' ? x.q_offerings : '',
+                at: typeof x.at === 'number' ? x.at : 0,
+            }))
+            .slice(0, PPMS_VENDOR_SEARCH_HISTORY_MAX);
+    } catch {
+        return [];
+    }
+}
+
+function pushSearchHistory() {
+    const q = String(filters.q || '').trim();
+    const qo = String(filters.q_offerings || '').trim();
+    if (!q && !qo) {
+        return;
+    }
+    const key = `${q}\u0000${qo}`;
+    const next = searchHistory.value.filter(
+        (h) => `${String(h.q || '').trim()}\u0000${String(h.q_offerings || '').trim()}` !== key,
+    );
+    next.unshift({ q, q_offerings: qo, at: Date.now() });
+    searchHistory.value = next.slice(0, PPMS_VENDOR_SEARCH_HISTORY_MAX);
+    try {
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(PPMS_VENDOR_SEARCH_HISTORY_KEY, JSON.stringify(searchHistory.value));
+        }
+    } catch {
+        /* ignore quota / private mode */
+    }
+}
+
+function clearSearchHistory() {
+    searchHistory.value = [];
+    try {
+        if (typeof localStorage !== 'undefined') {
+            localStorage.removeItem(PPMS_VENDOR_SEARCH_HISTORY_KEY);
+        }
+    } catch {
+        /* ignore */
+    }
+}
+
+function historyRowKey(h, idx) {
+    return `${h.at}-${idx}`;
+}
+
+async function applyHistoryEntry(h) {
+    clearTimeout(vendorFilterDebounce);
+    clearTimeout(searchHistoryBlurTimer);
+    suppressVendorFilterWatch.value = true;
+    filters.q = typeof h.q === 'string' ? h.q : '';
+    filters.q_offerings = typeof h.q_offerings === 'string' ? h.q_offerings : '';
+    page.value = 1;
+    await load();
+    await nextTick();
+    suppressVendorFilterWatch.value = false;
+    pushSearchHistory();
+}
+
+async function removeFilterChip(key) {
+    clearTimeout(vendorFilterDebounce);
+    suppressVendorFilterWatch.value = true;
+    if (key === 'q') {
+        filters.q = '';
+    } else if (key === 'q_offerings') {
+        filters.q_offerings = '';
+    } else if (key === 'status') {
+        filters.status = '';
+    } else if (key === 'industry') {
+        filters.industry = '';
+    } else if (key === 'min_score') {
+        filters.min_score = '';
+    }
+    page.value = 1;
+    await load();
+    await nextTick();
+    suppressVendorFilterWatch.value = false;
+}
+
+async function commitSearchFields() {
+    clearTimeout(vendorFilterDebounce);
+    page.value = 1;
+    await load();
+    pushSearchHistory();
+}
+
+function onSearchFieldBlur() {
+    clearTimeout(searchHistoryBlurTimer);
+    searchHistoryBlurTimer = setTimeout(() => {
+        pushSearchHistory();
+    }, 200);
+}
+
 async function load() {
     clearTimeout(vendorFilterDebounce);
     loading.value = true;
@@ -581,7 +825,10 @@ function pageTo(n) {
     load();
 }
 
-onMounted(load);
+onMounted(() => {
+    searchHistory.value = readSearchHistory();
+    load();
+});
 </script>
 
 <style scoped>
@@ -728,27 +975,117 @@ onMounted(load);
 }
 .vm-filters-panel {
     margin-top: 1rem;
-    padding: 1rem 1.1rem;
+    padding: 1rem 1.1rem 1.15rem;
     border: 1px solid var(--ppms-border, #e2e6ea);
-    border-radius: 10px;
-    background: var(--ppms-bg-subtle, rgba(248, 250, 252, 0.9));
+    border-radius: 12px;
+    background: linear-gradient(165deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+}
+.vm-filters-panel__head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.65rem;
 }
 .vm-filters-panel__title {
-    margin: 0 0 0.65rem;
+    margin: 0;
     font-size: 0.8125rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--ppms-muted, #64748b);
 }
-.vm-filters-grid {
+.vm-filters-panel__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    padding: 0 0.4rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #fff;
+    line-height: 1;
+}
+.vm-filters-search-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.65rem 1rem;
+    align-items: end;
+    margin-bottom: 0.85rem;
+}
+@media (min-width: 720px) {
+    .vm-filters-search-row {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    }
+}
+.vm-filters-search-actions {
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 0.1rem;
+}
+.vm-filters__apply {
+    min-height: 2.5rem;
+    padding: 0.45rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.vm-filters__lbl {
+    display: block;
+}
+.vm-filters__input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.vm-filters__input-wrap .ppms-input {
+    padding-right: 2rem;
+}
+.vm-filters__input-clear {
+    position: absolute;
+    right: 0.35rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.75rem;
+    height: 1.75rem;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ppms-muted, #64748b);
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.vm-filters__input-clear:hover {
+    background: rgba(15, 23, 42, 0.06);
+    color: var(--ppms-text, #0f172a);
+}
+.vm-filters-refine {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
     gap: 0.65rem 1rem;
     align-items: end;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+@media (min-width: 900px) {
+    .vm-filters-refine {
+        grid-template-columns: minmax(9rem, 1fr) minmax(10rem, 1.2fr) minmax(7rem, 0.9fr) auto;
+    }
 }
 .vm-filters__field {
     margin-bottom: 0;
+    min-width: 0;
+}
+.vm-filters__field--grow {
     min-width: 0;
 }
 .vm-filters__field .ppms-input {
@@ -756,23 +1093,165 @@ onMounted(load);
     min-height: 2.5rem;
     box-sizing: border-box;
 }
-.vm-filters__field--offerings {
-    grid-column: 1 / -1;
-}
 .vm-filters-actions {
     display: flex;
     align-items: flex-end;
     padding-bottom: 0.1rem;
 }
 @media (min-width: 900px) {
-    .vm-filters-grid {
-        grid-template-columns: minmax(11rem, 1.5fr) minmax(9rem, 1fr) minmax(9rem, 1fr) minmax(7rem, 0.85fr) auto;
-        align-items: end;
-    }
     .vm-filters-actions {
         justify-self: end;
         white-space: nowrap;
     }
+}
+.vm-filters-chips {
+    margin-top: 0.85rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.45rem 0.65rem;
+}
+.vm-filters-chips__k {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--ppms-muted, #64748b);
+    padding-top: 0.2rem;
+    flex-shrink: 0;
+}
+.vm-filters-chips__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    min-width: 0;
+    flex: 1 1 12rem;
+}
+.vm-filters-chips__item {
+    margin: 0;
+}
+.vm-filters-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    max-width: 100%;
+    padding: 0.25rem 0.35rem 0.25rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    background: rgba(238, 242, 255, 0.65);
+    font-size: 0.78rem;
+    line-height: 1.3;
+}
+.vm-filters-chip__k {
+    font-weight: 700;
+    color: #4338ca;
+    flex-shrink: 0;
+}
+.vm-filters-chip__v {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ppms-text, #0f172a);
+}
+.vm-filters-chip__x {
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: #6366f1;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.vm-filters-chip__x:hover {
+    background: rgba(99, 102, 241, 0.15);
+}
+.vm-filters-history {
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+.vm-filters-history__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-bottom: 0.55rem;
+}
+.vm-filters-history__title {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--ppms-muted, #64748b);
+}
+.vm-filters-history__hint {
+    margin: 0.2rem 0 0;
+    font-size: 0.75rem;
+    color: var(--ppms-muted, #64748b);
+    line-height: 1.4;
+    max-width: 36rem;
+}
+.vm-filters-history__clear {
+    font-size: 0.8125rem;
+    padding: 0.35rem 0.65rem;
+    flex-shrink: 0;
+}
+.vm-filters-history__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+.vm-filters-history__li {
+    margin: 0;
+}
+.vm-filters-history__btn {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    max-width: 100%;
+    padding: 0.4rem 0.65rem;
+    border-radius: 10px;
+    border: 1px solid var(--ppms-border, #e2e6ea);
+    background: #fff;
+    font-size: 0.8125rem;
+    color: var(--ppms-text, #0f172a);
+    cursor: pointer;
+    text-align: left;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+.vm-filters-history__btn:hover {
+    border-color: rgba(99, 102, 241, 0.45);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.12);
+}
+.vm-filters-history__part {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.vm-filters-history__part--muted {
+    color: var(--ppms-muted, #64748b);
+}
+.vm-filters-history__sep {
+    color: var(--ppms-muted, #94a3b8);
+    flex-shrink: 0;
 }
 .vm-list-cards {
     width: 100%;

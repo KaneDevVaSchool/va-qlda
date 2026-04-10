@@ -267,16 +267,46 @@
             </div>
         </section>
 
-        <section class="ppms-card ppms-pd-section">
-            <h2>{{ t('projects.pdActivityTitle') }}</h2>
-            <p v-if="!projectActivities.length" class="ppms-muted ppms-mt-sm">{{ t('projects.pdActivityEmpty') }}</p>
-            <ul v-else class="ppms-pd-activity-list ppms-mt-sm" role="list">
-                <li v-for="ev in projectActivities" :key="'act-' + ev.id" class="ppms-pd-activity-row">
-                    <span class="ppms-pd-activity-time">{{ formatActivityTime(ev.created_at) }}</span>
-                    <span class="ppms-pd-activity-user">{{ ev.user?.name || t('projects.pdActivitySystem') }}</span>
-                    <span class="ppms-pd-activity-action">{{ formatActivityAction(t, ev) }}</span>
-                </li>
-            </ul>
+        <section class="ppms-card ppms-pd-section ppms-pd-section--activity">
+            <div class="ppms-pd-activity-head">
+                <button
+                    type="button"
+                    class="ppms-pd-activity-toggle"
+                    :aria-expanded="activityExpanded"
+                    :aria-controls="activityPanelId"
+                    :aria-label="activityExpanded ? t('projects.pdActivityCollapse') : t('projects.pdActivityExpand')"
+                    @click="toggleActivitySection"
+                >
+                    <svg
+                        class="ppms-pd-activity-chev"
+                        :class="{ 'ppms-pd-activity-chev--collapsed': !activityExpanded }"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        aria-hidden="true"
+                    >
+                        <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                    <h2 class="ppms-pd-activity-heading">{{ t('projects.pdActivityTitle') }}</h2>
+                    <span
+                        v-if="!activityExpanded && projectActivities.length"
+                        class="ppms-pd-activity-count"
+                        aria-hidden="true"
+                        >{{ projectActivities.length }}</span
+                    >
+                </button>
+            </div>
+            <div v-show="activityExpanded" :id="activityPanelId" class="ppms-pd-activity-panel">
+                <p v-if="!projectActivities.length" class="ppms-muted ppms-mt-sm">{{ t('projects.pdActivityEmpty') }}</p>
+                <ul v-else class="ppms-pd-activity-list ppms-mt-sm" role="list">
+                    <li v-for="ev in projectActivities" :key="'act-' + ev.id" class="ppms-pd-activity-row">
+                        <span class="ppms-pd-activity-time">{{ formatActivityTime(ev.created_at) }}</span>
+                        <span class="ppms-pd-activity-user">{{ ev.user?.name || t('projects.pdActivitySystem') }}</span>
+                        <span class="ppms-pd-activity-action">{{ formatActivityAction(t, ev) }}</span>
+                    </li>
+                </ul>
+            </div>
         </section>
 
         <section class="ppms-card ppms-pd-section">
@@ -476,7 +506,7 @@
 </template>
 
 <script setup>
-import { computed, provide, reactive } from 'vue';
+import { computed, onMounted, provide, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
     fileExt,
@@ -492,6 +522,10 @@ import ProjectMediaTreeChildren from './ProjectMediaTreeChildren.vue';
 
 const { t } = useI18n();
 
+const PPMS_PD_ACTIVITY_COLLAPSED_KEY = 'ppms-pd-activity-collapsed-';
+
+const activityExpanded = ref(true);
+
 const props = defineProps({
     project: { type: Object, required: true },
     taskStats: { type: Object, required: true },
@@ -503,6 +537,50 @@ const props = defineProps({
     projectMedia: { type: Array, default: () => [] },
     recentMediaItems: { type: Array, required: true },
 });
+
+const activityPanelId = computed(() => `pd-activity-panel-${props.project.id}`);
+
+function loadActivityCollapsedFromStorage() {
+    try {
+        if (typeof localStorage === 'undefined') {
+            activityExpanded.value = true;
+            return;
+        }
+        const v = localStorage.getItem(PPMS_PD_ACTIVITY_COLLAPSED_KEY + String(props.project.id));
+        activityExpanded.value = v !== '1';
+    } catch {
+        activityExpanded.value = true;
+    }
+}
+
+function persistActivityCollapsed() {
+    try {
+        if (typeof localStorage === 'undefined') {
+            return;
+        }
+        const id = String(props.project.id);
+        if (!activityExpanded.value) {
+            localStorage.setItem(PPMS_PD_ACTIVITY_COLLAPSED_KEY + id, '1');
+        } else {
+            localStorage.removeItem(PPMS_PD_ACTIVITY_COLLAPSED_KEY + id);
+        }
+    } catch {
+        /* ignore */
+    }
+}
+
+function toggleActivitySection() {
+    activityExpanded.value = !activityExpanded.value;
+    persistActivityCollapsed();
+}
+
+onMounted(loadActivityCollapsedFromStorage);
+watch(
+    () => props.project.id,
+    () => {
+        loadActivityCollapsedFromStorage();
+    },
+);
 
 /** Mở/đóng thư mục trong cây + danh sách con (inject vào ProjectMediaTreeChildren). */
 const treeExpandedFolderIds = reactive({});
@@ -744,3 +822,69 @@ defineEmits([
     'open-task-from-attachment',
 ]);
 </script>
+
+<style scoped>
+.ppms-pd-section--activity {
+    padding-top: 0.85rem;
+}
+.ppms-pd-activity-head {
+    margin: 0 0 0.35rem;
+}
+.ppms-pd-activity-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin: 0;
+    padding: 0.35rem 0.15rem;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.ppms-pd-activity-toggle:hover {
+    background: rgba(15, 23, 42, 0.04);
+}
+.ppms-pd-activity-toggle:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+}
+.ppms-pd-activity-chev {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--ppms-muted, #64748b);
+    transition: transform 0.2s ease;
+}
+.ppms-pd-activity-chev--collapsed {
+    transform: rotate(-90deg);
+}
+.ppms-pd-activity-heading {
+    margin: 0;
+    flex: 1 1 auto;
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--ppms-text, #0f172a);
+}
+.ppms-pd-activity-count {
+    flex-shrink: 0;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    padding: 0 0.4rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.35rem;
+    text-align: center;
+    background: rgba(99, 102, 241, 0.15);
+    color: #4338ca;
+}
+.ppms-pd-activity-panel {
+    padding-top: 0.15rem;
+}
+</style>

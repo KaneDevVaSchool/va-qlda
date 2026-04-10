@@ -61,6 +61,30 @@ class ProjectController extends Controller
     }
 
     /**
+     * Project counts per lifecycle phase, using the same filters as the list but ignoring phase / active_phase.
+     */
+    public function phaseCounts(Request $request)
+    {
+        $this->authorize('viewAny', Project::class);
+
+        $q = Project::query();
+        $this->projectListQuery->applyFilters($q, $request, ['skip_phase' => true]);
+
+        $keys = ['planning', 'development', 'uat', 'done', 'maintenance', 'rnd'];
+        $out = array_fill_keys($keys, 0);
+
+        $rows = $q->selectRaw('phase, count(*) as c')->groupBy('phase')->get();
+        foreach ($rows as $row) {
+            $ph = $row->phase;
+            if ($ph !== null && array_key_exists($ph, $out)) {
+                $out[$ph] = (int) $row->c;
+            }
+        }
+
+        return response()->json($out);
+    }
+
+    /**
      * Distinct project labels (non-archived), for filters and autocomplete.
      */
     public function labelSuggestions(Request $request)

@@ -7,6 +7,53 @@
 
         <ProjectListSavedViews :saved-views="savedViews" @apply="applySavedView($event)" @remove="removeSavedView" />
 
+        <div class="ppms-pl-phase-filter ppms-mt">
+            <button
+                type="button"
+                class="ppms-pl-phase-filter-head"
+                :aria-expanded="phaseFilterExpanded"
+                :aria-label="phaseFilterExpanded ? t('projects.phaseFilterCollapse') : t('projects.phaseFilterExpand')"
+                @click="phaseFilterExpanded = !phaseFilterExpanded"
+            >
+                <svg
+                    class="ppms-pl-phase-filter-chev"
+                    :class="{ 'ppms-pl-phase-filter-chev--collapsed': !phaseFilterExpanded }"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                >
+                    <polyline points="6 9 12 15 18 9" />
+                </svg>
+                <span class="ppms-pl-phase-filter-title">{{ t('projects.phaseFilterTitle') }}</span>
+            </button>
+            <p v-show="phaseFilterExpanded" class="ppms-muted ppms-pl-phase-filter-hint">{{ t('projects.phaseFilterHint') }}</p>
+            <div v-show="phaseFilterExpanded" class="ppms-pl-phase-filter-body">
+                <div class="ppms-pl-phase-filter-chips" role="group" :aria-label="t('projects.phaseFilterTitle')">
+                    <button
+                        v-for="ph in KANBAN_PHASE_ORDER"
+                        :key="'phf-' + ph"
+                        type="button"
+                        class="ppms-pl-phase-filter-chip"
+                        :class="{ 'ppms-pl-phase-filter-chip--active': filters.phase === ph }"
+                        @click="setPhaseFilter(ph)"
+                    >
+                        <span class="ppms-pl-phase-filter-label">{{ t(`projects.phase.${ph}`) }}</span>
+                        <span class="ppms-pl-phase-filter-num">{{ phaseCountDisplay(ph) }}</span>
+                    </button>
+                </div>
+                <button
+                    v-if="filters.phase"
+                    type="button"
+                    class="ppms-btn-ghost ppms-pl-phase-filter-clear"
+                    @click="clearPhaseFilter"
+                >
+                    {{ t('projects.phaseFilterClear') }}
+                </button>
+            </div>
+        </div>
+
         <ProjectListToolbar
             ref="toolbarRef"
             v-model:menu-open="toolbarMenuOpen"
@@ -89,6 +136,7 @@
                             <th v-if="colVis('admin')" class="ppms-th-admin">{{ t('projects.colAdmin') }}</th>
                             <th v-if="colVis('code')" class="ppms-th-code">{{ t('projects.colCode') }}</th>
                             <th v-if="colVis('name')" class="ppms-th-name">{{ t('projects.colName') }}</th>
+                            <th v-if="colVis('phase')" class="ppms-th-phase">{{ t('projects.colPhase') }}</th>
                             <th v-if="colVis('team')" class="ppms-th-team">{{ t('projects.colTeam') }}</th>
                             <th v-if="colVis('participants')" class="ppms-th-participants">{{ t('projects.colParticipants') }}</th>
                             <th v-if="colVis('progress')" class="ppms-th-process">{{ t('projects.colProgress') }}</th>
@@ -235,6 +283,34 @@
                                             </button>
                                         </template>
                                     </div>
+                                    </template>
+                                </td>
+                                <td v-if="colVis('phase')" class="ppms-td-phase">
+                                    <div v-if="canEditProject && isInlineEditing(p)" class="ppms-pl-inline-field-stack">
+                                        <select
+                                            v-model="inlineDraft.phase"
+                                            class="ppms-input ppms-pl-inline-select ppms-pl-inline-select--sm"
+                                            @click.stop
+                                            @focus="setInlineEditAnchor('phase')"
+                                        >
+                                            <option value="planning">{{ t('projects.phase.planning') }}</option>
+                                            <option value="development">{{ t('projects.phase.development') }}</option>
+                                            <option value="uat">{{ t('projects.phase.uat') }}</option>
+                                            <option value="done">{{ t('projects.phase.done') }}</option>
+                                            <option value="maintenance">{{ t('projects.phase.maintenance') }}</option>
+                                            <option value="rnd">{{ t('projects.phase.rnd') }}</option>
+                                        </select>
+                                        <ProjectListInlineEditBar
+                                            v-if="inlineEditAnchor === 'phase'"
+                                            :disabled="inlineSaving"
+                                            @save="saveInlineEdit"
+                                            @cancel="cancelInlineEdit"
+                                        />
+                                    </div>
+                                    <template v-else>
+                                        <span class="ppms-pl-phase-pill" :class="phasePillClass(p.phase)">{{
+                                            t(`projects.phase.${p.phase || 'planning'}`)
+                                        }}</span>
                                     </template>
                                 </td>
                                 <td v-if="colVis('team')" class="ppms-td-team">
@@ -392,7 +468,12 @@
                                                 <option value="delivery">{{ t('projects.typeShort.delivery') }}</option>
                                                 <option value="rnd">{{ t('projects.typeShort.rnd') }}</option>
                                             </select>
-                                            <select v-model="inlineDraft.phase" class="ppms-input ppms-pl-inline-select ppms-pl-inline-select--sm" @click.stop>
+                                            <select
+                                                v-if="!colVis('phase')"
+                                                v-model="inlineDraft.phase"
+                                                class="ppms-input ppms-pl-inline-select ppms-pl-inline-select--sm"
+                                                @click.stop
+                                            >
                                                 <option value="planning">{{ t('projects.phase.planning') }}</option>
                                                 <option value="development">{{ t('projects.phase.development') }}</option>
                                                 <option value="uat">{{ t('projects.phase.uat') }}</option>
@@ -635,6 +716,9 @@
                                     </div>
                                     <div class="ppms-pl-kanban-card-meta">
                                         <span class="ppms-pl-tag ppms-pl-tag--kanban">{{ t(`projects.typeShort.${p.type}`) }}</span>
+                                        <span class="ppms-pl-phase-pill ppms-pl-phase-pill--kanban" :class="phasePillClass(p.phase)">{{
+                                            t(`projects.phase.${p.phase || 'planning'}`)
+                                        }}</span>
                                         <span class="ppms-status-pill ppms-status-pill--kanban" :class="statusPillClass(p.status)">{{
                                             t(`projects.status.${p.status}`)
                                         }}</span>
@@ -903,6 +987,159 @@
     font-size: 0.85rem;
     line-height: 1;
 }
+.ppms-pl-phase-filter {
+    border: 1px solid var(--ppms-border, #e2e8f0);
+    border-radius: 12px;
+    padding: 0.65rem 0.85rem 0.75rem;
+    background: linear-gradient(165deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%);
+}
+.ppms-pl-phase-filter-head {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    width: 100%;
+    margin: 0;
+    padding: 0.15rem 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font: inherit;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--ppms-text, #0f172a);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s ease;
+}
+.ppms-pl-phase-filter-head:hover {
+    background: rgba(15, 23, 42, 0.04);
+}
+.ppms-pl-phase-filter-head:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+}
+.ppms-pl-phase-filter-chev {
+    flex-shrink: 0;
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--ppms-muted, #64748b);
+    transition: transform 0.2s ease;
+}
+.ppms-pl-phase-filter-chev--collapsed {
+    transform: rotate(-90deg);
+}
+.ppms-pl-phase-filter-hint {
+    margin: 0.35rem 0 0.55rem;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+}
+.ppms-pl-phase-filter-body {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.65rem;
+}
+.ppms-pl-phase-filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    flex: 1 1 12rem;
+    min-width: 0;
+}
+.ppms-pl-phase-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    max-width: 100%;
+    padding: 0.35rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--ppms-border, #e2e8f0);
+    background: #f8fafc;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--ppms-text, #0f172a);
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+.ppms-pl-phase-filter-chip:hover {
+    border-color: rgba(99, 102, 241, 0.45);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+}
+.ppms-pl-phase-filter-chip--active {
+    border-color: #6366f1;
+    background: #eef2ff;
+    color: #3730a3;
+}
+.ppms-pl-phase-filter-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 16rem;
+}
+.ppms-pl-phase-filter-num {
+    font-weight: 800;
+    font-size: 0.78rem;
+    opacity: 0.9;
+}
+.ppms-pl-phase-filter-clear {
+    flex-shrink: 0;
+    font-size: 0.8125rem;
+    padding: 0.35rem 0.65rem;
+}
+.ppms-th-phase,
+.ppms-td-phase {
+    white-space: nowrap;
+}
+.ppms-td-phase {
+    max-width: 12rem;
+}
+.ppms-pl-phase-pill {
+    display: inline-block;
+    max-width: 100%;
+    padding: 0.18rem 0.5rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+.ppms-pl-phase-pill--planning {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+.ppms-pl-phase-pill--development {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+.ppms-pl-phase-pill--uat {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+.ppms-pl-phase-pill--done {
+    background: #d1fae5;
+    color: #047857;
+}
+.ppms-pl-phase-pill--maintenance {
+    background: #fef3c7;
+    color: #b45309;
+}
+.ppms-pl-phase-pill--rnd {
+    background: #fce7f3;
+    color: #9d174d;
+}
+.ppms-pl-phase-pill--kanban {
+    font-size: 0.65rem;
+    font-weight: 800;
+    max-width: 10.5rem;
+    letter-spacing: 0.01em;
+}
 </style>
 
 <script setup>
@@ -943,6 +1180,18 @@ const { columnVisibility, colVis, onColumnToggle, columnPickerOptions, PL_COL_OR
 const projects = ref([]);
 const viewMode = ref('list');
 const loading = ref(true);
+
+const PPMS_PL_PHASE_FILTER_EXPANDED_KEY = 'ppms-pl-phase-filter-expanded';
+const phaseFilterExpanded = ref(true);
+const phaseCounts = ref({});
+
+try {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem(PPMS_PL_PHASE_FILTER_EXPANDED_KEY) === '0') {
+        phaseFilterExpanded.value = false;
+    }
+} catch {
+    /* ignore */
+}
 const showForm = ref(false);
 const showSaveViewModal = ref(false);
 const saveViewNameInput = ref('');
@@ -965,7 +1214,7 @@ const inlineSaving = ref(false);
 /** Cột đang “neo” thanh Lưu/Hủy (theo focus ô chỉnh sửa). */
 const inlineEditAnchor = ref('name');
 
-const INLINE_EDIT_ANCHOR_KEYS = ['code', 'name', 'team', 'start', 'actualStart', 'end', 'status'];
+const INLINE_EDIT_ANCHOR_KEYS = ['code', 'name', 'phase', 'team', 'start', 'actualStart', 'end', 'status'];
 
 function firstVisibleInlineAnchor() {
     for (const k of INLINE_EDIT_ANCHOR_KEYS) {
@@ -2138,6 +2387,15 @@ function scheduleSaveListFiltersToStorage() {
 }
 watch(filters, scheduleSaveListFiltersToStorage, { deep: true });
 watch([viewMode, page, perPage], scheduleSaveListFiltersToStorage);
+watch(phaseFilterExpanded, (v) => {
+    try {
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(PPMS_PL_PHASE_FILTER_EXPANDED_KEY, v ? '1' : '0');
+        }
+    } catch {
+        /* ignore */
+    }
+});
 
 function scheduleUrlReplace() {
     clearTimeout(urlDebounce);
@@ -2199,6 +2457,51 @@ function buildQueryParams() {
     return params;
 }
 
+function buildPhaseCountParams() {
+    const params = { ...buildQueryParams() };
+    delete params.page;
+    delete params.per_page;
+    delete params.phase;
+    delete params.active_phase;
+
+    return params;
+}
+
+async function loadPhaseCounts() {
+    try {
+        const { data } = await axios.get('/api/projects/phase-counts', { params: buildPhaseCountParams() });
+        phaseCounts.value = data && typeof data === 'object' ? { ...data } : {};
+    } catch {
+        phaseCounts.value = {};
+    }
+}
+
+function phaseCountDisplay(ph) {
+    const n = phaseCounts.value[ph];
+    return typeof n === 'number' && !Number.isNaN(n) ? n : 0;
+}
+
+function setPhaseFilter(ph) {
+    if (filters.phase === ph) {
+        filters.phase = '';
+    } else {
+        filters.phase = ph;
+        filters.activePhase = false;
+    }
+    onFilterChange();
+}
+
+function clearPhaseFilter() {
+    filters.phase = '';
+    onFilterChange();
+}
+
+function phasePillClass(ph) {
+    const k = ph && String(ph).trim() ? String(ph).trim() : 'planning';
+
+    return `ppms-pl-phase-pill--${k}`;
+}
+
 function buildExportParams() {
     const p = { ...buildQueryParams() };
     delete p.page;
@@ -2210,7 +2513,8 @@ async function load() {
     loading.value = true;
     const isKanban = viewMode.value === 'kanban';
     try {
-        const { data } = await axios.get('/api/projects', { params: buildQueryParams() });
+        const [listRes] = await Promise.all([axios.get('/api/projects', { params: buildQueryParams() }), loadPhaseCounts()]);
+        const { data } = listRes;
         if (Array.isArray(data.data)) {
             projects.value = data.data;
             lastPage.value = data.last_page || 1;
