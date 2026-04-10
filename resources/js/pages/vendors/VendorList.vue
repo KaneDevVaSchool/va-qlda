@@ -2,12 +2,17 @@
     <div class="ppms-page vm-page">
         <section class="ppms-card">
             <div class="vm-toolbar">
-           
+                <div class="vm-toolbar__head">
+                    <h1 class="vm-toolbar__title">{{ t('vendors.pageTitle') }}</h1>
+                    <p class="vm-toolbar__desc">{{ t('vendors.pageDescription') }}</p>
+                </div>
                 <div class="vm-toolbar__actions">
-                    <button type="button" class="ppms-btn-ghost" :disabled="loading" @click="load">
+                    <button type="button" class="vm-toolbar__btn vm-toolbar__btn--ghost" :disabled="loading" @click="load">
                         {{ t('vendors.refresh') }}
                     </button>
-                    <button type="button" class="ppms-btn-primary" @click="openCreate">{{ t('vendors.create') }}</button>
+                    <button type="button" class="vm-toolbar__btn vm-toolbar__btn--primary" @click="openCreate">
+                        {{ t('vendors.create') }}
+                    </button>
                 </div>
             </div>
 
@@ -570,31 +575,124 @@ onMounted(load);
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    gap: 1rem;
     align-items: flex-start;
+    gap: 1rem 1.25rem;
+    padding: 1.15rem 1.2rem 1.2rem;
+    border-radius: 14px;
+    border: 1px solid rgba(15, 23, 42, 0.07);
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 42%, #f1f5f9 100%);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.85) inset,
+        0 10px 28px rgba(15, 23, 42, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+.vm-toolbar::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 14px 0 0 14px;
+    background: linear-gradient(180deg, #2563eb, #4f46e5, #7c3aed);
+    pointer-events: none;
 }
 .vm-toolbar__head {
     min-width: 0;
-    flex: 1 1 12rem;
+    flex: 1 1 14rem;
+    padding-left: 0.35rem;
 }
 .vm-toolbar__title {
     margin: 0;
-    font-size: 1.25rem;
-    font-weight: 700;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     color: var(--ppms-text, #0f172a);
-    line-height: 1.3;
+    line-height: 1.25;
 }
 .vm-toolbar__desc {
     margin: 0.35rem 0 0;
     font-size: 0.875rem;
     color: var(--ppms-muted, #64748b);
-    line-height: 1.45;
-    max-width: 42rem;
+    line-height: 1.5;
+    max-width: 44rem;
 }
 .vm-toolbar__actions {
     display: flex;
+    align-items: center;
     gap: 0.5rem;
     flex-wrap: wrap;
+    flex-shrink: 0;
+    padding: 0.15rem 0 0;
+}
+.vm-toolbar__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    padding: 0.45rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        color 0.15s ease,
+        transform 0.12s ease;
+}
+.vm-toolbar__btn:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+}
+.vm-toolbar__btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+.vm-toolbar__btn--ghost {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(15, 23, 42, 0.12);
+    color: #334155;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.vm-toolbar__btn--ghost:hover:not(:disabled) {
+    background: #fff;
+    border-color: rgba(37, 99, 235, 0.35);
+    color: #1d4ed8;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
+}
+.vm-toolbar__btn--primary {
+    background: linear-gradient(135deg, #2563eb 0%, #4f46e5 55%, #7c3aed 100%);
+    color: #fff;
+    border-color: rgba(37, 99, 235, 0.35);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.2) inset,
+        0 8px 20px rgba(79, 70, 229, 0.28);
+}
+.vm-toolbar__btn--primary:hover:not(:disabled) {
+    filter: brightness(1.05);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.22) inset,
+        0 10px 26px rgba(79, 70, 229, 0.35);
+    transform: translateY(-1px);
+}
+@media (max-width: 560px) {
+    .vm-toolbar {
+        padding: 1rem 1rem 1.1rem;
+    }
+    .vm-toolbar__actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+    .vm-toolbar__btn {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
 }
 .vm-kind-tabs {
     display: flex;
