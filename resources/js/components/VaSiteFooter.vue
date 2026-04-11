@@ -28,9 +28,7 @@
                             <div class="va-site-footer-module-title">{{ t('layout.footerColOps') }}</div>
                             <div class="va-site-footer-module-links">
                                 <router-link to="/projects">{{ t('layout.navProjects') }}</router-link>
-                                <router-link to="/kpi">{{ t('layout.navKpi') }}</router-link>
                                 <router-link to="/teams">{{ t('layout.navTeams') }}</router-link>
-                                <router-link to="/reports">{{ t('layout.navReports') }}</router-link>
                             </div>
                         </div>
                         <div class="va-site-footer-module">

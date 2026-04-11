@@ -2,53 +2,6 @@
     <div class="ppms-app" :class="{ 'ppms-app--nav-open': mobileNavOpen }">
         <a href="#ppms-main" class="ppms-skip-link">{{ t('common.skipToContent') }}</a>
 
-        <header class="ppms-app-header">
-            <div class="ppms-app-header-inner">
-                <button
-                    type="button"
-                    class="ppms-icon-btn-header ppms-app-nav-toggle"
-                    :aria-expanded="mobileNavOpen"
-                    aria-controls="ppms-sidebar-nav"
-                    :aria-label="mobileNavOpen ? t('layout.closeMenu') : t('layout.toggleMenu')"
-                    @click="toggleMobileNav"
-                >
-                    <span v-if="!mobileNavOpen" class="ppms-icon-menu" aria-hidden="true" />
-                    <span v-else class="ppms-icon-close" aria-hidden="true" />
-                </button>
-                <router-link to="/" class="ppms-app-brand-link">
-                    <span class="ppms-app-header-mascot-wrap" aria-hidden="true">
-                        <VaMascotImg img-class="ppms-app-header-mascot" alt="" />
-                    </span>
-                    <span class="ppms-app-brand">
-                        <strong>PPMS</strong>
-                        <span>VA Schools</span>
-                    </span>
-                </router-link>
-                <div class="ppms-app-header-spacer" />
-                <div class="ppms-locale-switch" role="group" :aria-label="t('common.language')">
-                    <button
-                        type="button"
-                        class="ppms-locale-btn"
-                        :class="{ 'ppms-locale-btn--active': locale === 'vi' }"
-                        :title="t('common.localeVi')"
-                        @click="setLocale('vi')"
-                    >
-                        VI
-                    </button>
-                    <button
-                        type="button"
-                        class="ppms-locale-btn"
-                        :class="{ 'ppms-locale-btn--active': locale === 'en' }"
-                        :title="t('common.localeEn')"
-                        @click="setLocale('en')"
-                    >
-                        EN
-                    </button>
-                </div>
-                <NotificationDropdown :unread="unread" @refresh="refreshUnread" />
-            </div>
-        </header>
-
         <div class="ppms-app-middle ppms-shell">
             <div
                 class="ppms-sidebar-backdrop"
@@ -88,17 +41,6 @@
                             <span class="ppms-nav-text">{{ t('layout.navProjects') }}</span>
                             <span v-if="navMaint('projects')" class="ppms-nav-maint-pill">{{ t('layout.moduleMaintBadge') }}</span>
                         </AppSidebarNavEntry>
-                        <AppSidebarNavEntry module-key="kpi" to="/kpi" :title="t('layout.navKpi')">
-                            <span class="ppms-nav-ico-wrap" aria-hidden="true">
-                                <svg class="ppms-nav-ico-svg" viewBox="0 0 24 24">
-                                    <line x1="18" y1="20" x2="18" y2="10" />
-                                    <line x1="12" y1="20" x2="12" y2="4" />
-                                    <line x1="6" y1="20" x2="6" y2="14" />
-                                </svg>
-                            </span>
-                            <span class="ppms-nav-text">{{ t('layout.navKpi') }}</span>
-                            <span v-if="navMaint('kpi')" class="ppms-nav-maint-pill">{{ t('layout.moduleMaintBadge') }}</span>
-                        </AppSidebarNavEntry>
                         <AppSidebarNavEntry module-key="teams" to="/teams" :title="t('layout.navTeams')">
                             <span class="ppms-nav-ico-wrap" aria-hidden="true">
                                 <svg class="ppms-nav-ico-svg" viewBox="0 0 24 24">
@@ -110,18 +52,6 @@
                             </span>
                             <span class="ppms-nav-text">{{ t('layout.navTeams') }}</span>
                             <span v-if="navMaint('teams')" class="ppms-nav-maint-pill">{{ t('layout.moduleMaintBadge') }}</span>
-                        </AppSidebarNavEntry>
-                        <AppSidebarNavEntry module-key="reports" to="/reports" :title="t('layout.navReports')">
-                            <span class="ppms-nav-ico-wrap" aria-hidden="true">
-                                <svg class="ppms-nav-ico-svg" viewBox="0 0 24 24">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                    <polyline points="14 2 14 8 20 8" />
-                                    <line x1="16" y1="13" x2="8" y2="13" />
-                                    <line x1="16" y1="17" x2="8" y2="17" />
-                                </svg>
-                            </span>
-                            <span class="ppms-nav-text">{{ t('layout.navReports') }}</span>
-                            <span v-if="navMaint('reports')" class="ppms-nav-maint-pill">{{ t('layout.moduleMaintBadge') }}</span>
                         </AppSidebarNavEntry>
                     </div>
                     <div class="ppms-nav-group">
@@ -285,18 +215,18 @@
             </aside>
 
             <div class="ppms-stage">
-                <div class="ppms-content-header">
-                    <nav class="ppms-breadcrumb" :aria-label="t('common.breadcrumb')">
-                        <template v-for="(c, i) in crumbs" :key="i">
-                            <span v-if="i > 0" class="ppms-bc-sep" aria-hidden="true">/</span>
-                            <router-link v-if="c.to" :to="c.to">{{ c.labelKey ? t(c.labelKey) : c.label }}</router-link>
-                            <span v-else class="ppms-bc-current">{{ c.labelKey ? t(c.labelKey) : c.label }}</span>
-                        </template>
-                    </nav>
-                    <template v-if="!route.meta.hideLayoutTitle">
-                        <h1 v-if="pageTitle" class="ppms-content-title">{{ pageTitle }}</h1>
-                        <p v-if="pageDescription" class="ppms-content-desc">{{ pageDescription }}</p>
-                    </template>
+                <div v-if="isMobileLayout" class="ppms-app-mobile-strip">
+                    <button
+                        type="button"
+                        class="ppms-icon-btn-header ppms-app-nav-toggle"
+                        :aria-expanded="mobileNavOpen"
+                        aria-controls="ppms-sidebar-nav"
+                        :aria-label="mobileNavOpen ? t('layout.closeMenu') : t('layout.toggleMenu')"
+                        @click="toggleMobileNav"
+                    >
+                        <span v-if="!mobileNavOpen" class="ppms-icon-menu" aria-hidden="true" />
+                        <span v-else class="ppms-icon-close" aria-hidden="true" />
+                    </button>
                 </div>
 
                 <main
@@ -409,8 +339,6 @@
                 <span class="ppms-mobile-tab-label">{{ t('layout.navAccount') }}</span>
             </router-link>
         </nav>
-
-        <VaSiteFooter />
     </div>
 </template>
 
@@ -419,8 +347,6 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { useRoute, useRouter } from 'vue-router';
 import AppSidebarNavEntry from '../components/AppSidebarNavEntry.vue';
-import VaMascotImg from '../components/VaMascotImg.vue';
-import VaSiteFooter from '../components/VaSiteFooter.vue';
 import { useI18n } from 'vue-i18n';
 import {
     appBootstrapState,
@@ -429,10 +355,9 @@ import {
     resetAppBootstrap,
 } from '../appBootstrap';
 import { setAuthToken } from '../bootstrap';
-import { persistLocale } from '../i18n';
 import { ppmsConfirm } from '../ppmsUi';
 
-const { locale, t } = useI18n();
+const { t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
@@ -467,14 +392,6 @@ const sidebarAriaHidden = computed(() =>
     isMobileLayout.value && !mobileNavOpen.value ? true : undefined,
 );
 
-const crumbs = computed(() => route.meta.breadcrumb ?? [{ labelKey: 'common.home' }]);
-const pageTitle = computed(() =>
-    route.meta.pageTitleKey ? t(route.meta.pageTitleKey) : (route.meta.pageTitle ?? ''),
-);
-const pageDescription = computed(() =>
-    route.meta.pageDescriptionKey ? t(route.meta.pageDescriptionKey) : (route.meta.pageDescription ?? ''),
-);
-
 const userInitial = computed(() => {
     const n = user.value?.name?.trim();
     if (!n) {
@@ -490,11 +407,6 @@ function roleLabel(role) {
     const key = `layout.role.${role}`;
     const translated = t(key);
     return translated === key ? role : translated;
-}
-
-function setLocale(code) {
-    locale.value = code;
-    persistLocale(code);
 }
 
 function toggleSidebarCollapsed() {
@@ -607,3 +519,13 @@ async function logout() {
     router.push({ name: 'login' });
 }
 </script>
+
+<style scoped>
+.ppms-app-mobile-strip {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--ppms-border, #e2e8f0);
+    background: var(--ppms-surface, #fff);
+}
+</style>

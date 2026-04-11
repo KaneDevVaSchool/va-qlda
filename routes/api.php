@@ -16,7 +16,6 @@ use App\Http\Controllers\Api\EvaluationController;
 use App\Http\Controllers\Api\EvaluationPeerController;
 use App\Http\Controllers\Api\InnovationIdeaController;
 use App\Http\Controllers\Api\KaizenController;
-use App\Http\Controllers\Api\KpiController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ProjectDocumentController;
@@ -24,7 +23,6 @@ use App\Http\Controllers\Api\ProjectImportController;
 use App\Http\Controllers\Api\ProjectPhaseController;
 use App\Http\Controllers\Api\ProjectSupplyController;
 use App\Http\Controllers\Api\RbacRoleMatrixController;
-use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SystemModuleController;
 use App\Http\Controllers\Api\TaskAttachmentController;
 use App\Http\Controllers\Api\TaskBulkController;
@@ -124,25 +122,9 @@ Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
         Route::delete('/teams/{team}/members/{userId}', [TeamController::class, 'removeMember'])->whereNumber('userId');
     });
 
-    Route::middleware('module:kpi')->group(function () {
-        Route::get('/kpi/current', [KpiController::class, 'current']);
-        Route::get('/kpi/benchmark', [KpiController::class, 'benchmark']);
-        Route::get('/kpi/snapshots', [KpiController::class, 'snapshots']);
-        Route::post('/kpi/snapshot-run', [KpiController::class, 'runSnapshot']);
-    });
-
-    Route::middleware('module:reports')->group(function () {
-        Route::get('/reports/weekly-status.pdf', [ReportController::class, 'weeklyStatusPdf']);
-        Route::get('/reports/export/projects.csv', [ReportController::class, 'exportCsv']);
-        Route::get('/reports/export/projects-filtered.csv', [ReportController::class, 'exportProjectsFilteredCsv']);
-        Route::get('/reports/export/projects-filtered.json', [ReportController::class, 'exportProjectsFilteredJson']);
-        Route::get('/reports/export/projects-filtered.pdf', [ReportController::class, 'exportProjectsFilteredPdf']);
-        Route::get('/reports/kaizen-impact', [ReportController::class, 'kaizenImpactSummary']);
-    });
-
     Route::middleware('module:projects')->group(function () {
-        Route::get('/reports/import/projects-template.csv', [ProjectImportController::class, 'templateCsv']);
-        Route::get('/reports/import/projects-template.json', [ProjectImportController::class, 'templateJson']);
+        Route::get('projects/import/projects-template.csv', [ProjectImportController::class, 'templateCsv']);
+        Route::get('projects/import/projects-template.json', [ProjectImportController::class, 'templateJson']);
 
         Route::post('projects/import/preview', [ProjectImportController::class, 'preview'])->middleware('throttle:30,1');
         Route::post('projects/import/commit', [ProjectImportController::class, 'commit'])->middleware('throttle:20,1');

@@ -3,14 +3,13 @@
 export const TIMELINE_PHASES = ['planning', 'development', 'uat', 'done', 'maintenance'];
 
 /** Thứ tự giống thanh tab (URL `?tab=`). */
-export const PROJECT_DETAIL_TAB_IDS = ['info', 'tasks', 'finance', 'supplies', 'reports', 'attachments'];
+export const PROJECT_DETAIL_TAB_IDS = ['info', 'tasks', 'finance', 'supplies', 'attachments'];
 
 export const PROJECT_DETAIL_TAB = {
     info: 'info',
     tasks: 'tasks',
     finance: 'finance',
     supplies: 'supplies',
-    reports: 'reports',
     attachments: 'attachments',
 };
 

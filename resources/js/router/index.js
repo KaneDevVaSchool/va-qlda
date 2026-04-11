@@ -93,21 +93,6 @@ const routes = [
                 },
             },
             {
-                path: 'kpi',
-                name: 'kpi',
-                component: () => import('../pages/KpiPage.vue'),
-                meta: {
-                    moduleKey: 'kpi',
-                    titleKey: 'layout.navKpi',
-                    pageTitleKey: 'layout.navKpi',
-                    pageDescriptionKey: 'kpiPage.scopeHint',
-                    breadcrumb: bc([
-                        { labelKey: 'common.home', to: '/' },
-                        { labelKey: 'layout.navKpi' },
-                    ]),
-                },
-            },
-            {
                 path: 'teams',
                 name: 'teams',
                 component: () => import('../pages/TeamsPage.vue'),
@@ -229,21 +214,6 @@ const routes = [
                     breadcrumb: bc([
                         { labelKey: 'common.home', to: '/' },
                         { labelKey: 'layout.navEvaluations' },
-                    ]),
-                },
-            },
-            {
-                path: 'reports',
-                name: 'reports',
-                component: () => import('../pages/ReportsPage.vue'),
-                meta: {
-                    moduleKey: 'reports',
-                    titleKey: 'reportsPage.pageTitle',
-                    pageTitleKey: 'reportsPage.pageTitle',
-                    pageDescriptionKey: 'reportsPage.pageDescription',
-                    breadcrumb: bc([
-                        { labelKey: 'common.home', to: '/' },
-                        { labelKey: 'layout.navReports' },
                     ]),
                 },
             },

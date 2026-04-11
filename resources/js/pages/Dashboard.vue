@@ -181,7 +181,7 @@
                     </article>
                 </section>
 
-            <section class="pbi-visual-row pbi-visual-row--2 pbi-board-section">
+            <section class="pbi-visual-row pbi-board-section">
                 <article class="pbi-visual">
                     <header class="pbi-visual-header">
                         <div class="pbi-visual-accent" aria-hidden="true" />
@@ -195,22 +195,6 @@
                             <canvas ref="typeChartRef" height="260" />
                         </div>
                         <p v-else class="pbi-visual-empty">{{ t('dashboard.empty.projectTypes') }}</p>
-                    </div>
-                </article>
-
-                <article class="pbi-visual">
-                    <header class="pbi-visual-header">
-                        <div class="pbi-visual-accent" aria-hidden="true" />
-                        <div class="pbi-visual-heading">
-                            <h3 class="pbi-visual-title">{{ t('dashboard.visual.kpiTrend') }}</h3>
-                            <p class="pbi-visual-sub">{{ t('dashboard.visual.kpiTrendSub') }}</p>
-                        </div>
-                    </header>
-                    <div class="pbi-visual-body">
-                        <div v-if="hasKpiTrend" class="pbi-chart-host">
-                            <canvas ref="kpiChartRef" height="260" />
-                        </div>
-                        <p v-else class="pbi-visual-empty">{{ t('dashboard.visual.kpiTrendEmpty') }}</p>
                     </div>
                 </article>
             </section>
@@ -494,12 +478,8 @@ import {
     CategoryScale,
     Chart,
     DoughnutController,
-    Filler,
     Legend,
     LinearScale,
-    LineController,
-    LineElement,
-    PointElement,
     PolarAreaController,
     RadialLinearScale,
     RadarController,
@@ -515,7 +495,6 @@ import {
     chartAnimation,
     chartFont,
     legendBottom,
-    lineAreaGradient,
     tooltipPremium,
 } from '@/utils/dashboardChartTheme';
 
@@ -523,7 +502,6 @@ Chart.register(
     DoughnutController,
     PolarAreaController,
     RadarController,
-    LineController,
     BarController,
     BarElement,
     ArcElement,
@@ -531,11 +509,8 @@ Chart.register(
     Legend,
     LinearScale,
     RadialLinearScale,
-    LineElement,
-    PointElement,
     Title,
     Tooltip,
-    Filler,
 );
 
 const { t, locale } = useI18n();
@@ -556,7 +531,6 @@ function togglePresentation() {
 }
 
 const typeChartRef = ref(null);
-const kpiChartRef = ref(null);
 const overviewTaskPieRef = ref(null);
 const overviewOwnerBarRef = ref(null);
 const overviewRadarPhaseRef = ref(null);
@@ -570,7 +544,6 @@ const phaseChartRef = ref(null);
 const categoryChartRef = ref(null);
 
 let typeChart;
-let kpiChart;
 let overviewTaskPieChart;
 let overviewOwnerBarChart;
 let overviewRadarPhaseChart;
@@ -588,7 +561,6 @@ const summary = reactive({
     kaizen_by_status: {},
     workload_open_tasks: [],
     at_risk_projects: [],
-    kpi_performance_trend: [],
     innovation_funnel: {},
     task_analytics: {
         tasks_by_status: {},
@@ -761,8 +733,6 @@ const hasFunnelChartData = computed(() => Object.keys(summary.innovation_funnel 
 const hasWorkloadChartData = computed(() => (summary.workload_open_tasks || []).length > 0);
 
 const hasProjectTypeData = computed(() => Object.keys(summary.projects?.by_type || {}).length > 0);
-
-const hasKpiTrend = computed(() => (summary.kpi_performance_trend || []).length > 0);
 
 const taskAnalytics = computed(() => summary.task_analytics || {});
 
@@ -950,10 +920,6 @@ function destroyOverviewCharts() {
     if (typeChart) {
         typeChart.destroy();
         typeChart = null;
-    }
-    if (kpiChart) {
-        kpiChart.destroy();
-        kpiChart = null;
     }
 }
 
@@ -1317,7 +1283,6 @@ function renderOverviewCharts() {
     }
 
     const typeEl = typeChartRef.value;
-    const kpiEl = kpiChartRef.value;
 
     if (hasProjectTypeData.value && typeEl) {
         const byType = summary.projects?.by_type || {};
@@ -1352,65 +1317,6 @@ function renderOverviewCharts() {
                             label(ctx) {
                                 const v = ctx.raw ?? 0;
                                 return ` ${ctx.label}: ${formatInt(v)}`;
-                            },
-                        },
-                    },
-                },
-            },
-        });
-    }
-
-    if (hasKpiTrend.value && kpiEl) {
-        const trend = summary.kpi_performance_trend || [];
-        kpiChart = new Chart(kpiEl, {
-            type: 'line',
-            data: {
-                labels: trend.map((r) => r.week_ending),
-                datasets: [
-                    {
-                        label: t('dashboard.visual.performancePct'),
-                        data: trend.map((r) => Number(r.value)),
-                        borderColor: chartColors.primary,
-                        borderWidth: 2,
-                        backgroundColor(context) {
-                            const { chart } = context;
-                            const { ctx, chartArea } = chart;
-                            return lineAreaGradient(ctx, chartArea, '154, 0, 54', 0.02);
-                        },
-                        fill: true,
-                        tension: 0.35,
-                        pointRadius: 4,
-                        pointHoverRadius: 7,
-                        pointBackgroundColor: '#fff',
-                        pointBorderColor: chartColors.primary,
-                        pointBorderWidth: 2,
-                    },
-                ],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: anim,
-                interaction: { mode: 'index', intersect: false },
-                scales: {
-                    x: {
-                        ticks: { color: chartColors.text, maxRotation: 45, minRotation: 0, font: chartFont(10) },
-                        grid: { color: chartColors.grid },
-                    },
-                    y: {
-                        ticks: { color: chartColors.text },
-                        grid: { color: chartColors.grid },
-                        beginAtZero: true,
-                    },
-                },
-                plugins: {
-                    legend: { labels: { color: chartColors.textDark, font: chartFont(11) } },
-                    tooltip: {
-                        ...tt,
-                        callbacks: {
-                            label(ctx) {
-                                const v = ctx.raw ?? 0;
-                                return `${ctx.dataset.label}: ${formatInt(v)}`;
                             },
                         },
                     },

@@ -73,15 +73,6 @@
                         @submit="addSupply"
                         @delete="deleteSupply"
                     />
-                    <ProjectDetailTabReports
-                        v-show="activeTab === 'reports'"
-                        :project="project"
-                        :can-pdf="canPdf"
-                        :can-csv="canCsv"
-                        @go-tasks="activeTab = 'tasks'"
-                        @dl-weekly-pdf="dlWeeklyPdf"
-                        @dl-projects-csv="dlProjectsCsv"
-                    />
                     <ProjectDetailTabAttachments
                         v-show="activeTab === 'attachments'"
                         :project-media="projectMedia"
@@ -181,7 +172,6 @@ import {
     ProjectDetailTabAttachments,
     ProjectDetailTabFinance,
     ProjectDetailTabInfo,
-    ProjectDetailTabReports,
     ProjectDetailTabSupplies,
     ProjectDetailTabTasks,
 } from './components/detail';
@@ -337,16 +327,12 @@ const detailTabs = computed(() => [
         label: t('projects.pdTabSupplies'),
         badge: project.value?.supplies?.length || undefined,
     },
-    { id: 'reports', label: t('projects.pdTabReports') },
     {
         id: 'attachments',
         label: t('projects.pdTabAttachments'),
         badge: projectMedia.value.length || undefined,
     },
 ]);
-
-const canPdf = computed(() => ['admin', 'pm', 'tl'].includes(me.value?.role));
-const canCsv = computed(() => ['admin', 'pm', 'hr'].includes(me.value?.role));
 
 const canManageDocuments = computed(() => ['admin', 'pm', 'tl'].includes(me.value?.role));
 
@@ -1115,26 +1101,6 @@ async function deleteSupply(s) {
     } catch (e) {
         ppmsToastError(formatApiUserMessage(e, t('projects.pdSupplyErr')));
     }
-}
-
-async function dlWeeklyPdf() {
-    const res = await axios.get('/api/reports/weekly-status.pdf', { responseType: 'blob' });
-    const url = URL.createObjectURL(res.data);
-    const el = document.createElement('a');
-    el.href = url;
-    el.download = 'ppms-weekly.pdf';
-    el.click();
-    URL.revokeObjectURL(url);
-}
-
-async function dlProjectsCsv() {
-    const res = await axios.get('/api/reports/export/projects.csv', { responseType: 'blob' });
-    const url = URL.createObjectURL(res.data);
-    const el = document.createElement('a');
-    el.href = url;
-    el.download = 'projects.csv';
-    el.click();
-    URL.revokeObjectURL(url);
 }
 
 function toggleFocus(task) {

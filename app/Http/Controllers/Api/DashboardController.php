@@ -3,19 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\InnovationIdea;
 use App\Models\Kaizen;
-use App\Models\KpiSnapshot;
 use App\Models\Project;
 use App\Models\Task;
-use App\Models\User;
-use App\Services\KpiEngine;
 use App\Support\MigrationCms;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function summary(Request $request, KpiEngine $kpiEngine)
+    public function summary(Request $request)
     {
         $typeDistribution = Project::query()
             ->whereNull('archived_at')
@@ -57,14 +55,6 @@ class DashboardController extends Controller
             ->limit(10)
             ->get(['id', 'name', 'type', 'status', 'progress', 'owner_id', 'deadline']);
 
-        $kpiTrend = KpiSnapshot::query()
-            ->where('entity_type', (new User)->getMorphClass())
-            ->where('entity_id', $request->user()->id)
-            ->where('metric_name', 'performance_pct')
-            ->orderBy('week_ending')
-            ->limit(12)
-            ->get(['week_ending', 'value']);
-
         return response()->json([
             'projects' => [
                 'by_type' => $typeDistribution,
@@ -74,8 +64,11 @@ class DashboardController extends Controller
             'kaizen_by_status' => $kaizenByStatus,
             'workload_open_tasks' => $workload,
             'at_risk_projects' => $atRiskProjects,
-            'kpi_performance_trend' => $kpiTrend,
-            'innovation_funnel' => $kpiEngine->innovationFunnelCounts(),
+            'innovation_funnel' => [
+                'submitted' => InnovationIdea::query()->where('status', 'submitted')->count(),
+                'poc' => InnovationIdea::query()->where('status', 'poc')->count(),
+                'applied' => InnovationIdea::query()->where('status', 'applied')->count(),
+            ],
             'task_analytics' => $this->taskAnalytics(),
             'board_stats' => $this->boardStats(),
             'projects_by_owner' => $this->projectsByOwner(),

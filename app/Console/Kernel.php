@@ -12,7 +12,6 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->command('ppms:snapshot-kpi')->weeklyOn(0, '23:59')->timezone(config('app.timezone'));
         $schedule->command('ppms:kaizen-reminder')->weeklyOn(4, '9:00')->timezone(config('app.timezone'));
         $schedule->command('ppms:run-alerts')->hourly();
         $schedule->command('contracts:run-reminders')->dailyAt('08:00')->timezone(config('app.timezone'));

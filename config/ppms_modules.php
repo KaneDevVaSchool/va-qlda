@@ -9,9 +9,7 @@ return [
     'modules' => [
         'dashboard' => ['label' => 'Dashboard'],
         'projects' => ['label' => 'Projects'],
-        'kpi' => ['label' => 'KPI'],
         'teams' => ['label' => 'Teams'],
-        'reports' => ['label' => 'Reports'],
         'vendors' => ['label' => 'Vendors'],
         'contracts' => ['label' => 'Contracts'],
         'kaizens' => ['label' => 'Kaizen'],

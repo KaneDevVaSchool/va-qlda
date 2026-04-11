@@ -19,7 +19,6 @@
             :range-to="rangeTo"
             :per-page="perPage"
             :can-import="canImport"
-            :can-export="canExport"
             :filters="filters"
             :team-options="teamOptions"
             :column-picker-options="columnPickerOptions"
@@ -31,12 +30,6 @@
             @set-per-page="onSetPerPage"
             @toolbar-labels="onToolbarLabels"
             @open-import="openImportModal"
-            @export-csv-filtered="onToolbarExportCsv"
-            @export-json-filtered="onToolbarExportJson"
-            @export-pdf-filtered="onToolbarExportPdf"
-            @export-csv-selected="onToolbarExportCsvSelected"
-            @export-json-selected="onToolbarExportJsonSelected"
-            @export-pdf-selected="onToolbarExportPdfSelected"
             @copy-link="onToolbarCopyLink"
             @save-view="onToolbarSaveView"
             @filter-change="onFilterChange"
@@ -63,500 +56,632 @@
                         <li>{{ t('projects.listGroupByCustomerHint') }}</li>
                     </ul>
                     <div class="ppms-pl-list-meta-actions" role="group" :aria-label="t('projects.listMetaActionsAria')">
-                        <label v-if="canBulk" class="ppms-pl-list-meta-select-all">
-                            <input
-                                type="checkbox"
-                                :checked="allPageSelected"
-                                :aria-label="t('projects.selectAll')"
-                                @change="toggleSelectAll($event)"
-                            />
-                        </label>
                         <button type="button" class="ppms-pl-list-meta-btn" @click="collapseAllCustomerGroups">
                             {{ t('projects.listCollapseAll') }}
                         </button>
-                        <button type="button" class="ppms-pl-list-meta-btn ppms-pl-list-meta-btn--primary" @click="expandAllCustomerGroups">
+                        <button
+                            type="button"
+                            class="ppms-pl-list-meta-btn ppms-pl-list-meta-btn--primary"
+                            @click="expandAllCustomerGroups"
+                        >
                             {{ t('projects.listExpandAll') }}
                         </button>
                     </div>
                 </div>
-                <div class="ppms-table-scroll ppms-project-list-table-wrap">
+                <div class="ppms-table-scroll ppms-table-scroll--sticky-head ppms-project-list-table-wrap">
                     <table class="ppms-table ppms-table--project-staging">
-                    <caption class="ppms-sr-only">
-                        {{ t('projects.listSectionTitle') }}
-                    </caption>
-                    <thead class="ppms-sr-only">
-                        <tr>
-                            <th v-if="canBulk" scope="col">{{ t('projects.selectAll') }}</th>
-                            <th v-if="colVis('admin')" scope="col">{{ t('projects.colAdmin') }}</th>
-                            <th v-if="colVis('code')" scope="col">{{ t('projects.colCode') }}</th>
-                            <th v-if="colVis('name')" scope="col">{{ t('projects.colName') }}</th>
-                            <th v-if="colVis('phase')" scope="col">{{ t('projects.colPhase') }}</th>
-                            <th v-if="colVis('team')" scope="col">{{ t('projects.colTeam') }}</th>
-                            <th v-if="colVis('participants')" scope="col">{{ t('projects.colParticipants') }}</th>
-                            <th v-if="colVis('progress')" scope="col">{{ t('projects.colProgress') }}</th>
-                            <th v-if="colVis('tasks')" scope="col">{{ t('projects.colTasks') }}</th>
-                            <th v-if="colVis('start')" scope="col">{{ t('projects.colStart') }}</th>
-                            <th v-if="colVis('actualStart')" scope="col">{{ t('projects.colActualStart') }}</th>
-                            <th v-if="colVis('end')" scope="col">{{ t('projects.colEnd') }}</th>
-                            <th v-if="colVis('status')" scope="col">{{ t('projects.colStatus') }}</th>
-                            <th v-if="colVis('actions')" scope="col">{{ t('projects.colActions') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <template v-for="group in listGroupsByCustomer" :key="'cust-' + group.key">
-                            <tr class="ppms-pl-customer-group-row">
-                                <td :colspan="listTableColspan" class="ppms-pl-customer-group-cell">
-                                    <button
-                                        type="button"
-                                        class="ppms-pl-customer-group-head"
-                                        :aria-expanded="!isCustomerGroupCollapsed(group.key)"
-                                        @click="toggleCustomerGroup(group.key)"
-                                    >
-                                        <svg
-                                            class="ppms-pl-customer-group-chevron"
-                                            :class="{ 'ppms-pl-customer-group-chevron--collapsed': isCustomerGroupCollapsed(group.key) }"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="2"
-                                            aria-hidden="true"
-                                        >
-                                            <polyline points="9 18 15 12 9 6" />
-                                        </svg>
-                                        <span class="ppms-pl-customer-group-title">{{ customerGroupLabel(group) }}</span>
-                                        <span class="ppms-pl-customer-group-count">{{
-                                            t('projects.listGroupCustomerCount', { n: group.projects.length })
-                                        }}</span>
-                                    </button>
-                                </td>
+                        <caption class="ppms-sr-only">
+                            {{
+                                t('projects.listSectionTitle')
+                            }}
+                        </caption>
+                        <thead>
+                            <tr>
+                                <th v-if="canBulk" class="ppms-th-check">
+                                    <input
+                                        type="checkbox"
+                                        :checked="allPageSelected"
+                                        :aria-label="t('projects.selectAll')"
+                                        @change="toggleSelectAll($event)"
+                                    />
+                                </th>
+                                <th v-if="colVis('admin')" class="ppms-th-admin">{{ t('projects.colAdmin') }}</th>
+                                <th v-if="colVis('code')" class="ppms-th-code">{{ t('projects.colCode') }}</th>
+                                <th v-if="colVis('name')" class="ppms-th-name">{{ t('projects.colName') }}</th>
+                                <th v-if="colVis('phase')" class="ppms-th-phase">{{ t('projects.colPhase') }}</th>
+                                <th v-if="colVis('team')" class="ppms-th-team">{{ t('projects.colTeam') }}</th>
+                                <th v-if="colVis('participants')" class="ppms-th-participants">
+                                    {{ t('projects.colParticipants') }}
+                                </th>
+                                <th v-if="colVis('progress')" class="ppms-th-process">
+                                    {{ t('projects.colProgress') }}
+                                </th>
+                                <th v-if="colVis('tasks')" class="ppms-th-num ppms-th-tasks">
+                                    {{ t('projects.colTasks') }}
+                                </th>
+                                <th v-if="colVis('start')" class="ppms-th-date">{{ t('projects.colStart') }}</th>
+                                <th v-if="colVis('actualStart')" class="ppms-th-date">
+                                    {{ t('projects.colActualStart') }}
+                                </th>
+                                <th v-if="colVis('end')" class="ppms-th-date">{{ t('projects.colEnd') }}</th>
+                                <th v-if="colVis('status')" class="ppms-th-status">{{ t('projects.colStatus') }}</th>
+                                <th v-if="colVis('actions')" class="ppms-th-actions">{{ t('projects.colActions') }}</th>
                             </tr>
-                            <template v-if="!isCustomerGroupCollapsed(group.key)">
-                                <tr
-                                    v-for="p in group.projects"
-                                    :key="p.id"
-                                    class="ppms-pl-data-row"
-                                    :class="{ 'ppms-pl-data-row--inline': isInlineEditing(p) }"
-                                >
-                                <td v-if="canBulk" class="ppms-td-check">
-                                    <input v-model="selectedProjectIds" type="checkbox" :value="p.id" />
-                                </td>
-                                <td v-if="colVis('admin')" class="ppms-td-admin">
-                                    <button
-                                        type="button"
-                                        class="ppms-pl-usercell ppms-pl-usercell-trigger"
-                                        :disabled="!p.owner"
-                                        :aria-label="t('projects.avatarInfoAdmin')"
-                                        @click="openAdminUserPopover($event, p)"
-                                    >
-                                        <span
-                                            class="ppms-pl-avatar"
-                                            :style="{ background: avatarColor(p.owner?.name || p.owner?.email || '?') }"
-                                            :aria-hidden="true"
-                                        >
-                                            {{ userInitials(p.owner?.name) }}
-                                        </span>
-                                        <span class="ppms-pl-username">{{ p.owner?.name || '—' }}</span>
-                                    </button>
-                                </td>
-                                <td v-if="colVis('code')" class="ppms-td-code ppms-muted">
-                                    <div v-if="canEditProject && isInlineEditing(p)" class="ppms-pl-inline-field-stack">
-                                        <input
-                                            v-model="inlineDraft.code"
-                                            type="text"
-                                            class="ppms-input ppms-pl-inline-input"
-                                            :placeholder="t('projects.inlinePlaceholderCode')"
-                                            @click.stop
-                                            @focus="setInlineEditAnchor('code')"
-                                        />
-                                        <ProjectListInlineEditBar
-                                            v-if="inlineEditAnchor === 'code'"
-                                            :disabled="inlineSaving"
-                                            @save="saveInlineEdit"
-                                            @cancel="cancelInlineEdit"
-                                        />
-                                    </div>
-                                    <template v-else>{{ projectCode(p) }}</template>
-                                </td>
-                                <td v-if="colVis('name')" class="ppms-td-name">
-                                    <template v-if="canEditProject && isInlineEditing(p)">
-                                        <div class="ppms-pl-inline-field-stack">
-                                            <input
-                                                v-model="inlineDraft.name"
-                                                type="text"
-                                                class="ppms-input ppms-pl-inline-input"
-                                                :placeholder="t('projects.inlinePlaceholderName')"
-                                                @click.stop
-                                                @focus="setInlineEditAnchor('name')"
-                                            />
-                                            <ProjectListInlineEditBar
-                                                v-if="inlineEditAnchor === 'name'"
-                                                :disabled="inlineSaving"
-                                                @save="saveInlineEdit"
-                                                @cancel="cancelInlineEdit"
-                                            />
-                                        </div>
-                                    </template>
-                                    <template v-else>
-                                    <router-link class="ppms-pl-name-link" :to="'/projects/' + p.id">{{ p.name }}</router-link>
-                                    <div class="ppms-pl-name-labels-row">
-                                        <div v-if="projectLabelList(p).length" class="ppms-pl-name-labels">
-                                            <span
-                                                v-for="(lb, li) in projectLabelsPreview(p).show"
-                                                :key="'lb-' + p.id + '-' + li"
-                                                class="ppms-pl-label-chip ppms-pl-label-chip--under-name"
-                                                >{{ lb }}</span
-                                            >
-                                            <span v-if="projectLabelsPreview(p).more > 0" class="ppms-pl-labels-more"
-                                                >+{{ projectLabelsPreview(p).more }}</span
-                                            >
-                                        </div>
-                                        <template v-if="canBulk">
-                                            <input
-                                                v-if="quickLabelProjectId === p.id"
-                                                ref="quickLabelInputEl"
-                                                v-model="quickLabelText"
-                                                type="text"
-                                                class="ppms-pl-quick-label-input"
-                                                list="ppms-pl-label-datalist"
-                                                autocomplete="off"
-                                                :placeholder="t('projects.labelAddPlaceholder')"
-                                                :aria-label="t('projects.labelAddPlaceholder')"
-                                                :disabled="quickLabelSavingId === p.id"
-                                                @keydown.enter.prevent="submitQuickLabel(p)"
-                                                @keydown.esc.prevent="closeQuickLabel"
-                                                @click.stop
-                                            />
-                                            <button
-                                                v-else
-                                                type="button"
-                                                class="ppms-pl-label-add-btn"
-                                                :aria-label="t('projects.labelAddAria')"
-                                                @click.stop="toggleQuickLabel(p)"
-                                            >
-                                                +
-                                            </button>
-                                        </template>
-                                    </div>
-                                    </template>
-                                </td>
-                                <td v-if="colVis('phase')" class="ppms-td-phase">
-                                    <div v-if="canEditProject && isInlineEditing(p)" class="ppms-pl-inline-field-stack">
-                                        <select
-                                            v-model="inlineDraft.phase"
-                                            class="ppms-input ppms-pl-inline-select ppms-pl-inline-select--sm"
-                                            @click.stop
-                                            @focus="setInlineEditAnchor('phase')"
-                                        >
-                                            <option value="planning">{{ t('projects.phase.planning') }}</option>
-                                            <option value="development">{{ t('projects.phase.development') }}</option>
-                                            <option value="uat">{{ t('projects.phase.uat') }}</option>
-                                            <option value="done">{{ t('projects.phase.done') }}</option>
-                                            <option value="maintenance">{{ t('projects.phase.maintenance') }}</option>
-                                            <option value="rnd">{{ t('projects.phase.rnd') }}</option>
-                                        </select>
-                                        <ProjectListInlineEditBar
-                                            v-if="inlineEditAnchor === 'phase'"
-                                            :disabled="inlineSaving"
-                                            @save="saveInlineEdit"
-                                            @cancel="cancelInlineEdit"
-                                        />
-                                    </div>
-                                    <template v-else>
-                                        <span class="ppms-pl-phase-pill" :class="phasePillClass(p.phase)">{{
-                                            t(`projects.phase.${p.phase || 'planning'}`)
-                                        }}</span>
-                                    </template>
-                                </td>
-                                <td v-if="colVis('team')" class="ppms-td-team">
-                                    <div v-if="canEditProject && isInlineEditing(p)" class="ppms-pl-inline-field-stack">
-                                        <select
-                                            v-model="inlineDraft.team_id"
-                                            class="ppms-input ppms-pl-inline-select"
-                                            @click.stop
-                                            @focus="setInlineEditAnchor('team')"
-                                        >
-                                            <option value="">{{ t('projects.inlineTeamUnset') }}</option>
-                                            <option v-for="tm in teamOptions" :key="'itm-' + tm.id" :value="String(tm.id)">{{ tm.name }}</option>
-                                        </select>
-                                        <ProjectListInlineEditBar
-                                            v-if="inlineEditAnchor === 'team'"
-                                            :disabled="inlineSaving"
-                                            @save="saveInlineEdit"
-                                            @cancel="cancelInlineEdit"
-                                        />
-                                    </div>
-                                    <template v-else>
-                                    <span v-if="p.team?.name" class="ppms-pl-team-pill" :title="p.team.name">{{ p.team.name }}</span>
-                                    <span v-else class="ppms-muted">—</span>
-                                    </template>
-                                </td>
-                                <td v-if="colVis('participants')" class="ppms-td-participants">
-                                    <div class="ppms-pl-participants">
+                        </thead>
+                        <tbody>
+                            <template v-for="group in listGroupsByCustomer" :key="'cust-' + group.key">
+                                <tr class="ppms-pl-customer-group-row">
+                                    <td :colspan="listTableColspan" class="ppms-pl-customer-group-cell">
                                         <button
-                                            v-for="(slot, si) in participantVisibleSlots(p)"
-                                            :key="'pa-' + p.id + '-' + si"
                                             type="button"
-                                            class="ppms-pl-participants-avatar-btn"
-                                            :style="{ zIndex: si + 1 }"
-                                            :aria-label="participantSlotAriaLabel(slot)"
-                                            @click.stop="openSingleParticipantPopover($event, p, slot)"
+                                            class="ppms-pl-customer-group-head"
+                                            :aria-expanded="!isCustomerGroupCollapsed(group.key)"
+                                            @click="toggleCustomerGroup(group.key)"
                                         >
-                                            <span
-                                                class="ppms-pl-avatar ppms-pl-avatar--sm ppms-pl-participants-stack-avatar"
-                                                :style="{ background: avatarColor(slot.colorSeed) }"
+                                            <svg
+                                                class="ppms-pl-customer-group-chevron"
+                                                :class="{
+                                                    'ppms-pl-customer-group-chevron--collapsed':
+                                                        isCustomerGroupCollapsed(group.key),
+                                                }"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                                aria-hidden="true"
                                             >
-                                                {{ slot.initials }}
-                                            </span>
+                                                <polyline points="9 18 15 12 9 6" />
+                                            </svg>
+                                            <span class="ppms-pl-customer-group-title">{{
+                                                customerGroupLabel(group)
+                                            }}</span>
+                                            <span class="ppms-pl-customer-group-count">{{
+                                                t('projects.listGroupCustomerCount', { n: group.projects.length })
+                                            }}</span>
                                         </button>
-                                        <button
-                                            v-if="participantOverflowCount(p) > 0"
-                                            type="button"
-                                            class="ppms-pl-participants-more ppms-pl-participants-overflow-btn"
-                                            :aria-label="t('projects.userPopoverMoreParticipantsAria', { n: participantOverflowCount(p) })"
-                                            @click.stop="openParticipantsOverflowMenu($event, p)"
-                                        >
-                                            +{{ participantOverflowCount(p) }}
-                                        </button>
-                                    </div>
-                                </td>
-                                <td v-if="colVis('progress')" class="ppms-td-process">
-                                    <div
-                                        class="ppms-progress-track ppms-progress-track--staging"
-                                        role="progressbar"
-                                        :aria-valuenow="Math.round(clampProgress(p.progress))"
-                                        aria-valuemin="0"
-                                        aria-valuemax="100"
-                                        :aria-label="t('projects.colProgress')"
+                                    </td>
+                                </tr>
+                                <template v-if="!isCustomerGroupCollapsed(group.key)">
+                                    <tr
+                                        v-for="p in group.projects"
+                                        :key="p.id"
+                                        class="ppms-pl-data-row"
+                                        :class="{ 'ppms-pl-data-row--inline': isInlineEditing(p) }"
                                     >
-                                        <div
-                                            class="ppms-progress-fill"
-                                            :class="progressToneClass(p.progress)"
-                                            :style="{ width: `${clampProgress(p.progress)}%` }"
-                                        />
-                                        <span
-                                            class="ppms-progress-knob"
-                                            :style="{
-                                                left: `${clampProgress(p.progress)}%`,
-                                            }"
-                                            aria-hidden="true"
-                                        >
-                                            <span class="ppms-progress-knob-pct">{{ formatProgress(p.progress) }}%</span>
-                                        </span>
-                                    </div>
-                                </td>
-                                <td v-if="colVis('tasks')" class="ppms-td-num ppms-td-tasks">{{ p.tasks_count ?? '—' }}</td>
-                                <td v-if="colVis('start')" class="ppms-td-date">
-                                    <div v-if="canEditProject && isInlineEditing(p)" class="ppms-pl-inline-field-stack ppms-pl-inline-field-stack--tight">
-                                        <input
-                                            v-model="inlineDraft.start_date"
-                                            type="date"
-                                            class="ppms-input ppms-pl-inline-date"
-                                            @click.stop
-                                            @focus="setInlineEditAnchor('start')"
-                                        />
-                                        <ProjectListInlineEditBar
-                                            v-if="inlineEditAnchor === 'start'"
-                                            :disabled="inlineSaving"
-                                            @save="saveInlineEdit"
-                                            @cancel="cancelInlineEdit"
-                                        />
-                                    </div>
-                                    <template v-else>
-                                    <span v-if="!p.start_date" class="ppms-muted">{{ t('projects.startNone') }}</span>
-                                    <span v-else>{{ formatDateIso(p.start_date) }}</span>
-                                    </template>
-                                </td>
-                                <td v-if="colVis('actualStart')" class="ppms-td-date">
-                                    <div v-if="canEditProject && isInlineEditing(p)" class="ppms-pl-inline-field-stack ppms-pl-inline-field-stack--tight">
-                                        <input
-                                            v-model="inlineDraft.actual_start_date"
-                                            type="date"
-                                            class="ppms-input ppms-pl-inline-date"
-                                            @click.stop
-                                            @focus="setInlineEditAnchor('actualStart')"
-                                        />
-                                        <ProjectListInlineEditBar
-                                            v-if="inlineEditAnchor === 'actualStart'"
-                                            :disabled="inlineSaving"
-                                            @save="saveInlineEdit"
-                                            @cancel="cancelInlineEdit"
-                                        />
-                                    </div>
-                                    <template v-else>
-                                    <span v-if="!p.actual_start_date" class="ppms-muted">{{ t('projects.actualStartNone') }}</span>
-                                    <span v-else>{{ formatDateIso(p.actual_start_date) }}</span>
-                                    </template>
-                                </td>
-                                <td v-if="colVis('end')" class="ppms-td-date">
-                                    <div v-if="canEditProject && isInlineEditing(p)" class="ppms-pl-inline-field-stack ppms-pl-inline-field-stack--tight">
-                                        <input
-                                            v-model="inlineDraft.deadline"
-                                            type="date"
-                                            class="ppms-input ppms-pl-inline-date"
-                                            @click.stop
-                                            @focus="setInlineEditAnchor('end')"
-                                        />
-                                        <ProjectListInlineEditBar
-                                            v-if="inlineEditAnchor === 'end'"
-                                            :disabled="inlineSaving"
-                                            @save="saveInlineEdit"
-                                            @cancel="cancelInlineEdit"
-                                        />
-                                    </div>
-                                    <template v-else>
-                                    <span v-if="!p.deadline" class="ppms-muted">{{ t('projects.deadlineNone') }}</span>
-                                    <span v-else class="ppms-deadline" :class="deadlineTone(p.deadline).cls">
-                                        {{ formatDeadline(p.deadline) }}
-                                    </span>
-                                    </template>
-                                </td>
-                                <td v-if="colVis('status')" class="ppms-td-status">
-                                    <div
-                                        v-if="canEditProject && isInlineEditing(p)"
-                                        class="ppms-pl-inline-field-stack"
-                                        @focusin="setInlineEditAnchor('status')"
-                                    >
-                                        <div class="ppms-pl-inline-type-status">
-                                            <select v-model="inlineDraft.type" class="ppms-input ppms-pl-inline-select ppms-pl-inline-select--sm" @click.stop>
-                                                <option value="maintenance">{{ t('projects.typeShort.maintenance') }}</option>
-                                                <option value="delivery">{{ t('projects.typeShort.delivery') }}</option>
-                                                <option value="rnd">{{ t('projects.typeShort.rnd') }}</option>
-                                            </select>
-                                            <select
-                                                v-if="!colVis('phase')"
-                                                v-model="inlineDraft.phase"
-                                                class="ppms-input ppms-pl-inline-select ppms-pl-inline-select--sm"
-                                                @click.stop
-                                            >
-                                                <option value="planning">{{ t('projects.phase.planning') }}</option>
-                                                <option value="development">{{ t('projects.phase.development') }}</option>
-                                                <option value="uat">{{ t('projects.phase.uat') }}</option>
-                                                <option value="done">{{ t('projects.phase.done') }}</option>
-                                                <option value="maintenance">{{ t('projects.phase.maintenance') }}</option>
-                                                <option value="rnd">{{ t('projects.phase.rnd') }}</option>
-                                            </select>
-                                            <select v-model="inlineDraft.status" class="ppms-input ppms-pl-inline-select ppms-pl-inline-select--sm" @click.stop>
-                                                <option value="on_track">{{ t('projects.status.on_track') }}</option>
-                                                <option value="at_risk">{{ t('projects.status.at_risk') }}</option>
-                                                <option value="delayed">{{ t('projects.status.delayed') }}</option>
-                                                <option value="blocked">{{ t('projects.status.blocked') }}</option>
-                                            </select>
-                                        </div>
-                                        <ProjectListInlineEditBar
-                                            v-if="inlineEditAnchor === 'status'"
-                                            :disabled="inlineSaving"
-                                            @save="saveInlineEdit"
-                                            @cancel="cancelInlineEdit"
-                                        />
-                                    </div>
-                                    <span v-else class="ppms-status-pill" :class="statusPillClass(p.status)">{{
-                                        t(`projects.status.${p.status}`)
-                                    }}</span>
-                                </td>
-                                <td v-if="colVis('actions')" class="ppms-td-actions">
-                                    <div class="ppms-pl-actions-cell">
-                                        <div
-                                            v-if="canEditProject && isInlineEditing(p)"
-                                            class="ppms-pl-actions-cell--inline-spacer"
-                                            aria-hidden="true"
-                                        />
-                                        <div
-                                            v-else
-                                            class="ppms-pl-actions-dd"
-                                            :class="{ 'ppms-pl-actions-dd--open': actionsMenuOpenId === p.id }"
-                                        >
+                                        <td v-if="canBulk" class="ppms-td-check">
+                                            <input v-model="selectedProjectIds" type="checkbox" :value="p.id" />
+                                        </td>
+                                        <td v-if="colVis('admin')" class="ppms-td-admin">
                                             <button
-                                                :id="'pl-actions-trigger-' + p.id"
                                                 type="button"
-                                                class="ppms-pl-actions-dd__trigger"
-                                                :aria-controls="'pl-actions-menu-' + p.id"
-                                                :aria-expanded="actionsMenuOpenId === p.id"
-                                                :aria-haspopup="true"
-                                                :aria-label="t('projects.actionsMenuAria')"
-                                                @click.stop="toggleActionsMenu(p.id)"
+                                                class="ppms-pl-usercell ppms-pl-usercell-trigger"
+                                                :disabled="!p.owner"
+                                                :aria-label="t('projects.avatarInfoAdmin')"
+                                                @click="openAdminUserPopover($event, p)"
                                             >
-                                                <svg
-                                                    class="ppms-pl-actions-dd__trigger-ico"
-                                                    viewBox="0 0 24 24"
-                                                    fill="currentColor"
-                                                    aria-hidden="true"
+                                                <span
+                                                    class="ppms-pl-avatar"
+                                                    :style="{
+                                                        background: avatarColor(p.owner?.name || p.owner?.email || '?'),
+                                                    }"
+                                                    :aria-hidden="true"
                                                 >
-                                                    <circle cx="12" cy="5" r="2" />
-                                                    <circle cx="12" cy="12" r="2" />
-                                                    <circle cx="12" cy="19" r="2" />
-                                                </svg>
+                                                    {{ userInitials(p.owner?.name) }}
+                                                </span>
+                                                <span class="ppms-pl-username">{{ p.owner?.name || '—' }}</span>
                                             </button>
+                                        </td>
+                                        <td v-if="colVis('code')" class="ppms-td-code ppms-muted">
                                             <div
-                                                v-show="actionsMenuOpenId === p.id"
-                                                :id="'pl-actions-menu-' + p.id"
-                                                class="ppms-pl-actions-dd__panel"
-                                                role="menu"
-                                                :aria-labelledby="'pl-actions-trigger-' + p.id"
-                                                @click.stop
+                                                v-if="canEditProject && isInlineEditing(p)"
+                                                class="ppms-pl-inline-field-stack"
                                             >
-                                                <router-link
-                                                    role="menuitem"
-                                                    class="ppms-pl-actions-dd__item"
-                                                    :to="'/projects/' + p.id"
-                                                    @click="closeActionsMenu"
+                                                <input
+                                                    v-model="inlineDraft.code"
+                                                    type="text"
+                                                    class="ppms-input ppms-pl-inline-input"
+                                                    :placeholder="t('projects.inlinePlaceholderCode')"
+                                                    @click.stop
+                                                    @focus="setInlineEditAnchor('code')"
+                                                />
+                                                <ProjectListInlineEditBar
+                                                    v-if="inlineEditAnchor === 'code'"
+                                                    :disabled="inlineSaving"
+                                                    @save="saveInlineEdit"
+                                                    @cancel="cancelInlineEdit"
+                                                />
+                                            </div>
+                                            <template v-else>{{ projectCode(p) }}</template>
+                                        </td>
+                                        <td v-if="colVis('name')" class="ppms-td-name">
+                                            <template v-if="canEditProject && isInlineEditing(p)">
+                                                <div class="ppms-pl-inline-field-stack">
+                                                    <input
+                                                        v-model="inlineDraft.name"
+                                                        type="text"
+                                                        class="ppms-input ppms-pl-inline-input"
+                                                        :placeholder="t('projects.inlinePlaceholderName')"
+                                                        @click.stop
+                                                        @focus="setInlineEditAnchor('name')"
+                                                    />
+                                                    <ProjectListInlineEditBar
+                                                        v-if="inlineEditAnchor === 'name'"
+                                                        :disabled="inlineSaving"
+                                                        @save="saveInlineEdit"
+                                                        @cancel="cancelInlineEdit"
+                                                    />
+                                                </div>
+                                            </template>
+                                            <template v-else>
+                                                <router-link class="ppms-pl-name-link" :to="'/projects/' + p.id">{{
+                                                    p.name
+                                                }}</router-link>
+                                                <div class="ppms-pl-name-labels-row">
+                                                    <div v-if="projectLabelList(p).length" class="ppms-pl-name-labels">
+                                                        <span
+                                                            v-for="(lb, li) in projectLabelsPreview(p).show"
+                                                            :key="'lb-' + p.id + '-' + li"
+                                                            class="ppms-pl-label-chip ppms-pl-label-chip--under-name"
+                                                            >{{ lb }}</span
+                                                        >
+                                                        <span
+                                                            v-if="projectLabelsPreview(p).more > 0"
+                                                            class="ppms-pl-labels-more"
+                                                            >+{{ projectLabelsPreview(p).more }}</span
+                                                        >
+                                                    </div>
+                                                    <template v-if="canBulk">
+                                                        <input
+                                                            v-if="quickLabelProjectId === p.id"
+                                                            ref="quickLabelInputEl"
+                                                            v-model="quickLabelText"
+                                                            type="text"
+                                                            class="ppms-pl-quick-label-input"
+                                                            list="ppms-pl-label-datalist"
+                                                            autocomplete="off"
+                                                            :placeholder="t('projects.labelAddPlaceholder')"
+                                                            :aria-label="t('projects.labelAddPlaceholder')"
+                                                            :disabled="quickLabelSavingId === p.id"
+                                                            @keydown.enter.prevent="submitQuickLabel(p)"
+                                                            @keydown.esc.prevent="closeQuickLabel"
+                                                            @click.stop
+                                                        />
+                                                        <button
+                                                            v-else
+                                                            type="button"
+                                                            class="ppms-pl-label-add-btn"
+                                                            :aria-label="t('projects.labelAddAria')"
+                                                            @click.stop="toggleQuickLabel(p)"
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </td>
+                                        <td v-if="colVis('phase')" class="ppms-td-phase">
+                                            <div
+                                                v-if="canEditProject && isInlineEditing(p)"
+                                                class="ppms-pl-inline-field-stack"
+                                            >
+                                                <select
+                                                    v-model="inlineDraft.phase"
+                                                    class="ppms-input ppms-pl-inline-select ppms-pl-inline-select--sm"
+                                                    @click.stop
+                                                    @focus="setInlineEditAnchor('phase')"
                                                 >
-                                                    <svg
-                                                        class="ppms-pl-actions-dd__item-ico"
-                                                        viewBox="0 0 24 24"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        stroke-width="2"
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        aria-hidden="true"
+                                                    <option value="planning">{{ t('projects.phase.planning') }}</option>
+                                                    <option value="development">
+                                                        {{ t('projects.phase.development') }}
+                                                    </option>
+                                                    <option value="uat">{{ t('projects.phase.uat') }}</option>
+                                                    <option value="done">{{ t('projects.phase.done') }}</option>
+                                                    <option value="maintenance">
+                                                        {{ t('projects.phase.maintenance') }}
+                                                    </option>
+                                                    <option value="rnd">{{ t('projects.phase.rnd') }}</option>
+                                                </select>
+                                                <ProjectListInlineEditBar
+                                                    v-if="inlineEditAnchor === 'phase'"
+                                                    :disabled="inlineSaving"
+                                                    @save="saveInlineEdit"
+                                                    @cancel="cancelInlineEdit"
+                                                />
+                                            </div>
+                                            <template v-else>
+                                                <span class="ppms-pl-phase-pill" :class="phasePillClass(p.phase)">{{
+                                                    t(`projects.phase.${p.phase || 'planning'}`)
+                                                }}</span>
+                                            </template>
+                                        </td>
+                                        <td v-if="colVis('team')" class="ppms-td-team">
+                                            <div
+                                                v-if="canEditProject && isInlineEditing(p)"
+                                                class="ppms-pl-inline-field-stack"
+                                            >
+                                                <select
+                                                    v-model="inlineDraft.team_id"
+                                                    class="ppms-input ppms-pl-inline-select"
+                                                    @click.stop
+                                                    @focus="setInlineEditAnchor('team')"
+                                                >
+                                                    <option value="">{{ t('projects.inlineTeamUnset') }}</option>
+                                                    <option
+                                                        v-for="tm in teamOptions"
+                                                        :key="'itm-' + tm.id"
+                                                        :value="String(tm.id)"
                                                     >
-                                                        <path d="M5 12h14M12 5l7 7-7 7" />
-                                                    </svg>
-                                                    <span>{{ t('projects.openDetail') }}</span>
-                                                </router-link>
+                                                        {{ tm.name }}
+                                                    </option>
+                                                </select>
+                                                <ProjectListInlineEditBar
+                                                    v-if="inlineEditAnchor === 'team'"
+                                                    :disabled="inlineSaving"
+                                                    @save="saveInlineEdit"
+                                                    @cancel="cancelInlineEdit"
+                                                />
+                                            </div>
+                                            <template v-else>
+                                                <span
+                                                    v-if="p.team?.name"
+                                                    class="ppms-pl-team-pill"
+                                                    :title="p.team.name"
+                                                    >{{ p.team.name }}</span
+                                                >
+                                                <span v-else class="ppms-muted">—</span>
+                                            </template>
+                                        </td>
+                                        <td v-if="colVis('participants')" class="ppms-td-participants">
+                                            <div class="ppms-pl-participants">
                                                 <button
-                                                    v-if="canEditProject"
+                                                    v-for="(slot, si) in participantVisibleSlots(p)"
+                                                    :key="'pa-' + p.id + '-' + si"
                                                     type="button"
-                                                    role="menuitem"
-                                                    class="ppms-pl-actions-dd__item"
-                                                    @click="onActionInlineEdit(p)"
+                                                    class="ppms-pl-participants-avatar-btn"
+                                                    :style="{ zIndex: si + 1 }"
+                                                    :aria-label="participantSlotAriaLabel(slot)"
+                                                    @click.stop="openSingleParticipantPopover($event, p, slot)"
                                                 >
-                                                    <span class="ppms-pl-actions-dd__item-ico ppms-pl-actions-dd__item-ico--text" aria-hidden="true"
-                                                        >⚡</span
+                                                    <span
+                                                        class="ppms-pl-avatar ppms-pl-avatar--sm ppms-pl-participants-stack-avatar"
+                                                        :style="{ background: avatarColor(slot.colorSeed) }"
                                                     >
-                                                    <span>{{ t('projects.inlineOpen') }}</span>
+                                                        {{ slot.initials }}
+                                                    </span>
                                                 </button>
                                                 <button
-                                                    v-if="canEditProject"
+                                                    v-if="participantOverflowCount(p) > 0"
                                                     type="button"
-                                                    role="menuitem"
-                                                    class="ppms-pl-actions-dd__item"
-                                                    @click="onActionOpenEditModal(p)"
+                                                    class="ppms-pl-participants-more ppms-pl-participants-overflow-btn"
+                                                    :aria-label="
+                                                        t('projects.userPopoverMoreParticipantsAria', {
+                                                            n: participantOverflowCount(p),
+                                                        })
+                                                    "
+                                                    @click.stop="openParticipantsOverflowMenu($event, p)"
                                                 >
-                                                    <svg
-                                                        class="ppms-pl-actions-dd__item-ico"
-                                                        viewBox="0 0 24 24"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        stroke-width="2"
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        aria-hidden="true"
-                                                    >
-                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                                    </svg>
-                                                    <span>{{ t('common.edit') }}</span>
+                                                    +{{ participantOverflowCount(p) }}
                                                 </button>
                                             </div>
-                                        </div>
-                                    </div>
-                                </td>
-                                </tr>
+                                        </td>
+                                        <td v-if="colVis('progress')" class="ppms-td-process">
+                                            <div
+                                                class="ppms-progress-track ppms-progress-track--staging"
+                                                role="progressbar"
+                                                :aria-valuenow="Math.round(clampProgress(p.progress))"
+                                                aria-valuemin="0"
+                                                aria-valuemax="100"
+                                                :aria-label="t('projects.colProgress')"
+                                            >
+                                                <div
+                                                    class="ppms-progress-fill"
+                                                    :class="progressToneClass(p.progress)"
+                                                    :style="{ width: `${clampProgress(p.progress)}%` }"
+                                                />
+                                                <span
+                                                    class="ppms-progress-knob"
+                                                    :style="{
+                                                        left: `${clampProgress(p.progress)}%`,
+                                                    }"
+                                                    aria-hidden="true"
+                                                >
+                                                    <span class="ppms-progress-knob-pct"
+                                                        >{{ formatProgress(p.progress) }}%</span
+                                                    >
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td v-if="colVis('tasks')" class="ppms-td-num ppms-td-tasks">
+                                            {{ p.tasks_count ?? '—' }}
+                                        </td>
+                                        <td v-if="colVis('start')" class="ppms-td-date">
+                                            <div
+                                                v-if="canEditProject && isInlineEditing(p)"
+                                                class="ppms-pl-inline-field-stack ppms-pl-inline-field-stack--tight"
+                                            >
+                                                <input
+                                                    v-model="inlineDraft.start_date"
+                                                    type="date"
+                                                    class="ppms-input ppms-pl-inline-date"
+                                                    @click.stop
+                                                    @focus="setInlineEditAnchor('start')"
+                                                />
+                                                <ProjectListInlineEditBar
+                                                    v-if="inlineEditAnchor === 'start'"
+                                                    :disabled="inlineSaving"
+                                                    @save="saveInlineEdit"
+                                                    @cancel="cancelInlineEdit"
+                                                />
+                                            </div>
+                                            <template v-else>
+                                                <span v-if="!p.start_date" class="ppms-muted">{{
+                                                    t('projects.startNone')
+                                                }}</span>
+                                                <span v-else>{{ formatDateIso(p.start_date) }}</span>
+                                            </template>
+                                        </td>
+                                        <td v-if="colVis('actualStart')" class="ppms-td-date">
+                                            <div
+                                                v-if="canEditProject && isInlineEditing(p)"
+                                                class="ppms-pl-inline-field-stack ppms-pl-inline-field-stack--tight"
+                                            >
+                                                <input
+                                                    v-model="inlineDraft.actual_start_date"
+                                                    type="date"
+                                                    class="ppms-input ppms-pl-inline-date"
+                                                    @click.stop
+                                                    @focus="setInlineEditAnchor('actualStart')"
+                                                />
+                                                <ProjectListInlineEditBar
+                                                    v-if="inlineEditAnchor === 'actualStart'"
+                                                    :disabled="inlineSaving"
+                                                    @save="saveInlineEdit"
+                                                    @cancel="cancelInlineEdit"
+                                                />
+                                            </div>
+                                            <template v-else>
+                                                <span v-if="!p.actual_start_date" class="ppms-muted">{{
+                                                    t('projects.actualStartNone')
+                                                }}</span>
+                                                <span v-else>{{ formatDateIso(p.actual_start_date) }}</span>
+                                            </template>
+                                        </td>
+                                        <td v-if="colVis('end')" class="ppms-td-date">
+                                            <div
+                                                v-if="canEditProject && isInlineEditing(p)"
+                                                class="ppms-pl-inline-field-stack ppms-pl-inline-field-stack--tight"
+                                            >
+                                                <input
+                                                    v-model="inlineDraft.deadline"
+                                                    type="date"
+                                                    class="ppms-input ppms-pl-inline-date"
+                                                    @click.stop
+                                                    @focus="setInlineEditAnchor('end')"
+                                                />
+                                                <ProjectListInlineEditBar
+                                                    v-if="inlineEditAnchor === 'end'"
+                                                    :disabled="inlineSaving"
+                                                    @save="saveInlineEdit"
+                                                    @cancel="cancelInlineEdit"
+                                                />
+                                            </div>
+                                            <template v-else>
+                                                <span v-if="!p.deadline" class="ppms-muted">{{
+                                                    t('projects.deadlineNone')
+                                                }}</span>
+                                                <span
+                                                    v-else
+                                                    class="ppms-deadline"
+                                                    :class="deadlineTone(p.deadline).cls"
+                                                >
+                                                    {{ formatDeadline(p.deadline) }}
+                                                </span>
+                                            </template>
+                                        </td>
+                                        <td v-if="colVis('status')" class="ppms-td-status">
+                                            <div
+                                                v-if="canEditProject && isInlineEditing(p)"
+                                                class="ppms-pl-inline-field-stack"
+                                                @focusin="setInlineEditAnchor('status')"
+                                            >
+                                                <div class="ppms-pl-inline-type-status">
+                                                    <select
+                                                        v-model="inlineDraft.type"
+                                                        class="ppms-input ppms-pl-inline-select ppms-pl-inline-select--sm"
+                                                        @click.stop
+                                                    >
+                                                        <option value="maintenance">
+                                                            {{ t('projects.typeShort.maintenance') }}
+                                                        </option>
+                                                        <option value="delivery">
+                                                            {{ t('projects.typeShort.delivery') }}
+                                                        </option>
+                                                        <option value="rnd">{{ t('projects.typeShort.rnd') }}</option>
+                                                    </select>
+                                                    <select
+                                                        v-if="!colVis('phase')"
+                                                        v-model="inlineDraft.phase"
+                                                        class="ppms-input ppms-pl-inline-select ppms-pl-inline-select--sm"
+                                                        @click.stop
+                                                    >
+                                                        <option value="planning">
+                                                            {{ t('projects.phase.planning') }}
+                                                        </option>
+                                                        <option value="development">
+                                                            {{ t('projects.phase.development') }}
+                                                        </option>
+                                                        <option value="uat">{{ t('projects.phase.uat') }}</option>
+                                                        <option value="done">{{ t('projects.phase.done') }}</option>
+                                                        <option value="maintenance">
+                                                            {{ t('projects.phase.maintenance') }}
+                                                        </option>
+                                                        <option value="rnd">{{ t('projects.phase.rnd') }}</option>
+                                                    </select>
+                                                    <select
+                                                        v-model="inlineDraft.status"
+                                                        class="ppms-input ppms-pl-inline-select ppms-pl-inline-select--sm"
+                                                        @click.stop
+                                                    >
+                                                        <option value="on_track">
+                                                            {{ t('projects.status.on_track') }}
+                                                        </option>
+                                                        <option value="at_risk">
+                                                            {{ t('projects.status.at_risk') }}
+                                                        </option>
+                                                        <option value="delayed">
+                                                            {{ t('projects.status.delayed') }}
+                                                        </option>
+                                                        <option value="blocked">
+                                                            {{ t('projects.status.blocked') }}
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                                <ProjectListInlineEditBar
+                                                    v-if="inlineEditAnchor === 'status'"
+                                                    :disabled="inlineSaving"
+                                                    @save="saveInlineEdit"
+                                                    @cancel="cancelInlineEdit"
+                                                />
+                                            </div>
+                                            <span v-else class="ppms-status-pill" :class="statusPillClass(p.status)">{{
+                                                t(`projects.status.${p.status}`)
+                                            }}</span>
+                                        </td>
+                                        <td v-if="colVis('actions')" class="ppms-td-actions">
+                                            <div class="ppms-pl-actions-cell">
+                                                <div
+                                                    v-if="canEditProject && isInlineEditing(p)"
+                                                    class="ppms-pl-actions-cell--inline-spacer"
+                                                    aria-hidden="true"
+                                                />
+                                                <div
+                                                    v-else
+                                                    class="ppms-pl-actions-dd"
+                                                    :class="{ 'ppms-pl-actions-dd--open': actionsMenuOpenId === p.id }"
+                                                >
+                                                    <button
+                                                        :id="'pl-actions-trigger-' + p.id"
+                                                        type="button"
+                                                        class="ppms-pl-actions-dd__trigger"
+                                                        :aria-controls="'pl-actions-menu-' + p.id"
+                                                        :aria-expanded="actionsMenuOpenId === p.id"
+                                                        :aria-haspopup="true"
+                                                        :aria-label="t('projects.actionsMenuAria')"
+                                                        @click.stop="toggleActionsMenu(p.id)"
+                                                    >
+                                                        <svg
+                                                            class="ppms-pl-actions-dd__trigger-ico"
+                                                            viewBox="0 0 24 24"
+                                                            fill="currentColor"
+                                                            aria-hidden="true"
+                                                        >
+                                                            <circle cx="12" cy="5" r="2" />
+                                                            <circle cx="12" cy="12" r="2" />
+                                                            <circle cx="12" cy="19" r="2" />
+                                                        </svg>
+                                                    </button>
+                                                    <div
+                                                        v-show="actionsMenuOpenId === p.id"
+                                                        :id="'pl-actions-menu-' + p.id"
+                                                        class="ppms-pl-actions-dd__panel"
+                                                        role="menu"
+                                                        :aria-labelledby="'pl-actions-trigger-' + p.id"
+                                                        @click.stop
+                                                    >
+                                                        <router-link
+                                                            role="menuitem"
+                                                            class="ppms-pl-actions-dd__item"
+                                                            :to="'/projects/' + p.id"
+                                                            @click="closeActionsMenu"
+                                                        >
+                                                            <svg
+                                                                class="ppms-pl-actions-dd__item-ico"
+                                                                viewBox="0 0 24 24"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                stroke-width="2"
+                                                                stroke-linecap="round"
+                                                                stroke-linejoin="round"
+                                                                aria-hidden="true"
+                                                            >
+                                                                <path d="M5 12h14M12 5l7 7-7 7" />
+                                                            </svg>
+                                                            <span>{{ t('projects.openDetail') }}</span>
+                                                        </router-link>
+                                                        <button
+                                                            v-if="canEditProject"
+                                                            type="button"
+                                                            role="menuitem"
+                                                            class="ppms-pl-actions-dd__item"
+                                                            @click="onActionInlineEdit(p)"
+                                                        >
+                                                            <span
+                                                                class="ppms-pl-actions-dd__item-ico ppms-pl-actions-dd__item-ico--text"
+                                                                aria-hidden="true"
+                                                                >⚡</span
+                                                            >
+                                                            <span>{{ t('projects.inlineOpen') }}</span>
+                                                        </button>
+                                                        <button
+                                                            v-if="canEditProject"
+                                                            type="button"
+                                                            role="menuitem"
+                                                            class="ppms-pl-actions-dd__item"
+                                                            @click="onActionOpenEditModal(p)"
+                                                        >
+                                                            <svg
+                                                                class="ppms-pl-actions-dd__item-ico"
+                                                                viewBox="0 0 24 24"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                stroke-width="2"
+                                                                stroke-linecap="round"
+                                                                stroke-linejoin="round"
+                                                                aria-hidden="true"
+                                                            >
+                                                                <path
+                                                                    d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                                                                />
+                                                                <path
+                                                                    d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                                                                />
+                                                            </svg>
+                                                            <span>{{ t('common.edit') }}</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
                             </template>
-                        </template>
-                    </tbody>
-                </table>
+                        </tbody>
+                        <tfoot>
+                            <tr class="ppms-pl-table-foot-row">
+                                <td :colspan="listTableColspan" class="ppms-pl-table-foot-cell">
+                                    <span class="ppms-pl-table-foot-inner">
+                                        <span
+                                            v-if="rangeFrom != null && rangeTo != null"
+                                            class="ppms-pl-table-foot-stat"
+                                            >{{
+                                                t('projects.listTableFootRange', {
+                                                    from: rangeFrom,
+                                                    to: rangeTo,
+                                                    total,
+                                                })
+                                            }}</span
+                                        >
+                                        <span v-else class="ppms-pl-table-foot-stat">{{
+                                            t('projects.listTableFootTotal', { total })
+                                        }}</span>
+                                        <span v-if="lastPage > 1" class="ppms-pl-table-foot-page">{{
+                                            t('projects.pagination', { current: page, last: lastPage })
+                                        }}</span>
+                                    </span>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
             <div v-else class="ppms-pl-kanban-wrap ppms-mt">
@@ -583,7 +708,9 @@
                                 <span class="ppms-pl-kanban-col-count">{{ col.projects.length }}</span>
                             </header>
                             <div class="ppms-pl-kanban-col-body" role="list">
-                                <p v-if="!col.projects.length" class="ppms-pl-kanban-empty">{{ t('projects.kanbanEmptyColumn') }}</p>
+                                <p v-if="!col.projects.length" class="ppms-pl-kanban-empty">
+                                    {{ t('projects.kanbanEmptyColumn') }}
+                                </p>
                                 <article
                                     v-for="p in col.projects"
                                     :key="'kc-' + p.id"
@@ -605,21 +732,32 @@
                                     @dragend="onKanbanDragEnd"
                                 >
                                     <div class="ppms-pl-kanban-card-top">
-                                        <label v-if="canBulk" class="ppms-pl-card-check ppms-pl-kanban-card-check" @click.stop>
+                                        <label
+                                            v-if="canBulk"
+                                            class="ppms-pl-card-check ppms-pl-kanban-card-check"
+                                            @click.stop
+                                        >
                                             <input v-model="selectedProjectIds" type="checkbox" :value="p.id" />
-                                            <span class="ppms-sr-only">{{ t('projects.selectRow', { name: p.name }) }}</span>
+                                            <span class="ppms-sr-only">{{
+                                                t('projects.selectRow', { name: p.name })
+                                            }}</span>
                                         </label>
                                         <div class="ppms-pl-kanban-card-head-text">
                                             <span class="ppms-pl-kanban-card-title">{{ p.name }}</span>
                                             <div class="ppms-pl-kanban-labels-row">
-                                                <div v-if="projectLabelList(p).length" class="ppms-pl-kanban-card-labels">
+                                                <div
+                                                    v-if="projectLabelList(p).length"
+                                                    class="ppms-pl-kanban-card-labels"
+                                                >
                                                     <span
                                                         v-for="(lb, lbi) in kanbanLabelPreview(p).show"
                                                         :key="'kcl-' + p.id + '-' + lbi"
                                                         class="ppms-pl-label-chip ppms-pl-label-chip--under-name"
                                                         >{{ lb }}</span
                                                     >
-                                                    <span v-if="kanbanLabelPreview(p).more > 0" class="ppms-pl-labels-more"
+                                                    <span
+                                                        v-if="kanbanLabelPreview(p).more > 0"
+                                                        class="ppms-pl-labels-more"
                                                         >+{{ kanbanLabelPreview(p).more }}</span
                                                     >
                                                 </div>
@@ -650,20 +788,30 @@
                                                     </button>
                                                 </template>
                                             </div>
-                                            <span class="ppms-pl-kanban-card-code ppms-muted">{{ projectCode(p) }}</span>
+                                            <span class="ppms-pl-kanban-card-code ppms-muted">{{
+                                                projectCode(p)
+                                            }}</span>
                                         </div>
                                     </div>
                                     <div class="ppms-pl-kanban-card-meta">
-                                        <span class="ppms-pl-tag ppms-pl-tag--kanban">{{ t(`projects.typeShort.${p.type}`) }}</span>
-                                        <span class="ppms-pl-phase-pill ppms-pl-phase-pill--kanban" :class="phasePillClass(p.phase)">{{
-                                            t(`projects.phase.${p.phase || 'planning'}`)
+                                        <span class="ppms-pl-tag ppms-pl-tag--kanban">{{
+                                            t(`projects.typeShort.${p.type}`)
                                         }}</span>
-                                        <span class="ppms-status-pill ppms-status-pill--kanban" :class="statusPillClass(p.status)">{{
-                                            t(`projects.status.${p.status}`)
-                                        }}</span>
+                                        <span
+                                            class="ppms-pl-phase-pill ppms-pl-phase-pill--kanban"
+                                            :class="phasePillClass(p.phase)"
+                                            >{{ t(`projects.phase.${p.phase || 'planning'}`) }}</span
+                                        >
+                                        <span
+                                            class="ppms-status-pill ppms-status-pill--kanban"
+                                            :class="statusPillClass(p.status)"
+                                            >{{ t(`projects.status.${p.status}`) }}</span
+                                        >
                                     </div>
                                     <div v-if="p.team?.name" class="ppms-pl-kanban-team-row">
-                                        <span class="ppms-pl-team-pill ppms-pl-team-pill--kanban">{{ p.team.name }}</span>
+                                        <span class="ppms-pl-team-pill ppms-pl-team-pill--kanban">{{
+                                            p.team.name
+                                        }}</span>
                                     </div>
                                     <div class="ppms-pl-kanban-card-progress">
                                         <div
@@ -692,12 +840,16 @@
                                         >
                                             <span
                                                 class="ppms-pl-avatar ppms-pl-avatar--sm"
-                                                :style="{ background: avatarColor(p.owner?.name || p.owner?.email || '?') }"
+                                                :style="{
+                                                    background: avatarColor(p.owner?.name || p.owner?.email || '?'),
+                                                }"
                                                 aria-hidden="true"
                                             >
                                                 {{ userInitials(p.owner?.name) }}
                                             </span>
-                                            <span class="ppms-pl-username ppms-pl-kanban-owner-name">{{ p.owner?.name || '—' }}</span>
+                                            <span class="ppms-pl-username ppms-pl-kanban-owner-name">{{
+                                                p.owner?.name || '—'
+                                            }}</span>
                                         </button>
                                     </div>
                                 </article>
@@ -775,15 +927,6 @@
 </template>
 
 <style scoped>
-.ppms-pl-list-meta-select-all {
-    display: inline-flex;
-    align-items: center;
-}
-.ppms-pl-list-meta-select-all input {
-    width: 1.1rem;
-    height: 1.1rem;
-    cursor: pointer;
-}
 .ppms-pl-data-row--inline {
     background: rgba(238, 242, 255, 0.42);
 }
@@ -995,7 +1138,13 @@ import { useRoute, useRouter } from 'vue-router';
 import { formatApiUserMessage } from '@/bootstrap';
 import { ppmsConfirm, ppmsToastError, ppmsToastSuccess } from '@/ppmsUi';
 import { useProjectListColumns } from './composables/useProjectListColumns';
-import { clampProgress, deadlineTone, formatDeadline, formatProgress, progressToneClass } from './utils/projectListDisplay';
+import {
+    clampProgress,
+    deadlineTone,
+    formatDeadline,
+    formatProgress,
+    progressToneClass,
+} from './utils/projectListDisplay';
 import { parseCommaLabelTokens, projectLabelList, projectLabelsPreview } from './utils/projectLabels';
 import { buildParticipantSlots as participantAllSlots, displayNameFromEmail } from './utils/projectParticipants';
 import {
@@ -1365,12 +1514,6 @@ function routeQuerySignature(q) {
 
     return JSON.stringify(norm);
 }
-
-const canExport = computed(() => {
-    const r = currentUser.value?.role;
-
-    return r && ['admin', 'pm', 'hr', 'tl'].includes(r);
-});
 
 const canBulk = computed(() => {
     const r = currentUser.value?.role;
@@ -2288,13 +2431,6 @@ function phasePillClass(ph) {
     return `ppms-pl-phase-pill--${k}`;
 }
 
-function buildExportParams() {
-    const p = { ...buildQueryParams() };
-    delete p.page;
-
-    return p;
-}
-
 async function load() {
     loading.value = true;
     const isKanban = viewMode.value === 'kanban';
@@ -2471,51 +2607,6 @@ function onToolbarSaveView() {
     openSaveViewModal();
 }
 
-async function onToolbarExportCsv() {
-    closeToolbarMenu();
-    await exportFiltered('csv');
-}
-
-async function onToolbarExportJson() {
-    closeToolbarMenu();
-    await exportFiltered('json');
-}
-
-async function onToolbarExportPdf() {
-    closeToolbarMenu();
-    await exportFiltered('pdf');
-}
-
-async function onToolbarExportCsvSelected() {
-    closeToolbarMenu();
-    if (!selectedProjectIds.value.length) {
-        ppmsToastError(t('projects.exportNeedSelection'));
-
-        return;
-    }
-    await exportFiltered('csv', { ids: selectedProjectIds.value.join(',') });
-}
-
-async function onToolbarExportJsonSelected() {
-    closeToolbarMenu();
-    if (!selectedProjectIds.value.length) {
-        ppmsToastError(t('projects.exportNeedSelection'));
-
-        return;
-    }
-    await exportFiltered('json', { ids: selectedProjectIds.value.join(',') });
-}
-
-async function onToolbarExportPdfSelected() {
-    closeToolbarMenu();
-    if (!selectedProjectIds.value.length) {
-        ppmsToastError(t('projects.exportNeedSelection'));
-
-        return;
-    }
-    await exportFiltered('pdf', { ids: selectedProjectIds.value.join(',') });
-}
-
 function openImportModal() {
     importPreviewId.value = null;
     importPreviewRows.value = [];
@@ -2541,7 +2632,7 @@ function onImportFileChange() {
 
 async function downloadImportTemplateCsv() {
     try {
-        const res = await axios.get('/api/reports/import/projects-template.csv', { responseType: 'blob' });
+        const res = await axios.get('/api/projects/import/projects-template.csv', { responseType: 'blob' });
         const blob = res.data;
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -2556,7 +2647,7 @@ async function downloadImportTemplateCsv() {
 
 async function downloadImportTemplateJson() {
     try {
-        const res = await axios.get('/api/reports/import/projects-template.json', { responseType: 'blob' });
+        const res = await axios.get('/api/projects/import/projects-template.json', { responseType: 'blob' });
         const blob = res.data;
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -2617,9 +2708,7 @@ async function runImportCommit() {
     importCommitLoading.value = true;
     try {
         const { data } = await axios.post('/api/projects/import/commit', { preview_id: id });
-        ppmsToastSuccess(
-            t('projects.importOk', { created: data.created ?? 0, updated: data.updated ?? 0 }),
-        );
+        ppmsToastSuccess(t('projects.importOk', { created: data.created ?? 0, updated: data.updated ?? 0 }));
         closeImportModal();
         await load();
     } catch (e) {
@@ -2631,43 +2720,6 @@ async function runImportCommit() {
         }
     } finally {
         importCommitLoading.value = false;
-    }
-}
-
-async function exportFiltered(kind, opts = {}) {
-    const params = { ...buildExportParams() };
-    if (opts.ids) {
-        params.ids = opts.ids;
-    }
-    const path =
-        kind === 'pdf'
-            ? '/api/reports/export/projects-filtered.pdf'
-            : kind === 'json'
-              ? '/api/reports/export/projects-filtered.json'
-              : '/api/reports/export/projects-filtered.csv';
-    try {
-        const res = await axios.get(path, {
-            params,
-            responseType: 'blob',
-        });
-        const blob = res.data;
-        const dispo = res.headers['content-disposition'];
-        let filename =
-            kind === 'pdf' ? 'projects.pdf' : kind === 'json' ? 'projects.json' : 'projects.csv';
-        if (dispo && dispo.includes('filename=')) {
-            const m = dispo.match(/filename="?([^";]+)"?/);
-            if (m) {
-                filename = m[1];
-            }
-        }
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
-    } catch (e) {
-        ppmsToastError(formatApiUserMessage(e, t('projects.exportError')));
     }
 }
 
@@ -2777,8 +2829,7 @@ async function submitProject() {
             description: form.description || null,
             customer_name: form.customer_name?.trim() || null,
             customer_email: form.customer_email?.trim() || null,
-            department_id:
-                form.department_id !== '' && form.department_id != null ? Number(form.department_id) : null,
+            department_id: form.department_id !== '' && form.department_id != null ? Number(form.department_id) : null,
             block_id: form.block_id !== '' && form.block_id != null ? Number(form.block_id) : null,
             suppliers,
             progress_calc: form.progress_calc || null,

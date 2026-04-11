@@ -10,6 +10,5 @@ export { default as ProjectDetailModalPhase } from './ProjectDetailModalPhase.vu
 export { default as ProjectDetailTabAttachments } from './ProjectDetailTabAttachments.vue';
 export { default as ProjectDetailTabFinance } from './ProjectDetailTabFinance.vue';
 export { default as ProjectDetailTabInfo } from './ProjectDetailTabInfo.vue';
-export { default as ProjectDetailTabReports } from './ProjectDetailTabReports.vue';
 export { default as ProjectDetailTabSupplies } from './ProjectDetailTabSupplies.vue';
 export { default as ProjectDetailTabTasks } from './ProjectDetailTabTasks.vue';

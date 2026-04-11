@@ -194,27 +194,6 @@ class PpmsApiTest extends TestCase
         ]);
     }
 
-    public function test_projects_filtered_csv_requires_role(): void
-    {
-        Sanctum::actingAs($this->pmUser);
-
-        $this->get('/api/reports/export/projects-filtered.csv')
-            ->assertOk()
-            ->assertHeader('content-type', 'text/csv; charset=UTF-8');
-    }
-
-    public function test_projects_filtered_json_export_ok(): void
-    {
-        Sanctum::actingAs($this->pmUser);
-
-        $res = $this->get('/api/reports/export/projects-filtered.json');
-        $res->assertOk();
-        $this->assertStringContainsString('application/json', (string) $res->headers->get('content-type'));
-        $body = $res->streamedContent();
-        $this->assertStringContainsString('"export_version"', $body);
-        $this->assertStringContainsString('"projects":', $body);
-    }
-
     public function test_projects_import_json_preview_ok(): void
     {
         Sanctum::actingAs($this->pmUser);
@@ -238,7 +217,7 @@ class PpmsApiTest extends TestCase
     {
         Sanctum::actingAs($this->pmUser);
 
-        $this->get('/api/reports/import/projects-template.csv')
+        $this->get('/api/projects/import/projects-template.csv')
             ->assertOk()
             ->assertHeader('content-type', 'text/csv; charset=UTF-8');
     }
@@ -248,7 +227,7 @@ class PpmsApiTest extends TestCase
         $tl = User::factory()->create(['role' => 'tl']);
         Sanctum::actingAs($tl);
 
-        $this->get('/api/reports/import/projects-template.csv')->assertForbidden();
+        $this->get('/api/projects/import/projects-template.csv')->assertForbidden();
     }
 
     public function test_project_label_suggestions_returns_json(): void
@@ -515,20 +494,6 @@ class PpmsApiTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1)
             ->assertJsonPath('0.scope', 'task');
-    }
-
-    public function test_kpi_current_requires_authentication(): void
-    {
-        $this->getJson('/api/kpi/current')->assertUnauthorized();
-    }
-
-    public function test_kpi_current_returns_json_for_authenticated_user(): void
-    {
-        Sanctum::actingAs($this->pmUser);
-
-        $this->getJson('/api/kpi/current')
-            ->assertOk()
-            ->assertJsonStructure(['scope', 'person']);
     }
 
     public function test_bootstrap_returns_module_catalog_and_rbac(): void

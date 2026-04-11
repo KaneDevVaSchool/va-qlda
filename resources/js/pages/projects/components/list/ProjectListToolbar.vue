@@ -153,12 +153,6 @@
                     </svg>
                     <span>{{ t('projects.toolbarImport') }}</span>
                 </button>
-                <button v-if="canExport" type="button" class="ppms-btn-ghost ppms-pl-tbar-btn" @click="$emit('export-csv-filtered')">
-                    <svg class="ppms-pl-ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    <span>{{ t('projects.toolbarExport') }}</span>
-                </button>
                 <div ref="menuElRef" class="ppms-toolbar-dropdown ppms-toolbar-dropdown--pl">
                     <button
                         type="button"
@@ -240,38 +234,6 @@
                                 </ul>
                             </div>
                         </li>
-                        <template v-if="canExport">
-                            <li role="none">
-                                <button type="button" class="ppms-dropdown-menuitem" role="menuitem" @click="$emit('export-csv-filtered')">
-                                    {{ t('projects.exportCsvFiltered') }}
-                                </button>
-                            </li>
-                            <li role="none">
-                                <button type="button" class="ppms-dropdown-menuitem" role="menuitem" @click="$emit('export-json-filtered')">
-                                    {{ t('projects.exportJsonFiltered') }}
-                                </button>
-                            </li>
-                            <li role="none">
-                                <button type="button" class="ppms-dropdown-menuitem" role="menuitem" @click="$emit('export-pdf-filtered')">
-                                    {{ t('projects.exportPdfFiltered') }}
-                                </button>
-                            </li>
-                            <li v-if="selectedCount > 0" role="none">
-                                <button type="button" class="ppms-dropdown-menuitem" role="menuitem" @click="$emit('export-csv-selected')">
-                                    {{ t('projects.exportCsvSelection') }}
-                                </button>
-                            </li>
-                            <li v-if="selectedCount > 0" role="none">
-                                <button type="button" class="ppms-dropdown-menuitem" role="menuitem" @click="$emit('export-json-selected')">
-                                    {{ t('projects.exportJsonSelection') }}
-                                </button>
-                            </li>
-                            <li v-if="selectedCount > 0" role="none">
-                                <button type="button" class="ppms-dropdown-menuitem" role="menuitem" @click="$emit('export-pdf-selected')">
-                                    {{ t('projects.exportPdfSelection') }}
-                                </button>
-                            </li>
-                        </template>
                     </ul>
                 </div>
             </div>
@@ -295,7 +257,6 @@ const props = defineProps({
     rangeTo: { type: Number, default: null },
     perPage: { type: Number, default: 50 },
     canImport: { type: Boolean, default: false },
-    canExport: { type: Boolean, default: false },
     filters: { type: Object, required: true },
     teamOptions: { type: Array, default: () => [] },
     columnPickerOptions: { type: Array, required: true },
@@ -324,12 +285,6 @@ const emit = defineEmits([
     'set-per-page',
     'toolbar-labels',
     'open-import',
-    'export-csv-filtered',
-    'export-json-filtered',
-    'export-pdf-filtered',
-    'export-csv-selected',
-    'export-json-selected',
-    'export-pdf-selected',
     'copy-link',
     'save-view',
     'filter-change',

@@ -7,7 +7,6 @@
                     <p class="ppms-muted ppms-mt-sm">{{ t('teams.subtitle') }}</p>
                 </div>
                 <div class="ppms-teams-head-actions">
-                    <router-link to="/kpi" class="ppms-btn-secondary ppms-btn-linkish">{{ t('teams.linkKpi') }}</router-link>
                     <button v-if="canCreate" type="button" class="ppms-btn-primary" @click="openCreateModal">
                         {{ t('teams.createBtn') }}
                     </button>
