@@ -118,8 +118,425 @@
         "pageDescription": "Type 3 ideas — funnel Submitted → POC → Applied."
     },
     "evaluationsPage": {
-        "pageTitle": "3P evaluation",
-        "pageDescription": "P1 / P2 / P3, peer review, and PDF export."
+        "pageTitle": "3P & Lean evaluations",
+        "pageDescription": "Lean Japanese framework (Position · Person · Performance), project & task context, peer review, PDF.",
+        "leanBadge": "Lean 3P",
+        "leanIntro": "S–A–B–C–D scale · Criteria 1–5 · Weights P1 20% / P2 40% / P3 40%",
+        "trackLabel": "Role / track",
+        "trackDev": "Developer",
+        "trackBa": "BA / PM / UI-UX",
+        "projectLabel": "Reference project (P3 & tasks)",
+        "projectHint": "Link a project to attach task throughput context while scoring.",
+        "criteriaTitle": "Scoring rubric",
+        "pillarP1": "P1 — Position",
+        "pillarP2": "P2 — Person",
+        "pillarP3": "P3 — Performance",
+        "scoreHint": "1 = D … 5 = S",
+        "previewTitle": "Preview",
+        "totalLabel": "Weighted total (1–5)",
+        "gradeLabel": "Grade",
+        "radarTitle": "Competency radar",
+        "taskCtxTitle": "Task context (system)",
+        "taskCtxHint": "Task stats for the assignee — use as reference for P3.",
+        "btnCreateLean": "Save Lean evaluation",
+        "legacySection": "Legacy mode (0–100 / 40-30-30 formula)",
+        "colProject": "Project",
+        "colMode": "Mode",
+        "kaizenVerifiedLabel": "Kaizen verified this period (≥1 measurable improvement — TL/PM)",
+        "kaizenVerifiedHint": "Without verified Kaizen, P2 (Person) is capped at 3 (B) even if rubric scores are higher.",
+        "kaizenActionLabel": "Kaizen Action (recommended for A/S)",
+        "kaizenActionPlaceholder": "Describe the improvement commitment (e.g. staging deploy script, design system…)",
+        "kaizenCapWarning": "P2 capped at 3 because Kaizen is not verified for this period.",
+        "p2RawLabel": "P2 (before cap)",
+        "pillarBarsTitle": "Pillar scores P1 / P2 / P3 (1–5 scale)",
+        "radarPosition": "Position & domain",
+        "radarCraft": "Technical / Craft",
+        "radarKaizen": "Kaizen / Improvement",
+        "radarHorenso": "Horenso / Communication",
+        "radarDelivery": "Delivery & KPIs",
+        "frameworkRefTitle": "Lean evaluation framework (reference)",
+        "frameworkRefLead": "Framework version {v} — grading scale, rubric, career matrix & team summary.",
+        "leanGradingScaleSection": "Grading scale & Kaizen rules",
+        "leanLevelMatrixSection": "Career Level Matrix (Junior → Lead)",
+        "levelMatrixHint": "Score B = meets expectations for current level; use together with the rubric.",
+        "colGrade": "Grade",
+        "colPoints": "Pts",
+        "colKaizenRule": "Kaizen / conditions",
+        "colOutcome": "Outcomes",
+        "colDimension": "Dimension",
+        "colName": "Name",
+        "colCareer": "Level",
+        "careerLevelLabel": "Expected career level",
+        "careerUnset": "— Not set —",
+        "careerJunior": "Junior (0–2 yrs)",
+        "careerMiddle": "Middle (2–4 yrs)",
+        "careerSenior": "Senior (4–7 yrs)",
+        "careerLead": "Lead / Principal (7+ yrs)",
+        "metaFrequency": "Frequency",
+        "metaSource": "Data source",
+        "teamDashTitle": "Team summary",
+        "teamDashHint": "Ranking, grade mix & period heatmap from saved Lean evaluations.",
+        "filterPeriod": "Filter period",
+        "heatmapTitle": "Total score heatmap by period",
+        "kaizenCtxTitle": "Kaizen in system",
+        "kaizenCtxHint": "Approved/implemented Kaizen records (Kaizen module), optional quarter filter (e.g. 2026-Q2).",
+        "kaizenVerifiedCount": "Verified Kaizen count",
+        "kaizenTotalScope": "Total Kaizen in time scope",
+        "lmCodeQuality": "Code quality",
+        "lmSystemDesign": "System design",
+        "lmProblemSolving": "Problem solving",
+        "lmLangFramework": "Language & framework",
+        "lmTesting": "Testing",
+        "lmDevOps": "DevOps & infra",
+        "lmKaizenMindset": "Kaizen mindset",
+        "lmHorenso": "Horenso & communication",
+        "lmMentoring": "Mentoring & leadership",
+        "lmOwnership": "Autonomy & ownership",
+        "criteria": {
+            "dev_p1_1": {
+                "title": "Hiểu domain & nghiệp vụ",
+                "hint": "JD, domain, giải thích logic cho non-tech.",
+                "cluster": "P1 — POSITION",
+                "frequency": "Hàng quý",
+                "dataSource": "PM Review + BA Feedback"
+            },
+            "dev_p1_2": {
+                "title": "Thiết kế & kiến trúc",
+                "hint": "DB schema, API, architecture review.",
+                "cluster": "P1 — POSITION",
+                "frequency": "Hàng quý",
+                "dataSource": "Tech Lead + Code Review"
+            },
+            "dev_p1_3": {
+                "title": "Security awareness",
+                "hint": "OWASP, Sonar, coverage.",
+                "cluster": "P1 — POSITION",
+                "frequency": "Hàng quý",
+                "dataSource": "Security Scan + PR Review"
+            },
+            "dev_p2_1": {
+                "title": "Ngôn ngữ / stack chính",
+                "hint": "Clean code, paradigm, idiomatic.",
+                "cluster": "P2 — Person (Hard)",
+                "frequency": "Hàng quý",
+                "dataSource": "Code Review + Tech Assessment"
+            },
+            "dev_p2_2": {
+                "title": "Framework & ecosystem",
+                "hint": "Lifecycle, best practice.",
+                "cluster": "P2 — Person (Hard)",
+                "frequency": "Hàng quý",
+                "dataSource": "PR Review + Tech Demo"
+            },
+            "dev_p2_3": {
+                "title": "Database & data layer",
+                "hint": "Query, index, N+1.",
+                "cluster": "P2 — Person (Hard)",
+                "frequency": "Hàng quý",
+                "dataSource": "DBA Review + Query Log"
+            },
+            "dev_p2_4": {
+                "title": "DevOps & tooling",
+                "hint": "CI/CD, Docker, Git.",
+                "cluster": "P2 — Person (Hard)",
+                "frequency": "Hàng quý",
+                "dataSource": "DevOps Lead + Git History"
+            },
+            "dev_p2_5": {
+                "title": "Testing & chất lượng",
+                "hint": "Coverage, Sonar, security.",
+                "cluster": "P2 — Person (Hard)",
+                "frequency": "Hàng quý",
+                "dataSource": "SonarQube + Security Scan"
+            },
+            "dev_p2_6": {
+                "title": "Kaizen — cải tiến",
+                "hint": "≥1 cải tiến có đo lường.",
+                "cluster": "P2 — Person (Kaizen)",
+                "frequency": "Hàng quý",
+                "dataSource": "Kaizen Log (module Kaizen / TL xác nhận)"
+            },
+            "dev_p2_7": {
+                "title": "Horenso & teamwork",
+                "hint": "Standup, PR feedback 24h, peer.",
+                "cluster": "P2 — Person (Soft)",
+                "frequency": "Hàng tháng",
+                "dataSource": "Daily Log + PM Feedback + 360°"
+            },
+            "dev_p3_1": {
+                "title": "Tiến độ task / timeline",
+                "hint": "On-time rate theo sprint.",
+                "cluster": "P3 — PERFORMANCE",
+                "frequency": "Hàng sprint",
+                "dataSource": "Jira / Linear Dashboard"
+            },
+            "dev_p3_2": {
+                "title": "Chất lượng / bug rate",
+                "hint": "Bug index theo SP.",
+                "cluster": "P3 — PERFORMANCE",
+                "frequency": "Hàng sprint",
+                "dataSource": "QA Report + Bug Tracker"
+            },
+            "dev_p3_3": {
+                "title": "Code review & đóng góp",
+                "hint": "Peer NPS / review PR.",
+                "cluster": "P3 — PERFORMANCE",
+                "frequency": "Hàng quý",
+                "dataSource": "360° Survey (ẩn danh)"
+            },
+            "dev_p3_4": {
+                "title": "Đóng góp kỹ thuật",
+                "hint": "PR merge, lib nội bộ, ADR.",
+                "cluster": "P3 — PERFORMANCE",
+                "frequency": "Hàng quý",
+                "dataSource": "GitHub / GitLab Stats"
+            },
+            "ba_p1_1": {
+                "title": "Domain & vai trò",
+                "hint": "Hiểu domain, stakeholder, RACI.",
+                "cluster": "P1 — POSITION",
+                "frequency": "Hàng quý",
+                "dataSource": "PM Review + Client Feedback"
+            },
+            "ba_p1_2": {
+                "title": "Scope & change control",
+                "hint": "Baseline, CR, MoSCoW.",
+                "cluster": "P1 — POSITION",
+                "frequency": "Hàng quý",
+                "dataSource": "Change Log + Project Report"
+            },
+            "ba_p1_3": {
+                "title": "Stakeholder management",
+                "hint": "Communication plan, NPS.",
+                "cluster": "P1 — POSITION",
+                "frequency": "Hàng quý",
+                "dataSource": "Stakeholder Survey + PM Review"
+            },
+            "ba_p2_1": {
+                "title": "Requirements / research",
+                "hint": "User story, AC, workshop.",
+                "cluster": "P2A — BA",
+                "frequency": "Hàng sprint",
+                "dataSource": "PRD Review + Dev/QA Feedback"
+            },
+            "ba_p2_2": {
+                "title": "Tài liệu & thiết kế",
+                "hint": "Flow, ERD, sequence.",
+                "cluster": "P2A — BA",
+                "frequency": "Hàng sprint",
+                "dataSource": "Dev Survey + Doc Review"
+            },
+            "ba_p2_3": {
+                "title": "Kỹ thuật BA / nâng cao",
+                "hint": "5 Whys, SWOT, gap analysis.",
+                "cluster": "P2A — BA",
+                "frequency": "Hàng quý",
+                "dataSource": "Analysis Deliverable Review"
+            },
+            "ba_p2_4": {
+                "title": "Lập kế hoạch / Agile",
+                "hint": "WBS, milestone, velocity.",
+                "cluster": "P2B — PM",
+                "frequency": "Hàng sprint",
+                "dataSource": "Project Plan + Jira Report"
+            },
+            "ba_p2_5": {
+                "title": "Risk / UX flow",
+                "hint": "Risk register, RAID, IA.",
+                "cluster": "P2B — PM",
+                "frequency": "Hàng sprint",
+                "dataSource": "Risk Register + Sprint Retro"
+            },
+            "ba_p2_6": {
+                "title": "Kaizen quy trình",
+                "hint": "Cải tiến có đo lường.",
+                "cluster": "P2D — Kaizen",
+                "frequency": "Hàng quý",
+                "dataSource": "Kaizen Log + TL/PM"
+            },
+            "ba_p2_7": {
+                "title": "Horenso & product sense",
+                "hint": "Data-driven, executive summary.",
+                "cluster": "P2D — Soft skills",
+                "frequency": "Hàng tháng",
+                "dataSource": "Meeting Log + Metrics Dashboard"
+            },
+            "ba_p3_1": {
+                "title": "Milestone / sprint",
+                "hint": "Timeline adherence.",
+                "cluster": "P3 — PERFORMANCE",
+                "frequency": "Hàng sprint",
+                "dataSource": "Project Report + Jira"
+            },
+            "ba_p3_2": {
+                "title": "Chất lượng deliverable",
+                "hint": "PRD/Design approval rate.",
+                "cluster": "P3 — PERFORMANCE",
+                "frequency": "Hàng sprint",
+                "dataSource": "QA/Dev Feedback + Survey"
+            },
+            "ba_p3_3": {
+                "title": "CSAT / stakeholder",
+                "hint": "Client & team NPS.",
+                "cluster": "P3 — PERFORMANCE",
+                "frequency": "Hàng quý",
+                "dataSource": "Survey ẩn danh + Client Interview"
+            },
+            "ba_p3_4": {
+                "title": "Học hỏi & phát triển",
+                "hint": "Cert, talk, portfolio.",
+                "cluster": "P3 — PERFORMANCE",
+                "frequency": "Hàng quý",
+                "dataSource": "HR Learning Log + Portfolio"
+            }
+        },
+        "legendRows": {
+            "S": {
+                "completion": ">120%",
+                "summary": "Đột phá, Kaizen có đo lường, role model."
+            },
+            "A": {
+                "completion": "100–110%",
+                "summary": "Vượt kỳ vọng, ≥1 Kaizen có kết quả."
+            },
+            "B": {
+                "completion": "85–99%",
+                "summary": "Đạt chuẩn kỳ vọng."
+            },
+            "C": {
+                "completion": "70–84%",
+                "summary": "Cần coaching, PIP nếu kéo dài."
+            },
+            "D": {
+                "completion": "<70%",
+                "summary": "Không đạt yêu cầu tối thiểu."
+            }
+        },
+        "gradeBands": {
+            "S": "Xuất sắc (Breakthrough)",
+            "A": "Vượt kỳ vọng",
+            "B": "Chuẩn mực",
+            "C": "Chưa đạt chuẩn",
+            "D": "Cần cải thiện"
+        },
+        "gradingDetail": {
+            "S": {
+                "completion": ">120%",
+                "label": "Breakthrough / Đột phá",
+                "kaizen_rule": "BẮT BUỘC: ≥2 Kaizen Actions triển khai, có số liệu đo lường; ít nhất 1 Kaizen cấp team/công ty.",
+                "outcome": "Tăng lương ≥15% + Bonus đặc biệt + Xem xét thăng chức + Certificate of Excellence"
+            },
+            "A": {
+                "completion": "100–110%",
+                "label": "Above Expectation / Vượt kỳ vọng",
+                "kaizen_rule": "BẮT BUỘC: ≥1 Kaizen Action trong kỳ, có kết quả đo lường (cá nhân hoặc nhóm nhỏ).",
+                "outcome": "Tăng lương 8–14% + Bonus hiệu suất + Ưu tiên dự án chiến lược"
+            },
+            "B": {
+                "completion": "85–99%",
+                "label": "Standard / Chuẩn mực",
+                "kaizen_rule": "KHUYẾN KHÍCH: ≥1 ý tưởng cải tiến (chưa triển khai vẫn được).",
+                "outcome": "Duy trì mức lương + Kế hoạch đào tạo + Review thăng chức sau 2 kỳ B liên tiếp"
+            },
+            "C": {
+                "completion": "70–84%",
+                "label": "Below Standard / Chưa đạt chuẩn",
+                "kaizen_rule": "KHÔNG đủ điều kiện A/S. PIP 30 ngày.",
+                "outcome": "Cảnh báo chính thức + PIP 30 ngày + Freeze lương"
+            },
+            "D": {
+                "completion": "<70%",
+                "label": "Unsatisfactory / Không đạt",
+                "kaizen_rule": "Kế hoạch khẩn cấp 14 ngày.",
+                "outcome": "Xem xét chấm dứt HĐ / Điều chuyển / Đào tạo bắt buộc 60 ngày"
+            }
+        },
+        "levelMatrix": {
+            "dim1": {
+                "junior": "Code chạy được, cần review nhiều. Convention đôi khi sai.",
+                "middle": "Code sạch, convention nhất quán. Tự review. Coverage ≥70%.",
+                "senior": "Code elegant, refactor chủ động. Coverage ≥80%. Sonar A.",
+                "lead": "Đặt chuẩn coding cho team. Review là cơ hội dạy. Zero critical security."
+            },
+            "dim2": {
+                "junior": "Làm theo design có sẵn. Chưa tự thiết kế phức tạp.",
+                "middle": "Thiết kế module vừa. Biết MVC, Repository.",
+                "senior": "Microservice/module lớn, trade-off, API chuẩn.",
+                "lead": "Kiến trúc toàn sản phẩm, tầm nhìn 6–12 tháng."
+            },
+            "dim3": {
+                "junior": "Debug lỗi đơn giản với help.",
+                "middle": "Debug độc lập module quen. RCA cơ bản.",
+                "senior": "Debug phức tạp, 5 Whys, benchmark.",
+                "lead": "Incident production, postmortem, kiến trúc phòng ngừa."
+            },
+            "dim4": {
+                "junior": "Syntax cơ bản, làm theo tutorial.",
+                "middle": "Best practice, tự tra docs.",
+                "senior": "Idioms, đánh giá thư viện, contribute ví dụ.",
+                "lead": "Expert, patch framework, dạy người khác."
+            },
+            "dim5": {
+                "junior": "Unit test cơ bản. Coverage <50%.",
+                "middle": "Unit + integration. Coverage ≥70%.",
+                "senior": "TDD mindset, strategy, ≥80%, helper cho team.",
+                "lead": "Contract/mutation testing, quality gate CI/CD."
+            },
+            "dim6": {
+                "junior": "Deploy theo hướng dẫn, Docker cơ bản.",
+                "middle": "Local env, CI đơn giản, Dockerfile.",
+                "senior": "CI/CD design, K8s, monitoring.",
+                "lead": "IaC, multi-region, DR."
+            },
+            "dim7": {
+                "junior": "Nhận ra lãng phí khi được chỉ.",
+                "middle": "Tự nhận ra Muda, Kaizen cá nhân.",
+                "senior": "Kaizen cho team, đo lường, present.",
+                "lead": "Văn hóa Kaizen, Gemba, Kaizen Board."
+            },
+            "dim8": {
+                "junior": "Báo cáo khi được hỏi. Hỏi khi không hiểu.",
+                "middle": "Báo blocker chủ động, standup rõ, email business.",
+                "senior": "Proactive, manage up, present kỹ thuật.",
+                "lead": "Chiến lược giao tiếp team, C-level, conference."
+            },
+            "dim9": {
+                "junior": "Tự học, nhận mentoring.",
+                "middle": "Hỗ trợ junior, chia sẻ trong team.",
+                "senior": "Mentor 1–2 người, lead discussion.",
+                "lead": "Mentor team, vision, hire, unblock."
+            },
+            "dim10": {
+                "junior": "Cần hướng dẫn chi tiết; task <2 ngày độc lập.",
+                "middle": "Độc lập 1–2 tuần, own một feature.",
+                "senior": "Own module lớn, giải quyết việc không được giao.",
+                "lead": "Strategic ownership, tech direction, long-term."
+            }
+        },
+        "kaizenLogPolicy": "Để đạt hạng A (≥4đ) hoặc S (5đ) trong nhóm Person — nhân viên phải có ít nhất 1 mục Kaizen với kết quả đo lường được (Kaizen Log / xác nhận TL/PM). Không có Kaizen đã xác nhận = điểm Person tối đa B (3đ) trong hệ thống tính điểm.",
+        "heatmapGuideFull": "Ô cam/đỏ ≥2 tháng liên tiếp: cảnh báo burnout hoặc skill gap — cần 1:1. Xanh đậm liên tiếp: tiềm năng thăng chức.",
+        "distHint": {
+            "S": "Xuất sắc — Xem xét thăng chức / tăng lương ưu tiên",
+            "A": "Vượt kỳ vọng — Giao dự án chiến lược, phát triển tiếp",
+            "B": "Đạt chuẩn — Ổn định, coaching để lên A",
+            "C": "Cần coaching, PIP nếu kéo dài",
+            "D": "Can thiệp khẩn"
+        },
+        "sheetMap": {
+            "regulations": "1. Quy Dinh",
+            "dev_rubric": "2. Dev Competency",
+            "ba_rubric": "3. BA-PM-UIUX Competency",
+            "level_matrix": "4. Level Matrix",
+            "scorecard": "5. Bang Cham Diem",
+            "kaizen_log": "6. Kaizen Log",
+            "dashboard": "7. Bao Cao Tong Hop"
+        },
+        "careerYears": {
+            "junior": "0–2",
+            "middle": "2–4",
+            "senior": "4–7",
+            "lead": "7+"
+        }
     },
     "reportsPage": {
         "pageTitle": "Reports & export",
@@ -673,10 +1090,10 @@
         "taskCreateErr": "Could not create task.",
         "bulkLabel": "Bulk (≤50):",
         "bulkStatusPh": "— status —",
-        "bulkApply": "Apply",
+        "bulkApply": "Apply bulk update",
         "confirmBulk": "Apply bulk action to {n} selected task(s)?",
-        "bulkOk": "Bulk update applied.",
-        "bulkErr": "Could not apply bulk update.",
+        "bulkOk": "Updated {n} project(s).",
+        "bulkErr": "Bulk update failed.",
         "thTask": "Task",
         "thPred": "Pred",
         "thWeight": "Weight",
@@ -723,6 +1140,10 @@
         "pdStatInProgress": "In progress",
         "pdStatDone": "Done",
         "pdStatPending": "Pending",
+        "pdLeanEvalTitle": "Lean evaluations linked to this project",
+        "pdLeanEvalEmpty": "No Lean evaluations linked yet.",
+        "pdLeanEvalOpen": "Open evaluations",
+        "pdLeanEvalPeriod": "Period",
         "pdAddMenuRegular": "Add regular task",
         "pdAddMenuBulk": "Add multiple regular tasks",
         "pdAddMenuCategory": "Add task by category",
@@ -1236,10 +1657,7 @@
         "bulkArchiveLabel": "Archive",
         "bulkUnarchiveLabel": "Unarchive",
         "bulkNoArchiveChange": "Do not change archive state",
-        "bulkApply": "Apply bulk update",
         "bulkConfirm": "Update {n} selected project(s)? Changes are audit-logged.",
-        "bulkOk": "Updated {n} project(s).",
-        "bulkErr": "Bulk update failed.",
         "bulkNeedSelection": "Select at least one project.",
         "bulkNeedField": "Choose at least one change: owner, phase, or archive.",
         "bulkClearSelection": "Clear selection",

@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\EvaluationController;
 use App\Http\Controllers\Api\EvaluationPeerController;
 use App\Http\Controllers\Api\InnovationIdeaController;
 use App\Http\Controllers\Api\KaizenController;
+use App\Http\Controllers\Api\LeanEvaluationController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ProjectDocumentController;
@@ -177,6 +178,8 @@ Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
 
         Route::get('projects/{project}/csat', [CsatController::class, 'index']);
         Route::post('projects/{project}/csat', [CsatController::class, 'store']);
+
+        Route::get('projects/{project}/evaluations', [EvaluationController::class, 'forProject']);
     });
 
     Route::middleware('module:kaizens')->group(function () {
@@ -195,6 +198,11 @@ Route::middleware(['auth:sanctum', 'touch.session'])->group(function () {
     });
 
     Route::middleware('module:evaluations')->group(function () {
+        Route::get('lean-evaluation/framework', [LeanEvaluationController::class, 'framework']);
+        Route::post('lean-evaluation/preview', [LeanEvaluationController::class, 'preview']);
+        Route::get('lean-evaluation/task-context', [LeanEvaluationController::class, 'taskContext']);
+        Route::get('lean-evaluation/kaizen-context', [LeanEvaluationController::class, 'kaizenContext']);
+        Route::get('lean-evaluation/team-dashboard', [LeanEvaluationController::class, 'teamDashboard']);
         Route::get('evaluations', [EvaluationController::class, 'index']);
         Route::get('evaluations/{evaluation}', [EvaluationController::class, 'show']);
         Route::post('evaluations', [EvaluationController::class, 'store']);

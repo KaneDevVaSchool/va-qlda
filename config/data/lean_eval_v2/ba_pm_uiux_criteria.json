@@ -1,0 +1,388 @@
+{
+  "meta": {
+    "version": "2.0",
+    "source": "internal_lean_framework_design",
+    "pillar_weights": {
+      "p1": 0.2,
+      "p2": 0.4,
+      "p3": 0.4
+    },
+    "note": "sheet_weight_pct is an intermediate column; weight is normalized per pillar to 20%/40%/40%."
+  },
+  "criteria": [
+    {
+      "code": "P1.1",
+      "pillar": "p1",
+      "sheet_weight_pct": 7.0,
+      "cluster": "P1 — POSITION\nHiểu vai trò & JD",
+      "title": "Hiểu nghiệp vụ domain & vai trò trong tổ chức",
+      "source": "PM Review + Client Feedback",
+      "rubric": {
+        "S": "Là subject matter expert của domain. Tư vấn được giải pháp thay vì chỉ ghi nhận yêu cầu. Hiểu P&L, chiến lược kinh doanh.",
+        "A": "Hiểu sâu quy trình nghiệp vụ khách hàng. Có thể represent stakeholder khi họ không có mặt trong meeting.",
+        "B": "Hiểu yêu cầu nghiệp vụ ở mức cơ bản. Cần hỏi lại nhiều lần nhưng câu hỏi có chất lượng.",
+        "C": "Thường không hiểu rõ why behind requirement. Chỉ ghi nhận và chuyển tiếp mà không phân tích."
+      },
+      "checklist": "Checklist:\n• Có thể vẽ được As-Is process map của khách hàng\n• Hiểu được KPI đo lường thành công của feature/project\n• Phân biệt được symptom vs root cause khi tiếp nhận requirement\n• Biết stakeholder map: RACI, power/interest grid\n• Hiểu được regulatory/compliance constraint của domain\n• Có thể trình bày cho C-level không cần technical jargon",
+      "id": "ba_p1_1",
+      "weight": 0.07
+    },
+    {
+      "code": "P1.2",
+      "pillar": "p1",
+      "sheet_weight_pct": 6.0,
+      "cluster": null,
+      "title": "Quản lý phạm vi & Kiểm soát thay đổi (Scope Management)",
+      "source": "Change Log + Project Report",
+      "rubric": {
+        "S": "Change control process chặt chẽ, Change Request rate <5% do lỗi phân tích ban đầu. ROI analysis cho mọi change request.",
+        "A": "Baseline scope rõ ràng, Change Request được document đầy đủ với impact analysis. CR rate <10%.",
+        "B": "Scope baseline có nhưng chưa chặt. Một số CR do thiếu sót phân tích. CR rate 10-20%.",
+        "C": "Scope không rõ, feature creep thường xuyên. CR rate >20% do lỗi phân tích."
+      },
+      "checklist": "Checklist Scope Management:\n• Project Charter / Scope Statement được sign-off trước khi bắt đầu\n• WBS (Work Breakdown Structure) chi tiết đến task level\n• Change Request form: mô tả change, impact analysis, cost/time estimate, approval\n• Change log được maintain và chia sẻ với team\n• MoSCoW prioritization cho backlog\n• Definition of Done (DoD) rõ ràng cho từng loại deliverable",
+      "id": "ba_p1_2",
+      "weight": 0.06
+    },
+    {
+      "code": "P1.3",
+      "pillar": "p1",
+      "sheet_weight_pct": 7.0,
+      "cluster": null,
+      "title": "Stakeholder Management & Giao tiếp",
+      "source": "Stakeholder Survey + PM Review",
+      "rubric": {
+        "S": "Xây dựng trust với C-level stakeholder. Manage conflict giữa stakeholders. Stakeholder NPS ≥4.5/5.",
+        "A": "Manage kỳ vọng stakeholder chủ động. Không để bất đồng leo thang. NPS ≥4/5.",
+        "B": "Giao tiếp tốt với stakeholder khi được hỏi. Đôi khi để vấn đề leo thang không cần thiết.",
+        "C": "Giao tiếp bị động. Stakeholder thường xuyên không hài lòng hoặc bị surprise."
+      },
+      "checklist": "Checklist Stakeholder Management:\n• Stakeholder register: name, role, interest, influence, communication preference\n• Communication plan: frequency, channel, format cho từng nhóm stakeholder\n• Meeting agenda gửi trước ≥24h\n• Meeting minutes gửi trong ≤2h sau meeting\n• Executive summary cho C-level (không >1 trang)\n• Escalation matrix rõ ràng (ai escalate lên ai, khi nào)",
+      "id": "ba_p1_3",
+      "weight": 0.07
+    },
+    {
+      "code": "P2.1",
+      "pillar": "p2",
+      "sheet_weight_pct": 8.0,
+      "cluster": "P2A — BUSINESS ANALYST\nCore Skills",
+      "title": "Thu thập & Phân tích yêu cầu (Requirements Elicitation)",
+      "source": "PRD Review + Dev/QA Feedback",
+      "rubric": {
+        "S": "Workshop facilitation technique chuyên nghiệp (5 Whys, CATWOE, Use Case 2.0). Zero ambiguous requirement. PRD được approve lần đầu ≥90%.",
+        "A": "User Story đầy đủ (As a... I want... So that...). Acceptance Criteria SMART. PRD approved lần đầu ≥80%.",
+        "B": "Viết được User Story nhưng AC đôi khi chưa testable. PRD cần chỉnh sửa 2-3 lần.",
+        "C": "User Story thiếu context, AC không đo được, PRD bị reject do thiếu thông tin cơ bản."
+      },
+      "checklist": "User Story Template:\nAs a [type of user],\nI want [goal/desire]\nSo that [benefit/value]\n\nAcceptance Criteria (Given-When-Then):\nGiven [context/precondition]\nWhen [action/event]\nThen [expected outcome]\nAnd [additional outcome]\n\nChecklist PRD:\n• Business context & problem statement\n• User persona(s) affected\n• Functional requirements (phân cấp Must/Should/Could/Won't)\n• Non-functional requirements (performance, security, accessibility)\n• Out of scope rõ ràng\n• Edge cases và error scenarios\n• Mockup/wireframe (hoặc link Figma)\n• Acceptance Criteria testable\n• Dependencies và risks",
+      "id": "ba_p2_1",
+      "weight": 0.03595506
+    },
+    {
+      "code": "P2.2",
+      "pillar": "p2",
+      "sheet_weight_pct": 6.0,
+      "cluster": null,
+      "title": "Viết tài liệu kỹ thuật & Đặc tả (Technical Documentation)",
+      "source": "Dev Survey + Doc Review",
+      "rubric": {
+        "S": "API specification, Data dictionary, Flow diagram phức tạp (BPMN 2.0). Tài liệu self-explanatory, không cần họp giải thích.",
+        "A": "Sequence diagram, flowchart, ERD rõ ràng. Tài liệu được dev/QA dùng không cần hỏi thêm.",
+        "B": "Viết được tài liệu cơ bản nhưng hay thiếu edge case, error flow. Dev thường hỏi thêm.",
+        "C": "Tài liệu thiếu thông tin cơ bản. Dev không thể code từ spec mà không confirm thêm nhiều lần."
+      },
+      "checklist": "Toolset & Checklist Documentation:\n• Flowchart: Lucidchart / draw.io / Miro (dùng swim lane cho multi-actor flow)\n• Sequence Diagram: PlantUML hoặc Mermaid (text-based, version-controllable)\n• BPMN: cho process có gateway phức tạp\n• ERD: cho document liên quan đến data model\n\nChecklist chất lượng doc:\n• Happy path + alternate paths + error paths\n• Pre-condition và post-condition cho mỗi use case\n• Data validation rules (length, format, range)\n• API error codes và messages\n• Glossary cho domain-specific term",
+      "id": "ba_p2_2",
+      "weight": 0.02696629
+    },
+    {
+      "code": "P2.3",
+      "pillar": "p2",
+      "sheet_weight_pct": 5.0,
+      "cluster": null,
+      "title": "Phân tích nghiệp vụ nâng cao (Advanced BA Techniques)",
+      "source": "Analysis Deliverable Review",
+      "rubric": {
+        "S": "SWOT, Value Stream Mapping, As-Is/To-Be process gap analysis, Cost-Benefit Analysis, decision matrix cho complex trade-off.",
+        "A": "Gap analysis giữa current và future state. Root cause analysis (5 Whys, Fishbone). Prioritization matrix.",
+        "B": "Biết dùng một số kỹ thuật BA cơ bản (User Story, Use Case). Chưa thành thạo phân tích nâng cao.",
+        "C": "Chỉ ghi nhận requirement mà không phân tích. Không biết kỹ thuật BA nào ngoài phỏng vấn."
+      },
+      "checklist": "BA Techniques Library:\n• 5 Whys: tìm root cause (không dừng ở symptom)\n• Fishbone (Ishikawa): phân tích cause-effect\n• SWOT: Strengths, Weaknesses, Opportunities, Threats\n• MoSCoW: Must/Should/Could/Won't prioritization\n• Kano Model: phân loại feature theo user satisfaction\n• Value Stream Mapping: identify và eliminate waste\n• Decision Matrix: so sánh các option theo weighted criteria\n• Impact Mapping: connect business goal → actor → impact → deliverable",
+      "id": "ba_p2_3",
+      "weight": 0.02247191
+    },
+    {
+      "code": "P2.4",
+      "pillar": "p2",
+      "sheet_weight_pct": 8.0,
+      "cluster": "P2B — PROJECT MANAGER\nCore Skills",
+      "title": "Lập kế hoạch & Quản lý tiến độ (Project Planning)",
+      "source": "Project Plan + Jira Report",
+      "rubric": {
+        "S": "WBS chi tiết, critical path analysis, resource leveling, earned value management. Milestone pass rate ≥95%.",
+        "A": "Project plan với milestone rõ ràng. Dependency mapping. Milestone pass rate ≥85%. Buffer management.",
+        "B": "Project plan cơ bản nhưng thiếu chi tiết. Milestone đôi khi miss do không track dependency.",
+        "C": "Không có plan hoặc plan không được dùng. Milestone miss thường xuyên (>30%)."
+      },
+      "checklist": "PM Planning Checklist:\n• Project charter sign-off trước kick-off\n• WBS đến task level (≤2 ngày/task)\n• PERT/Gantt chart với critical path highlighted\n• Dependency matrix (internal và external)\n• Resource allocation vs availability\n• Buffer: 20% cho identified risk, 10% management reserve\n• Milestone definition với clear exit criteria\n• Sprint planning: capacity = (working days × team size × 0.7)\n• Definition of Ready (DoR) cho user story trước khi vào sprint",
+      "id": "ba_p2_4",
+      "weight": 0.03595506
+    },
+    {
+      "code": "P2.5",
+      "pillar": "p2",
+      "sheet_weight_pct": 6.0,
+      "cluster": null,
+      "title": "Quản lý rủi ro (Risk Management)",
+      "source": "Risk Register + Sprint Retrospective",
+      "rubric": {
+        "S": "Risk register proactive với early warning indicators. Risk mitigation có ROI analysis. Không để risk thành issue vì bị bỏ qua.",
+        "A": "Risk register đầy đủ (probability × impact matrix). Mitigation plan cho top 5 risks. Review weekly.",
+        "B": "Identify risk nhưng mitigation plan chưa cụ thể. Review risk không đều đặn.",
+        "C": "Không có risk register hoặc chỉ là formality. Issue thường xuyên xảy ra mà không có mitigation."
+      },
+      "checklist": "Risk Register Template:\n• Risk ID | Mô tả Risk | Category | Probability (H/M/L) | Impact (H/M/L) | Risk Score | Trigger | Mitigation | Contingency | Owner | Status\n\nRisk Categories:\n• Technical risk (complexity, new technology)\n• Resource risk (key person dependency, availability)\n• External risk (third-party, regulatory)\n• Scope risk (requirement clarity, stakeholder alignment)\n• Schedule risk (dependency, estimate accuracy)\n\nEarly Warning Indicators:\n• Velocity drop >20% 2 sprints liên tiếp → schedule risk\n• Bug rate tăng >50% → quality risk\n• CR rate >15% → scope risk",
+      "id": "ba_p2_5",
+      "weight": 0.02696629
+    },
+    {
+      "code": "P2.6",
+      "pillar": "p2",
+      "sheet_weight_pct": 5.0,
+      "cluster": null,
+      "title": "Agile Facilitation & Scrum Master",
+      "source": "Sprint Velocity + Retro Actions",
+      "rubric": {
+        "S": "Sprint ceremonies hiệu quả (≤timebox). Retrospective có actionable items được follow-up. Team velocity ổn định và tăng theo thời gian.",
+        "A": "Sprint Planning chất lượng (DoR check, capacity planning). Retrospective action items được implement ≥80%.",
+        "B": "Ceremonies đúng format nhưng chưa hiệu quả. Retrospective action items thường bị quên.",
+        "C": "Ceremonies như ritual, không có giá trị. Team không thấy benefit của agile process."
+      },
+      "checklist": "Agile Ceremonies Checklist:\nSprint Planning:\n• Capacity = available days × team size × focus factor (0.7)\n• Story point fitting với velocity ±20%\n• DoR check: story đã có AC, dependency clear, estimate done\n\nDaily Standup (≤15 phút):\n• Yesterday: done — specific task, không nói 'working on'\n• Today: committed — specific task\n• Blocker: có action owner và ETA\n\nSprint Review:\n• Demo working software (not slides)\n• Stakeholder feedback captured\n\nRetrospective:\n• ≥1 actionable improvement per sprint\n• Follow-up từ retrospective trước\n• Rotate facilitator",
+      "id": "ba_p2_6",
+      "weight": 0.02247191
+    },
+    {
+      "code": "P2.7",
+      "pillar": "p2",
+      "sheet_weight_pct": 4.0,
+      "cluster": null,
+      "title": "Budget & Resource Management",
+      "source": "Budget Report + Resource Plan",
+      "rubric": {
+        "S": "Budget variance <5%. Resource utilization 75-85% (không over hoặc under-utilized). Proactive resource planning cho 2 sprints ahead.",
+        "A": "Budget tracking đều đặn. Resource allocation hiệu quả. Biết khi nào cần escalate resource issue.",
+        "B": "Track budget nhưng chưa kịp thời. Resource allocation đôi khi gây bottleneck.",
+        "C": "Không track budget. Resource conflict thường xuyên do không plan trước."
+      },
+      "checklist": "Budget & Resource Checklist:\n• Budget breakdown: Labor / License / Infrastructure / Contingency\n• Burn rate tracking weekly\n• Earned Value: EV, PV, AC, SPI, CPI\n• Resource calendar: vacation, training, partial allocation\n• Skills matrix cho team\n• RAID log: Risks, Assumptions, Issues, Dependencies\n• Vendor / 3rd party dependency tracking",
+      "id": "ba_p2_7",
+      "weight": 0.01797753
+    },
+    {
+      "code": "P2.8",
+      "pillar": "p2",
+      "sheet_weight_pct": 8.0,
+      "cluster": "P2C — UI/UX DESIGNER\nCore Skills",
+      "title": "UX Research & User Testing",
+      "source": "Research Report + Test Recording",
+      "rubric": {
+        "S": "Mixed methods research (qual + quant). Usability test với 5 users find 85% of problems. Research insights drive product decision có đo lường.",
+        "A": "Conduct usability test, interview, survey. Synthesize findings thành actionable insight. Test với ≥5 real users mỗi cycle.",
+        "B": "Biết các phương pháp nghiên cứu cơ bản. Thực hiện được user interview nhưng chưa synthesize tốt.",
+        "C": "Thiết kế dựa trên giả định không có validation. Không conduct user research."
+      },
+      "checklist": "UX Research Toolkit:\n• User Interview: ≥5 users, semi-structured, record với permission\n• Usability Test: task-based, think-aloud protocol\n• Survey: Likert scale, NPS, SUS (System Usability Scale)\n• Card Sorting: IA validation\n• A/B Test: statistical significance p<0.05\n• Analytics: funnel analysis, heatmap (Hotjar), session recording\n• Competitive analysis: feature matrix + UX audit\n\nResearch Report Structure:\n• Research question\n• Methodology & participant profile\n• Key findings (với evidence)\n• Insights & implications\n• Recommendations với priority",
+      "id": "ba_p2_8",
+      "weight": 0.03595506
+    },
+    {
+      "code": "P2.9",
+      "pillar": "p2",
+      "sheet_weight_pct": 7.0,
+      "cluster": null,
+      "title": "UI Design & Design System",
+      "source": "Design System Audit + Figma",
+      "rubric": {
+        "S": "Xây dựng Design System từ đầu với documentation đầy đủ. Token-based design (color, typography, spacing). Storybook integration.",
+        "A": "Dùng và đóng góp vào Design System hiện có. Component library đầy đủ variant, state, responsive. Auto Layout thành thạo.",
+        "B": "Thiết kế nhất quán nhờ dùng Design System nhưng chưa đóng góp vào. Đôi khi inconsistent spacing/color.",
+        "C": "Không dùng Design System. Mỗi màn hình design khác nhau. Spacing, typography không nhất quán."
+      },
+      "checklist": "Design System Checklist:\n• Color: Primary, Secondary, Neutral, Semantic (success, warning, error, info)\n• Typography: Scale, Weight, Line height, Letter spacing\n• Spacing: 4px/8px grid system\n• Components: Button (tất cả variant + state), Input, Card, Modal, Toast, Tooltip...\n• State: Default, Hover, Active, Focused, Disabled, Loading, Error\n• Responsive: Mobile-first, breakpoints chuẩn\n• Dark mode ready\n• Accessibility: contrast ratio ≥4.5:1 (AA), ≥7:1 (AAA)\n• Figma: Auto Layout, Constraints, Component variant",
+      "id": "ba_p2_9",
+      "weight": 0.03146067
+    },
+    {
+      "code": "P2.10",
+      "pillar": "p2",
+      "sheet_weight_pct": 5.0,
+      "cluster": null,
+      "title": "Information Architecture & User Flow",
+      "source": "IA Audit + User Test",
+      "rubric": {
+        "S": "Card sorting + tree testing để validate IA. User flow covers 100% của happy + error path. Navigation pattern research-backed.",
+        "A": "Sitemap rõ ràng, user flow cover happy path và alternate path. Navigation consistent và intuitive.",
+        "B": "User flow cover happy path. Đôi khi thiếu error state hoặc empty state.",
+        "C": "Không có sitemap hoặc user flow. Thiết kế từng màn hình mà không nghĩ đến flow."
+      },
+      "checklist": "IA & Flow Checklist:\n• Sitemap: toàn bộ màn hình của sản phẩm\n• User Flow cho mỗi key task (sign up, checkout, onboarding...)\n• Flow bao gồm: happy path + alternate path + error path + empty state\n• Navigation pattern: tab bar, drawer, breadcrumb (phù hợp với depth)\n• Deep link support (user có thể bookmark và share URL)\n• Back navigation behavior rõ ràng\n• Progressive disclosure: không show all info at once",
+      "id": "ba_p2_10",
+      "weight": 0.02247191
+    },
+    {
+      "code": "P2.11",
+      "pillar": "p2",
+      "sheet_weight_pct": 4.0,
+      "cluster": null,
+      "title": "Công cụ Design — Figma / Prototyping",
+      "source": "Figma File Audit + Dev Feedback",
+      "rubric": {
+        "S": "Figma master: Advanced component (variant, interactive component), plugin custom, Design token export cho developer. Prototype đủ để test.",
+        "A": "Figma thành thạo: component library, auto layout, prototype interactive. Handoff spec đầy đủ cho developer.",
+        "B": "Dùng được Figma cơ bản. Prototype đơn giản. Handoff thiếu một số spec (spacing, color token).",
+        "C": "Figma chỉ dùng để vẽ, không có component. Prototype không có. Handoff dev phải đoán nhiều."
+      },
+      "checklist": "Figma Proficiency Checklist:\n• Component: Base + Variant (size, state, type)\n• Instance swap và detach awareness\n• Auto Layout: direction, gap, padding, alignment\n• Constraint: cho responsive behavior\n• Prototype: connection, animation, conditional interaction\n• Inspect mode: dev có đủ spacing, color, font, export asset\n• Naming convention: frames, layers, component\n• Version history: milestone save với comment\n• Figma Plugin: đang dùng Iconify, Unsplash, Content Reel...",
+      "id": "ba_p2_11",
+      "weight": 0.01797753
+    },
+    {
+      "code": "P2.12",
+      "pillar": "p2",
+      "sheet_weight_pct": 4.0,
+      "cluster": null,
+      "title": "Accessibility & Inclusive Design (a11y)",
+      "source": "a11y Audit + WAVE Tool",
+      "rubric": {
+        "S": "WCAG 2.1 AA compliance audit. Screen reader testing. Accessibility được baked into design process, không phải afterthought.",
+        "A": "WCAG 2.1 AA awareness và apply trong design. Color contrast ≥4.5:1. Focus indicator rõ ràng.",
+        "B": "Biết về accessibility nhưng chưa apply đầy đủ. Contrast check cơ bản. Đôi khi quên focus state.",
+        "C": "Không quan tâm đến accessibility. Design không dùng được với keyboard hoặc screen reader."
+      },
+      "checklist": "Accessibility Checklist:\n• Color contrast: Text ≥4.5:1 (AA), Large text ≥3:1, Non-text ≥3:1\n• Touch target: tối thiểu 44×44px (iOS HIG), 48×48dp (Material)\n• Focus indicator: visible, high contrast\n• Text: không encode thông tin chỉ bằng color\n• Image: alt text mô tả đầy đủ\n• Form: label liên kết với input, error message rõ ràng\n• Animation: prefers-reduced-motion support\n• Screen reader: test với VoiceOver (iOS/macOS) hoặc TalkBack (Android)\n• Keyboard navigation: Tab order logical",
+      "id": "ba_p2_12",
+      "weight": 0.01797753
+    },
+    {
+      "code": "P2.13",
+      "pillar": "p2",
+      "sheet_weight_pct": 8.0,
+      "cluster": "P2D — SOFT SKILLS\n& KAIZEN",
+      "title": "Kaizen — Cải tiến liên tục quy trình",
+      "source": "Kaizen Log (Sheet 5)",
+      "rubric": {
+        "S": "≥2 Kaizen đã triển khai với số liệu đo lường. Ít nhất 1 Kaizen áp dụng ở cấp team/công ty. Trình bày Kaizen trong all-hands.",
+        "A": "≥1 Kaizen triển khai thành công với kết quả đo lường được. Impact ở cấp cá nhân hoặc sub-team.",
+        "B": "Có đề xuất cải tiến nhưng chưa triển khai. Hoặc triển khai nhưng chưa đo lường kết quả.",
+        "C": "Không có hành động cải tiến nào. Không nhận thức được lãng phí trong quy trình."
+      },
+      "checklist": "Kaizen Examples cho BA/PM/UIUX:\n\nBA Kaizen:\n• Tạo PRD template 50-point checklist → CR rate giảm từ 15% xuống 5%\n• Template user interview guide → giảm 40% prep time per research session\n• Jira workflow automation → tiết kiệm 30 phút/ngày ticket management\n\nPM Kaizen:\n• Daily Risk Dashboard tự động → phát hiện sớm risk, tiết kiệm 1 sprint delay\n• Sprint Planning template chuẩn → planning meeting giảm từ 3h xuống 1.5h\n• Stakeholder update email template → viết weekly report từ 45 phút xuống 15 phút\n\nUIUX Kaizen:\n• Design System 80 components → thiết kế màn hình mới nhanh hơn 60%\n• User test script template → setup test session từ 2h xuống 30 phút\n• Figma Component kit cho handoff → dev implementation time giảm 25%",
+      "id": "ba_p2_13",
+      "weight": 0.03595506
+    },
+    {
+      "code": "P2.14",
+      "pillar": "p2",
+      "sheet_weight_pct": 6.0,
+      "cluster": null,
+      "title": "Horenso — Giao tiếp chủ động",
+      "source": "Meeting Log + Stakeholder Feedback",
+      "rubric": {
+        "S": "Không bao giờ để stakeholder bị surprise. Escalate đúng lúc, đúng cấp. Viết executive summary rõ ràng cho C-level.",
+        "A": "Báo cáo kịp thời, meeting có agenda và minutes. Blocker được escalate trong ngày.",
+        "B": "Giao tiếp đủ nhưng đôi khi bị động (chờ được hỏi). Meeting đôi khi thiếu agenda.",
+        "C": "Giao tiếp phản ứng (reactive). Stakeholder và team thường không biết status."
+      },
+      "checklist": "Horenso for BA/PM/UIUX:\nHO (報 — Báo cáo):\n• Weekly status report: RAG (Red/Amber/Green) cho từng milestone\n• Escalation report: vấn đề + impact + options + recommendation\n• Post-mortem report sau incident/delay\n\nREN (連 — Liên lạc):\n• CC/tag đúng người trong email/Slack\n• Design decision log: chia sẻ với dev trước khi code\n• Sprint goal communicated đến toàn team trước sprint bắt đầu\n\nSO (相 — Bàn bạc):\n• Pre-mortem: brainstorm risk trước khi project bắt đầu\n• Design critique session: feedback early, không sau khi dev xong\n• Backlog refinement: BA/PM/Dev/QA cùng estimate và clarify",
+      "id": "ba_p2_14",
+      "weight": 0.02696629
+    },
+    {
+      "code": "P2.15",
+      "pillar": "p2",
+      "sheet_weight_pct": 5.0,
+      "cluster": null,
+      "title": "Tư duy sản phẩm & Data-driven Decision",
+      "source": "Product Metrics Dashboard",
+      "rubric": {
+        "S": "Validate hypothesis bằng experiment trước khi build. A/B test, funnel analysis, cohort analysis thành thạo.",
+        "A": "Sử dụng data (analytics, user feedback) để ra quyết định. Đặt câu hỏi Why trước khi What và How.",
+        "B": "Biết dùng Google Analytics / Mixpanel cơ bản. Đôi khi ra quyết định theo direct request mà không validate.",
+        "C": "Không dùng data để ra quyết định. Feature được build vì manager muốn, không vì user cần."
+      },
+      "checklist": "Product Thinking Checklist:\n• Problem statement: 'Người dùng gặp khó khăn gì? Chứng cứ là gì?'\n• Hypothesis: 'Nếu chúng ta làm X, thì Y sẽ xảy ra, đo bằng Z'\n• Minimum Viable Product (MVP): cái ít nhất để test hypothesis\n• Success metrics: leading indicator (activation rate) và lagging indicator (retention)\n• AARRR funnel: Acquisition, Activation, Retention, Referral, Revenue\n• OKR alignment: feature này phục vụ Objective nào?\n• Kill feature nếu metric không cải thiện sau 2 sprints",
+      "id": "ba_p2_15",
+      "weight": 0.0224719
+    },
+    {
+      "code": "P3.1",
+      "pillar": "p3",
+      "sheet_weight_pct": 10.0,
+      "cluster": "P3 — PERFORMANCE\nKPI & Kết quả",
+      "title": "Tiến độ milestone & Sprint (Timeline Adherence)",
+      "source": "Project Report + Jira",
+      "rubric": {
+        "S": "100% milestone on-time, Sprint goal met ≥95%, 0 scope creep không được approve.",
+        "A": "≥85% milestone on-time. Sprint goal met ≥85%. CR được manage tốt.",
+        "B": "70-84% on-time. Một số miss có lý do rõ ràng. CR được document.",
+        "C": "Dưới 70% on-time. Miss deadline do planning kém hoặc không escalate."
+      },
+      "checklist": "Công thức tính Timeline Score:\n• Timeline_Score = (Milestones_OnTime / Total_Milestones) × 100%\n\nLưu ý:\n• Milestone được count là on-time nếu đúng ngày hoặc trước ngày đã commit\n• Delay do external blocker (client, 3rd party) có PM document: không tính\n• Delay do internal issue: tính full vào score\n• Sprint Goal: 'Definition of Done' của sprint goal phải rõ ràng từ đầu sprint\n• Change Request: nếu CR được approve và adjust timeline → baseline mới",
+      "id": "ba_p3_1",
+      "weight": 0.13333333
+    },
+    {
+      "code": "P3.2",
+      "pillar": "p3",
+      "sheet_weight_pct": 8.0,
+      "cluster": null,
+      "title": "Chất lượng tài liệu & Deliverable",
+      "source": "QA/Dev Feedback + Survey",
+      "rubric": {
+        "S": "PRD/Design được approve lần đầu ≥90%. Change Request do lỗi tài liệu <5%. Không có critical bug do thiếu sót spec.",
+        "A": "Approve lần đầu ≥80%. CR do lỗi tài liệu <10%. Dev ít phải hỏi clarify.",
+        "B": "Approve sau 2-3 lần revision. CR do tài liệu 10-20%. Dev phải hỏi thêm thường xuyên.",
+        "C": "Tài liệu reject nhiều lần. CR do lỗi tài liệu >20%. Dev không thể làm việc từ spec."
+      },
+      "checklist": "Chất lượng Deliverable:\nBA:\n• PRD first-time approval rate\n• Change Request rate do lỗi spec\n• Số câu hỏi clarify từ Dev/QA mỗi story\n• Edge case coverage rate (số edge case QA tìm thêm)\n\nPM:\n• Milestone pass rate\n• Budget variance %\n• Risk-to-Issue conversion rate\n• Team NPS (team survey)\n\nUIUX:\n• Design revision rounds (target ≤2)\n• Developer handoff satisfaction score\n• Post-launch usability score (SUS)\n• Accessibility audit pass rate",
+      "id": "ba_p3_2",
+      "weight": 0.10666667
+    },
+    {
+      "code": "P3.3",
+      "pillar": "p3",
+      "sheet_weight_pct": 7.0,
+      "cluster": null,
+      "title": "Hài lòng khách hàng & Stakeholder (CSAT)",
+      "source": "Survey (ẩn danh) + Client Interview",
+      "rubric": {
+        "S": "Client NPS ≥8/10. Team NPS ≥8/10. Không có escalation từ client do communication.",
+        "A": "Client NPS ≥7/10. Team NPS ≥7/10. Escalation hiếm và được giải quyết nhanh.",
+        "B": "Client NPS 5-6/10. Team NPS 5-6/10. Đôi khi có complaint về communication.",
+        "C": "Client NPS <5/10. Team NPS <5/10. Thường xuyên có complaint."
+      },
+      "checklist": "Survey Questions (1-10 scale):\nClient Survey:\n1. Bạn có giới thiệu team này cho người khác không? (NPS)\n2. Tiến độ dự án đáp ứng kỳ vọng không?\n3. Chất lượng tài liệu / thiết kế đáp ứng không?\n4. Giao tiếp có rõ ràng và kịp thời không?\n\nTeam Survey:\n1. BA/PM/UIUX có cung cấp đủ context để bạn làm việc không?\n2. Khi bạn có câu hỏi, nhận được phản hồi nhanh và rõ không?\n3. Requirement/Design có ổn định trong sprint không?\n4. Bạn tin tưởng BA/PM/UIUX có thể represent user cho team không?",
+      "id": "ba_p3_3",
+      "weight": 0.09333333
+    },
+    {
+      "code": "P3.4",
+      "pillar": "p3",
+      "sheet_weight_pct": 5.0,
+      "cluster": null,
+      "title": "Tự phát triển & Học hỏi",
+      "source": "HR Learning Log + Portfolio",
+      "rubric": {
+        "S": "Hoàn thành ≥2 chứng chỉ/khóa học. Chia sẻ ≥1 talk nội bộ. Dẫn dắt community of practice.",
+        "A": "Hoàn thành ≥1 chứng chỉ/khóa học. Apply kiến thức vào dự án có chứng minh.",
+        "B": "Học nhưng chưa apply. Hoặc học để có certificate nhưng không dùng.",
+        "C": "Không có hoạt động học tập trong kỳ."
+      },
+      "checklist": "Relevant Certifications:\nBA: CBAP, CCBA, PMI-PBA, IIBA-ECBA\nPM: PMP, PMI-ACP, CAPM, CSM (Scrum Master), CSPO (Product Owner)\nUIUX: Google UX Design Certificate, Nielsen Norman UX Certificate\n\nLearning Resources:\n• BA: BABOK Guide, Business Analysis Techniques (IIBA)\n• PM: PMBOK 7th Edition, Agile Practice Guide, Scrum Guide\n• UIUX: NN/g Research, UX Collective, Laws of UX, Refactoring UI",
+      "id": "ba_p3_4",
+      "weight": 0.06666667
+    }
+  ]
+}

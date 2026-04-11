@@ -1,0 +1,422 @@
+{
+    "version": "2.0",
+    "pillar_weights": {
+        "p1": 0.2,
+        "p2": 0.4,
+        "p3": 0.4
+    },
+    "grade_bands": [
+        {
+            "min": 4.5,
+            "grade": "S",
+            "label_key": "evaluationsPage.gradeBands.S"
+        },
+        {
+            "min": 4,
+            "grade": "A",
+            "label_key": "evaluationsPage.gradeBands.A"
+        },
+        {
+            "min": 3,
+            "grade": "B",
+            "label_key": "evaluationsPage.gradeBands.B"
+        },
+        {
+            "min": 2,
+            "grade": "C",
+            "label_key": "evaluationsPage.gradeBands.C"
+        },
+        {
+            "min": 0,
+            "grade": "D",
+            "label_key": "evaluationsPage.gradeBands.D"
+        }
+    ],
+    "grade_scale_legend": [
+        {
+            "grade": "S",
+            "points": 5,
+            "completion_key": "evaluationsPage.legendRows.S.completion",
+            "summary_key": "evaluationsPage.legendRows.S.summary"
+        },
+        {
+            "grade": "A",
+            "points": 4,
+            "completion_key": "evaluationsPage.legendRows.A.completion",
+            "summary_key": "evaluationsPage.legendRows.A.summary"
+        },
+        {
+            "grade": "B",
+            "points": 3,
+            "completion_key": "evaluationsPage.legendRows.B.completion",
+            "summary_key": "evaluationsPage.legendRows.B.summary"
+        },
+        {
+            "grade": "C",
+            "points": 2,
+            "completion_key": "evaluationsPage.legendRows.C.completion",
+            "summary_key": "evaluationsPage.legendRows.C.summary"
+        },
+        {
+            "grade": "D",
+            "points": 1,
+            "completion_key": "evaluationsPage.legendRows.D.completion",
+            "summary_key": "evaluationsPage.legendRows.D.summary"
+        }
+    ],
+    "tracks": {
+        "dev": {
+            "label_key": "evaluationsPage.trackDev",
+            "criteria": [
+                {
+                    "id": "dev_p1_1",
+                    "pillar": "p1",
+                    "weight": 0.08,
+                    "code": "P1.1"
+                },
+                {
+                    "id": "dev_p1_2",
+                    "pillar": "p1",
+                    "weight": 0.07,
+                    "code": "P1.2"
+                },
+                {
+                    "id": "dev_p1_3",
+                    "pillar": "p1",
+                    "weight": 0.05,
+                    "code": "P1.3"
+                },
+                {
+                    "id": "dev_p2_1",
+                    "pillar": "p2",
+                    "weight": 0.05,
+                    "code": "P2.1"
+                },
+                {
+                    "id": "dev_p2_2",
+                    "pillar": "p2",
+                    "weight": 0.05,
+                    "code": "P2.2"
+                },
+                {
+                    "id": "dev_p2_3",
+                    "pillar": "p2",
+                    "weight": 0.05,
+                    "code": "P2.3"
+                },
+                {
+                    "id": "dev_p2_4",
+                    "pillar": "p2",
+                    "weight": 0.05,
+                    "code": "P2.4"
+                },
+                {
+                    "id": "dev_p2_5",
+                    "pillar": "p2",
+                    "weight": 0.05,
+                    "code": "P2.5"
+                },
+                {
+                    "id": "dev_p2_6",
+                    "pillar": "p2",
+                    "weight": 0.08,
+                    "code": "P2.6"
+                },
+                {
+                    "id": "dev_p2_7",
+                    "pillar": "p2",
+                    "weight": 0.07,
+                    "code": "P2.7"
+                },
+                {
+                    "id": "dev_p3_1",
+                    "pillar": "p3",
+                    "weight": 0.1,
+                    "code": "P3.1"
+                },
+                {
+                    "id": "dev_p3_2",
+                    "pillar": "p3",
+                    "weight": 0.1,
+                    "code": "P3.2"
+                },
+                {
+                    "id": "dev_p3_3",
+                    "pillar": "p3",
+                    "weight": 0.1,
+                    "code": "P3.3"
+                },
+                {
+                    "id": "dev_p3_4",
+                    "pillar": "p3",
+                    "weight": 0.1,
+                    "code": "P3.4"
+                }
+            ]
+        },
+        "ba_pm_uiux": {
+            "label_key": "evaluationsPage.trackBa",
+            "criteria": [
+                {
+                    "id": "ba_p1_1",
+                    "pillar": "p1",
+                    "code": "P1.1"
+                },
+                {
+                    "id": "ba_p1_2",
+                    "pillar": "p1",
+                    "code": "P1.2"
+                },
+                {
+                    "id": "ba_p1_3",
+                    "pillar": "p1",
+                    "code": "P1.3"
+                },
+                {
+                    "id": "ba_p2_1",
+                    "pillar": "p2",
+                    "code": "P2.1"
+                },
+                {
+                    "id": "ba_p2_2",
+                    "pillar": "p2",
+                    "code": "P2.2"
+                },
+                {
+                    "id": "ba_p2_3",
+                    "pillar": "p2",
+                    "code": "P2.3"
+                },
+                {
+                    "id": "ba_p2_4",
+                    "pillar": "p2",
+                    "code": "P2.4"
+                },
+                {
+                    "id": "ba_p2_5",
+                    "pillar": "p2",
+                    "code": "P2.5"
+                },
+                {
+                    "id": "ba_p2_6",
+                    "pillar": "p2",
+                    "code": "P2.6"
+                },
+                {
+                    "id": "ba_p2_7",
+                    "pillar": "p2",
+                    "code": "P2.7"
+                },
+                {
+                    "id": "ba_p3_1",
+                    "pillar": "p3",
+                    "code": "P3.1"
+                },
+                {
+                    "id": "ba_p3_2",
+                    "pillar": "p3",
+                    "code": "P3.2"
+                },
+                {
+                    "id": "ba_p3_3",
+                    "pillar": "p3",
+                    "code": "P3.3"
+                },
+                {
+                    "id": "ba_p3_4",
+                    "pillar": "p3",
+                    "code": "P3.4"
+                }
+            ],
+            "equal_weights_per_pillar": true
+        }
+    },
+    "radar_axes": [
+        {
+            "id": "position",
+            "label_key": "evaluationsPage.radarPosition",
+            "pillar": "p1"
+        },
+        {
+            "id": "craft",
+            "label_key": "evaluationsPage.radarCraft",
+            "pillar": "p2"
+        },
+        {
+            "id": "kaizen",
+            "label_key": "evaluationsPage.radarKaizen",
+            "pillar": "p2"
+        },
+        {
+            "id": "collab",
+            "label_key": "evaluationsPage.radarHorenso",
+            "pillar": "p2"
+        },
+        {
+            "id": "delivery",
+            "label_key": "evaluationsPage.radarDelivery",
+            "pillar": "p3"
+        }
+    ],
+    "radar_criteria_map": {
+        "dev": {
+            "position": [
+                "dev_p1_1",
+                "dev_p1_2",
+                "dev_p1_3"
+            ],
+            "craft": [
+                "dev_p2_1",
+                "dev_p2_2",
+                "dev_p2_3",
+                "dev_p2_4",
+                "dev_p2_5"
+            ],
+            "kaizen": [
+                "dev_p2_6"
+            ],
+            "collab": [
+                "dev_p2_7"
+            ],
+            "delivery": [
+                "dev_p3_1",
+                "dev_p3_2",
+                "dev_p3_3",
+                "dev_p3_4"
+            ]
+        },
+        "ba_pm_uiux": {
+            "position": [
+                "ba_p1_1",
+                "ba_p1_2",
+                "ba_p1_3"
+            ],
+            "craft": [
+                "ba_p2_1",
+                "ba_p2_2",
+                "ba_p2_3",
+                "ba_p2_4",
+                "ba_p2_5"
+            ],
+            "kaizen": [
+                "ba_p2_6"
+            ],
+            "collab": [
+                "ba_p2_7"
+            ],
+            "delivery": [
+                "ba_p3_1",
+                "ba_p3_2",
+                "ba_p3_3",
+                "ba_p3_4"
+            ]
+        }
+    },
+    "extras": {
+        "framework_version": "2.0",
+        "sheet_map_keys": {
+            "regulations": "evaluationsPage.sheetMap.regulations",
+            "dev_rubric": "evaluationsPage.sheetMap.dev_rubric",
+            "ba_rubric": "evaluationsPage.sheetMap.ba_rubric",
+            "level_matrix": "evaluationsPage.sheetMap.level_matrix",
+            "scorecard": "evaluationsPage.sheetMap.scorecard",
+            "kaizen_log": "evaluationsPage.sheetMap.kaizen_log",
+            "dashboard": "evaluationsPage.sheetMap.dashboard"
+        },
+        "grading_scale": [
+            {
+                "grade": "S",
+                "points": 5
+            },
+            {
+                "grade": "A",
+                "points": 4
+            },
+            {
+                "grade": "B",
+                "points": 3
+            },
+            {
+                "grade": "C",
+                "points": 2
+            },
+            {
+                "grade": "D",
+                "points": 1
+            }
+        ],
+        "level_matrix": [
+            {
+                "dim": "1",
+                "name_key": "evaluationsPage.lmCodeQuality"
+            },
+            {
+                "dim": "2",
+                "name_key": "evaluationsPage.lmSystemDesign"
+            },
+            {
+                "dim": "3",
+                "name_key": "evaluationsPage.lmProblemSolving"
+            },
+            {
+                "dim": "4",
+                "name_key": "evaluationsPage.lmLangFramework"
+            },
+            {
+                "dim": "5",
+                "name_key": "evaluationsPage.lmTesting"
+            },
+            {
+                "dim": "6",
+                "name_key": "evaluationsPage.lmDevOps"
+            },
+            {
+                "dim": "7",
+                "name_key": "evaluationsPage.lmKaizenMindset"
+            },
+            {
+                "dim": "8",
+                "name_key": "evaluationsPage.lmHorenso"
+            },
+            {
+                "dim": "9",
+                "name_key": "evaluationsPage.lmMentoring"
+            },
+            {
+                "dim": "10",
+                "name_key": "evaluationsPage.lmOwnership"
+            }
+        ],
+        "career_levels": [
+            {
+                "id": "junior",
+                "label_key": "evaluationsPage.careerJunior",
+                "years_key": "evaluationsPage.careerYears.junior"
+            },
+            {
+                "id": "middle",
+                "label_key": "evaluationsPage.careerMiddle",
+                "years_key": "evaluationsPage.careerYears.middle"
+            },
+            {
+                "id": "senior",
+                "label_key": "evaluationsPage.careerSenior",
+                "years_key": "evaluationsPage.careerYears.senior"
+            },
+            {
+                "id": "lead",
+                "label_key": "evaluationsPage.careerLead",
+                "years_key": "evaluationsPage.careerYears.lead"
+            }
+        ],
+        "distribution_hint_keys": {
+            "S": "evaluationsPage.distHint.S",
+            "A": "evaluationsPage.distHint.A",
+            "B": "evaluationsPage.distHint.B",
+            "C": "evaluationsPage.distHint.C",
+            "D": "evaluationsPage.distHint.D"
+        },
+        "kaizen_log_policy_key": "evaluationsPage.kaizenLogPolicy",
+        "heatmap_guide_key": "evaluationsPage.heatmapGuideFull"
+    }
+}

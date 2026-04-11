@@ -51,6 +51,26 @@
             </div>
         </div>
 
+        <section class="ppms-card ppms-pd-section ppms-pd-lean-eval">
+            <div class="ppms-pd-lean-eval-head">
+                <h2>{{ t('projects.pdLeanEvalTitle') }}</h2>
+                <RouterLink class="ppms-btn-ghost ppms-btn-sm" :to="{ name: 'evaluations', query: { project_id: project.id } }">
+                    {{ t('projects.pdLeanEvalOpen') }}
+                </RouterLink>
+            </div>
+            <p v-if="projectEvalsLoading" class="ppms-muted ppms-mt-sm">{{ t('common.loading') }}</p>
+            <p v-else-if="!projectEvals.length" class="ppms-muted ppms-mt-sm">{{ t('projects.pdLeanEvalEmpty') }}</p>
+            <ul v-else class="ppms-pd-lean-eval-list ppms-mt-sm" role="list">
+                <li v-for="ev in projectEvals" :key="ev.id" class="ppms-pd-lean-eval-row" role="listitem">
+                    <span class="ppms-pd-lean-eval-person">{{ ev.person?.name || '—' }}</span>
+                    <span class="ppms-pd-lean-eval-meta"
+                        >{{ t('projects.pdLeanEvalPeriod') }} {{ ev.period_label }} · {{ ev.scoring_mode || 'legacy' }}</span
+                    >
+                    <span class="ppms-pd-lean-eval-grade" :title="String(ev.total ?? '')">{{ ev.grade || '—' }}</span>
+                </li>
+            </ul>
+        </section>
+
         <section class="ppms-card ppms-pd-section">
             <h2>{{ t('projects.pdGeneralTitle') }}</h2>
             <div class="ppms-pd-info-grid">
@@ -506,7 +526,9 @@
 </template>
 
 <script setup>
+import axios from 'axios';
 import { computed, onMounted, provide, reactive, ref, watch } from 'vue';
+import { RouterLink } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import {
     fileExt,
@@ -525,6 +547,8 @@ const { t } = useI18n();
 const PPMS_PD_ACTIVITY_COLLAPSED_KEY = 'ppms-pd-activity-collapsed-';
 
 const activityExpanded = ref(true);
+const projectEvals = ref([]);
+const projectEvalsLoading = ref(false);
 
 const props = defineProps({
     project: { type: Object, required: true },
@@ -574,11 +598,27 @@ function toggleActivitySection() {
     persistActivityCollapsed();
 }
 
-onMounted(loadActivityCollapsedFromStorage);
+async function loadProjectEvaluations() {
+    projectEvalsLoading.value = true;
+    try {
+        const { data } = await axios.get(`/api/projects/${props.project.id}/evaluations`);
+        projectEvals.value = Array.isArray(data) ? data : [];
+    } catch {
+        projectEvals.value = [];
+    } finally {
+        projectEvalsLoading.value = false;
+    }
+}
+
+onMounted(() => {
+    loadActivityCollapsedFromStorage();
+    loadProjectEvaluations();
+});
 watch(
     () => props.project.id,
     () => {
         loadActivityCollapsedFromStorage();
+        loadProjectEvaluations();
     },
 );
 
@@ -886,5 +926,39 @@ defineEmits([
 }
 .ppms-pd-activity-panel {
     padding-top: 0.15rem;
+}
+.ppms-pd-lean-eval-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+.ppms-pd-lean-eval-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.ppms-pd-lean-eval-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    font-size: 0.9rem;
+}
+.ppms-pd-lean-eval-row:last-child {
+    border-bottom: none;
+}
+.ppms-pd-lean-eval-meta {
+    color: var(--ppms-muted, #64748b);
+    font-size: 0.85rem;
+}
+.ppms-pd-lean-eval-grade {
+    font-weight: 800;
+    color: #9a0036;
+    min-width: 2rem;
+    text-align: right;
 }
 </style>

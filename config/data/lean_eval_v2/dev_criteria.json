@@ -1,0 +1,422 @@
+{
+  "meta": {
+    "version": "2.0",
+    "source": "internal_lean_framework_design",
+    "pillar_weights": {
+      "p1": 0.2,
+      "p2": 0.4,
+      "p3": 0.4
+    },
+    "note": "sheet_weight_pct is an intermediate column; weight is normalized per pillar to 20%/40%/40%."
+  },
+  "criteria": [
+    {
+      "code": "P1.1",
+      "pillar": "p1",
+      "sheet_weight_pct": 8.0,
+      "cluster": "P1 — POSITION\nHiểu biết Nghiệp vụ & JD",
+      "title": "Hiểu domain & nghiệp vụ",
+      "source": "PM Review + BA Feedback",
+      "rubric": {
+        "S": "Giải thích được toàn bộ business flow, phát hiện gap trong spec trước khi dev. Tư vấn được giải pháp kỹ thuật theo nghiệp vụ.",
+        "A": "Hiểu đủ để dev đúng, đặt câu hỏi clarify chủ động, không phải hỏi lại câu đã giải đáp.",
+        "B": "Hiểu yêu cầu cơ bản, thỉnh thoảng cần BA giải thích thêm.",
+        "C": "Thường không đọc kỹ spec, cần nhắc nhở thường xuyên."
+      },
+      "checklist": "Checklist:\n• Đọc và hiểu PRD/BRD trước khi bắt tay code\n• Đặt câu hỏi clarify trước Sprint Planning (không đặt câu hỏi đã có trong document)\n• Có thể demo feature cho non-technical stakeholder\n• Hiểu được impacted user flow khi thay đổi 1 module\n• Phân biệt được Must-have vs Nice-to-have",
+      "id": "dev_p1_1",
+      "weight": 0.08
+    },
+    {
+      "code": "P1.2",
+      "pillar": "p1",
+      "sheet_weight_pct": 7.0,
+      "cluster": null,
+      "title": "Thiết kế hệ thống & Architecture",
+      "source": "Tech Lead + System Design Review",
+      "rubric": {
+        "S": "Thiết kế scalable, document đầy đủ ADR (Architecture Decision Record). Chủ động phát hiện bottleneck và propose cải tiến architecture.",
+        "A": "Thiết kế đúng pattern, DB schema hợp lý, API contract rõ ràng (Swagger/OpenAPI đầy đủ).",
+        "B": "Thiết kế đủ dùng nhưng chưa tối ưu. Schema còn thiếu index quan trọng. API thiếu error codes.",
+        "C": "Thiết kế ad-hoc, không document, phải sửa lại nhiều lần."
+      },
+      "checklist": "Checklist:\n• Vẽ được sequence diagram cho luồng nghiệp vụ phức tạp\n• Swagger/OpenAPI hoàn chỉnh: request, response, error codes, auth\n• DB schema có đầy đủ index cho các query thường dùng\n• Chọn đúng design pattern (Repository, Factory, Strategy...)\n• Có thể phân tích trade-off giữa 2 giải pháp kỹ thuật\n• Viết ADR cho quyết định kiến trúc quan trọng",
+      "id": "dev_p1_2",
+      "weight": 0.07
+    },
+    {
+      "code": "P1.3",
+      "pillar": "p1",
+      "sheet_weight_pct": 5.0,
+      "cluster": null,
+      "title": "Hiểu biết bảo mật cơ bản (Security Awareness)",
+      "source": "Security Scan + PR Review",
+      "rubric": {
+        "S": "Hiểu sâu OWASP Top 10, proactively review code của người khác về security, propose security hardening.",
+        "A": "Hiểu và áp dụng được OWASP Top 10 trong code của mình. Không commit credential lên git.",
+        "B": "Biết về injection, XSS nhưng đôi khi còn bỏ sót trong code review.",
+        "C": "Không nhận thức được rủi ro bảo mật cơ bản, để lộ secret key hoặc viết SQL không parameterized."
+      },
+      "checklist": "Checklist:\n• Không bao giờ hardcode credential / secret vào source code\n• Validate & sanitize tất cả input từ user\n• Không dùng eval() hoặc exec() với input không tin cậy\n• Sử dụng parameterized query (không nối chuỗi SQL)\n• Hiểu JWT, OAuth2 flow cơ bản\n• Biết cách scan dependency với npm audit / pip-audit / OWASP Dependency Check",
+      "id": "dev_p1_3",
+      "weight": 0.05
+    },
+    {
+      "code": "P2.1",
+      "pillar": "p2",
+      "sheet_weight_pct": 5.0,
+      "cluster": "P2A — NGÔN NGỮ LẬP TRÌNH\nPython",
+      "title": "Python Core — Syntax & Idiom",
+      "source": "Code Review + mypy/ruff",
+      "rubric": {
+        "S": "Viết Pythonic code: comprehension, generator, decorator, context manager. Hiểu GIL, memory model. Profiling & optimization.",
+        "A": "Sử dụng thành thạo built-ins, standard library. Viết code không có anti-pattern rõ ràng. Type hints đầy đủ.",
+        "B": "Viết được Python cơ bản, đôi khi dùng vòng lặp thay vì list comprehension. Chưa dùng type hints.",
+        "C": "Thường xuyên viết code không Pythonic, copy-paste từ StackOverflow mà không hiểu."
+      },
+      "checklist": "Checklist Python:\n• List/dict/set comprehension thay vì vòng lặp thủ công\n• Dùng dataclass hoặc namedtuple thay vì dict thuần\n• Dùng pathlib thay vì os.path\n• Exception handling đúng cách (không bare except)\n• f-string thay vì % formatting\n• Type hints đầy đủ (mypy passed)\n• Dùng virtual environment (venv/poetry/conda)\n• Biết dùng __slots__ khi cần tối ưu memory\n• Hiểu mutable default argument pitfall",
+      "id": "dev_p2_1",
+      "weight": 0.02597403
+    },
+    {
+      "code": "P2.2",
+      "pillar": "p2",
+      "sheet_weight_pct": 4.0,
+      "cluster": null,
+      "title": "Python Web — FastAPI / Django / Flask",
+      "source": "PR Review + Django Debug Toolbar",
+      "rubric": {
+        "S": "Thiết kế RESTful API chuẩn, async/await với FastAPI, ORM optimization (select_related, prefetch), custom middleware.",
+        "A": "Xây dựng API đúng HTTP semantics. Django: biết dùng queryset lazy evaluation. FastAPI: biết dependency injection.",
+        "B": "Xây dựng được CRUD API nhưng chưa tối ưu queryset. Không hiểu N+1 problem.",
+        "C": "API trả về status code sai, không validate input, N+1 query nghiêm trọng."
+      },
+      "checklist": "Checklist Python Web:\n• HTTP status code đúng ngữ nghĩa (201 cho POST create, 204 cho DELETE...)\n• Pydantic validation đầy đủ cho request/response\n• Django: dùng select_related / prefetch_related đúng chỗ\n• FastAPI: Depends() injection, background tasks, lifespan event\n• Pagination cho tất cả list endpoint\n• Rate limiting và throttling\n• Logging có correlation ID\n• Health check endpoint",
+      "id": "dev_p2_2",
+      "weight": 0.02077922
+    },
+    {
+      "code": "P2.3",
+      "pillar": "p2",
+      "sheet_weight_pct": 5.0,
+      "cluster": null,
+      "title": "JavaScript / TypeScript Core",
+      "source": "ESLint + TypeScript Compiler",
+      "rubric": {
+        "S": "Thành thạo event loop, closure, prototype chain. TypeScript strict mode, generic types phức tạp. Module bundler deep knowledge.",
+        "A": "Hiểu async/await, Promise chain, ES6+. TypeScript cơ bản với interface và type. Biết dùng npm/yarn workspace.",
+        "B": "Viết được JS/TS cơ bản nhưng hay gặp undefined/null error. Type 'any' nhiều chỗ. Callback hell.",
+        "C": "Thường xuyên gặp lỗi this binding, không hiểu async. TypeScript chỉ dùng như JavaScript."
+      },
+      "checklist": "Checklist JS/TS:\n• Không dùng var — chỉ dùng const / let\n• Không dùng type any — ít nhất dùng unknown\n• Optional chaining (?.) và nullish coalescing (??)\n• Destructuring đúng cách\n• Immutable pattern (spread, Object.freeze)\n• Strict TypeScript config (strict: true trong tsconfig)\n• Biết phân biệt == và === (luôn dùng ===)\n• Promise.all vs Promise.allSettled đúng usecase\n• Tránh callback hell — async/await hoặc .then chain sạch",
+      "id": "dev_p2_3",
+      "weight": 0.02597403
+    },
+    {
+      "code": "P2.4",
+      "pillar": "p2",
+      "sheet_weight_pct": 4.0,
+      "cluster": null,
+      "title": "JavaScript — React / Next.js Frontend",
+      "source": "Lighthouse + React DevTools Profiler",
+      "rubric": {
+        "S": "Custom hooks phức tạp, performance optimization (memo, useMemo, useCallback, virtualization), SSR/SSG/ISR strategy, Suspense.",
+        "A": "Hiểu component lifecycle, state management (Redux/Zustand/Context), lazy loading, code splitting.",
+        "B": "Xây dựng được component cơ bản. State management đơn giản. Chưa quan tâm re-render optimization.",
+        "C": "Prop drilling sâu, mutate state trực tiếp, không hiểu useEffect dependency array."
+      },
+      "checklist": "Checklist React/Next.js:\n• Không mutate state trực tiếp\n• useEffect dependency array đầy đủ và đúng\n• Tránh re-render không cần thiết (React.memo, useMemo, useCallback)\n• Lazy load route và component lớn\n• Error boundary cho tất cả async component\n• Accessibility (aria-label, semantic HTML, keyboard nav)\n• Core Web Vitals: LCP <2.5s, FID <100ms, CLS <0.1\n• SSR/SSG phù hợp với từng loại trang\n• Image optimization (next/image hoặc tương đương)",
+      "id": "dev_p2_4",
+      "weight": 0.02077922
+    },
+    {
+      "code": "P2.5",
+      "pillar": "p2",
+      "sheet_weight_pct": 4.0,
+      "cluster": null,
+      "title": "JavaScript — Node.js Backend",
+      "source": "Node.js Profiler + PM2 Metrics",
+      "rubric": {
+        "S": "Event loop deep knowledge, stream processing, cluster mode, worker threads. Performance profiling với clinic.js.",
+        "A": "Express/Fastify middleware pattern, error handling tập trung, async middleware đúng cách, biết dùng pm2.",
+        "B": "Xây dựng được REST API cơ bản với Express. Chưa xử lý unhandledRejection, uncaughtException.",
+        "C": "Blocking I/O trong event loop, callback không xử lý error, memory leak do event listener."
+      },
+      "checklist": "Checklist Node.js:\n• Không bao giờ block event loop (không dùng fs.readFileSync trong request handler)\n• Xử lý process.on('unhandledRejection') và process.on('uncaughtException')\n• Graceful shutdown (SIGTERM handler)\n• Connection pooling cho database\n• Helmet.js cho security headers\n• Morgan hoặc pino cho structured logging\n• Biết dùng --inspect cho debugging\n• Memory leak detection với clinic.js hoặc node --inspect",
+      "id": "dev_p2_5",
+      "weight": 0.02077922
+    },
+    {
+      "code": "P2.6",
+      "pillar": "p2",
+      "sheet_weight_pct": 4.0,
+      "cluster": null,
+      "title": "Java / Kotlin — Spring Boot Backend",
+      "source": "SonarQube + PR Review",
+      "rubric": {
+        "S": "Spring internals (IoC, AOP, transaction propagation), Reactive programming (WebFlux), JVM tuning, GC strategy.",
+        "A": "Spring Boot chuẩn: @Transactional đúng, Bean lifecycle hiểu rõ, Exception handler tập trung. JPA/Hibernate không gây N+1.",
+        "B": "Xây dựng được REST API với Spring Boot. Dùng @Autowired đúng nhưng chưa hiểu Bean scope. JPA có N+1.",
+        "C": "Không hiểu IoC container, tạo object bằng new thay vì inject. Transaction không dùng đúng."
+      },
+      "checklist": "Checklist Java/Spring:\n• Constructor injection thay vì @Autowired field injection\n• @Transactional đúng propagation và isolation level\n• @EntityGraph hoặc JOIN FETCH để tránh N+1\n• DTO pattern — không expose entity trực tiếp\n• Custom exception hierarchy + @ControllerAdvice\n• Actuator + Micrometer metrics\n• Profiles cho môi trường (dev/staging/prod)\n• Flyway/Liquibase cho DB migration\n• Unit test với Mockito, integration test với @SpringBootTest",
+      "id": "dev_p2_6",
+      "weight": 0.02077922
+    },
+    {
+      "code": "P2.7",
+      "pillar": "p2",
+      "sheet_weight_pct": 4.0,
+      "cluster": null,
+      "title": "Go (Golang) Backend",
+      "source": "golangci-lint + pprof",
+      "rubric": {
+        "S": "Concurrency model sâu (goroutine scheduler, channel patterns), custom middleware, profiling với pprof, cgo khi cần.",
+        "A": "Goroutine và channel đúng cách, context propagation, error wrapping với fmt.Errorf %w, biết dùng sync.WaitGroup.",
+        "B": "Viết được HTTP server cơ bản với net/http hoặc Gin. Goroutine đơn giản nhưng hay quên defer cancel().",
+        "C": "Goroutine leak, không dùng context, panic không recover, không hiểu interface{}."
+      },
+      "checklist": "Checklist Go:\n• Luôn defer cancel() sau context.WithCancel()\n• Error wrapping với %w (fmt.Errorf)\n• Không goroutine leak (dùng goleak trong test)\n• Table-driven tests\n• Biết phân biệt value receiver vs pointer receiver\n• Dùng sync.Once cho singleton\n• golangci-lint passed\n• Không dùng global state nếu không cần thiết\n• Context truyền qua toàn bộ call chain",
+      "id": "dev_p2_7",
+      "weight": 0.02077922
+    },
+    {
+      "code": "P2.8",
+      "pillar": "p2",
+      "sheet_weight_pct": 5.0,
+      "cluster": "P2B — FRAMEWORK\n& DATABASE",
+      "title": "Database — SQL (PostgreSQL / MySQL)",
+      "source": "DBA Review + pg_stat_statements",
+      "rubric": {
+        "S": "Query optimization sâu: execution plan, index strategy (composite, partial, covering). Partitioning, replication, VACUUM/ANALYZE.",
+        "A": "Viết query hiệu quả, tạo index đúng chỗ, dùng EXPLAIN để kiểm tra plan. Biết transaction isolation level.",
+        "B": "Viết được CRUD query. Biết JOIN cơ bản. Tạo index nhưng chưa kiểm tra effectiveness.",
+        "C": "Query chậm do thiếu index, SELECT *, không dùng transaction đúng cách."
+      },
+      "checklist": "Checklist SQL:\n• EXPLAIN ANALYZE trước khi ship query phức tạp\n• Không SELECT * trong production code\n• Composite index đúng thứ tự cột (most selective first)\n• Pagination dùng keyset (cursor) thay vì OFFSET cho large dataset\n• Index cho foreign key\n• Tránh function trên indexed column trong WHERE\n• Connection pool sizing phù hợp\n• Slow query log monitoring\n• Không mix DDL và DML trong transaction",
+      "id": "dev_p2_8",
+      "weight": 0.02597403
+    },
+    {
+      "code": "P2.9",
+      "pillar": "p2",
+      "sheet_weight_pct": 3.0,
+      "cluster": null,
+      "title": "Database — NoSQL (MongoDB / Redis / Elasticsearch)",
+      "source": "MongoDB Compass + Redis Monitor",
+      "rubric": {
+        "S": "Schema design cho read/write pattern cụ thể, aggregation pipeline phức tạp, Redis cluster, ES mapping optimization.",
+        "A": "Biết khi nào dùng embedding vs referencing trong MongoDB. Redis cho caching và pub/sub. ES cho full-text search.",
+        "B": "Dùng được MongoDB CRUD, Redis SET/GET cơ bản. Chưa tối ưu schema.",
+        "C": "Schema thiết kế sai pattern, không dùng TTL cho Redis cache, index MongoDB không phù hợp query."
+      },
+      "checklist": "Checklist NoSQL:\n• MongoDB: embedding khi data read together, reference khi data lớn hoặc query riêng\n• Tất cả Redis key có TTL (trừ data không expire)\n• Redis: pipeline/MULTI-EXEC cho batch operation\n• Elasticsearch: mapping trước khi index (không để auto-detect)\n• Không dùng MongoDB $where (JavaScript injection risk)\n• Redis: Lua script thay vì nhiều round-trip\n• MongoDB: projection để không lấy field thừa",
+      "id": "dev_p2_9",
+      "weight": 0.01558442
+    },
+    {
+      "code": "P2.10",
+      "pillar": "p2",
+      "sheet_weight_pct": 4.0,
+      "cluster": null,
+      "title": "API Design — REST & GraphQL & gRPC",
+      "source": "Swagger + Postman Collection",
+      "rubric": {
+        "S": "API versioning strategy, HATEOAS, GraphQL N+1 solution (DataLoader), gRPC bidirectional streaming, OpenAPI spec automation.",
+        "A": "RESTful đúng HTTP semantics, pagination chuẩn, GraphQL mutation với proper error handling, gRPC unary call.",
+        "B": "REST API hoạt động được nhưng status code chưa chuẩn. GraphQL cơ bản. Chưa biết gRPC.",
+        "C": "API trả về 200 cho mọi trường hợp kể cả lỗi. Không có pagination. Không versioning."
+      },
+      "checklist": "Checklist API Design:\n• HTTP method đúng ngữ nghĩa (GET idempotent, POST không idempotent)\n• Status code chuẩn RFC 7231\n• API versioning (URL prefix /v1/ hoặc header)\n• Pagination: cursor-based cho large dataset\n• Rate limiting headers (X-RateLimit-*)\n• Request ID / Correlation ID trong response header\n• Idempotency key cho POST tạo resource\n• OpenAPI spec auto-generated từ code\n• Backward compatible change (không breaking change trong patch version)",
+      "id": "dev_p2_10",
+      "weight": 0.02077922
+    },
+    {
+      "code": "P2.11",
+      "pillar": "p2",
+      "sheet_weight_pct": 3.0,
+      "cluster": "P2C — DEVOPS\n& QUALITY",
+      "title": "Git & Version Control",
+      "source": "Git History + PR Stats",
+      "rubric": {
+        "S": "Git internals (DAG, ref, pack), interactive rebase, git bisect, custom git hooks, monorepo strategy.",
+        "A": "Gitflow hoặc trunk-based development. Rebase vs merge hiểu rõ. Commit message chuẩn (Conventional Commits).",
+        "B": "Biết commit, branch, merge. Đôi khi conflict không resolve đúng. Commit message chung chung.",
+        "C": "Force push lên main, không biết resolve conflict, commit message như 'fix', 'update'."
+      },
+      "checklist": "Checklist Git:\n• Conventional Commits: feat/fix/docs/chore/refactor...\n• Không force push lên main/develop\n• PR size nhỏ (<400 lines changed)\n• Branch naming convention (feature/TICKET-123-description)\n• Git hooks: pre-commit (lint), commit-msg (conventional commit check)\n• Biết git stash, git cherry-pick, git bisect\n• Squash merge hoặc rebase trước khi merge\n• CODEOWNERS file đúng cấu hình",
+      "id": "dev_p2_11",
+      "weight": 0.01558442
+    },
+    {
+      "code": "P2.12",
+      "pillar": "p2",
+      "sheet_weight_pct": 4.0,
+      "cluster": null,
+      "title": "Testing — Unit / Integration / E2E",
+      "source": "Coverage Report + CI Dashboard",
+      "rubric": {
+        "S": "TDD mindset, property-based testing, contract testing (Pact), mutation testing, test pyramid strategy.",
+        "A": "Coverage ≥80%, test có tên mô tả, mock/stub đúng cách, test độc lập nhau (không shared state).",
+        "B": "Coverage ≥60%, test cơ bản cho happy path. Đôi khi test phụ thuộc nhau hoặc phụ thuộc order.",
+        "C": "Coverage <40%, chỉ test manual, hoặc test chỉ để coverage không để verify logic."
+      },
+      "checklist": "Checklist Testing:\n• Arrange-Act-Assert pattern\n• Test name mô tả behavior: 'should return 404 when user not found'\n• Không test implementation detail — test behavior\n• Mock external dependency (HTTP call, DB) trong unit test\n• Integration test với real DB (test container hoặc in-memory)\n• Coverage ≥70% meaningful coverage (không chỉ line coverage)\n• Không hard-code time trong test (dùng dependency injection cho clock)\n• Flaky test = bug — phải fix ngay",
+      "id": "dev_p2_12",
+      "weight": 0.02077922
+    },
+    {
+      "code": "P2.13",
+      "pillar": "p2",
+      "sheet_weight_pct": 3.0,
+      "cluster": null,
+      "title": "CI/CD & Docker / Kubernetes",
+      "source": "CI Dashboard + Container Scan",
+      "rubric": {
+        "S": "Multi-stage build optimization, K8s operator, Helm chart authoring, GitOps (ArgoCD/Flux), observability (Prometheus, Grafana, Jaeger).",
+        "A": "Dockerfile multi-stage build, GitHub Actions / GitLab CI pipeline hoàn chỉnh, K8s deployment/service/ingress cơ bản.",
+        "B": "Viết được Dockerfile đơn giản. Biết CI pipeline cơ bản. Chưa biết K8s.",
+        "C": "Không dùng .dockerignore, image size >1GB, không có health check trong Dockerfile."
+      },
+      "checklist": "Checklist CI/CD & Docker:\n• Multi-stage Dockerfile (build stage riêng, final image nhỏ)\n• .dockerignore đầy đủ\n• Non-root user trong container\n• HEALTHCHECK trong Dockerfile\n• Pinned base image version (không dùng :latest)\n• CI: lint → test → build → scan → deploy pipeline\n• Secrets không nằm trong image (dùng ARG không phải ENV cho secret)\n• K8s: resource requests/limits đầy đủ\n• Liveness và readiness probe",
+      "id": "dev_p2_13",
+      "weight": 0.01558442
+    },
+    {
+      "code": "P2.14",
+      "pillar": "p2",
+      "sheet_weight_pct": 8.0,
+      "cluster": "P2D — SOFT SKILLS\n& KAIZEN",
+      "title": "Kaizen — Cải tiến liên tục",
+      "source": "Kaizen Log (Sheet 5)",
+      "rubric": {
+        "S": "≥2 Kaizen đã triển khai với số liệu rõ ràng. Ít nhất 1 Kaizen có impact ở cấp team/công ty. Trình bày Kaizen Report trong team meeting.",
+        "A": "≥1 Kaizen triển khai thành công, có đo lường kết quả. Impact ở cấp cá nhân hoặc sub-team.",
+        "B": "Có đề xuất ý tưởng cải tiến nhưng chưa triển khai. Hoặc triển khai nhưng chưa đo lường.",
+        "C": "Không có bất kỳ hành động cải tiến nào trong kỳ. Không nhận thức được lãng phí (Muda)."
+      },
+      "checklist": "Kaizen Action Template:\n'Trong kỳ này, tôi đã [hành động cụ thể] tại [bước/quy trình X], bằng cách [phương pháp Y], giúp [kết quả đo lường được Z]'\n\nVí dụ:\n• Tự động hóa deploy script → giảm từ 45 phút xuống 3 phút mỗi lần deploy\n• Tạo shared error handler → giảm 60% boilerplate code xử lý exception\n• Viết Postman collection cho toàn bộ API → giảm 2h onboarding mỗi member mới\n• Tối ưu query report → giảm từ 8s xuống 0.3s, tránh timeout cho user",
+      "id": "dev_p2_14",
+      "weight": 0.04155844
+    },
+    {
+      "code": "P2.15",
+      "pillar": "p2",
+      "sheet_weight_pct": 7.0,
+      "cluster": null,
+      "title": "Horenso — Giao tiếp chủ động (報連相)",
+      "source": "Daily Log + PM Feedback",
+      "rubric": {
+        "S": "Báo cáo proactively, escalate đúng lúc đúng cấp, không để PM bị surprise. Viết daily standup có chất lượng (done/doing/blocker rõ ràng). Phản hồi PR review trong 4h.",
+        "A": "Báo cáo kịp thời khi có vấn đề. Blocker báo ngay trong ngày. PR review trong 24h. Không giữ thông tin ảnh hưởng team.",
+        "B": "Thỉnh thoảng chậm báo cáo. Blocker đôi khi để qua ngày hôm sau. PR review chậm.",
+        "C": "Để PM hỏi mới báo cáo. Giữ thông tin, không share progress. PR không review hoặc review qua loa."
+      },
+      "checklist": "Checklist Horenso:\nHO (報 — Báo cáo):\n• Daily standup: yesterday/today/blocker — cụ thể, không vague\n• Cập nhật Jira/ticket ngay khi status thay đổi\n• Báo cáo rủi ro khi phát hiện (không chờ deadline)\n\nREN (連 — Liên lạc):\n• Tag đúng người khi cần quyết định\n• Không silent failure — luôn có response kể cả 'đang xem xét'\n• Meeting notes chia sẻ trong 1h sau meeting\n\nSO (相 — Bàn bạc):\n• Đề xuất ≥1 giải pháp khi báo cáo vấn đề\n• Không tự quyết định unilateral khi ảnh hưởng team",
+      "id": "dev_p2_15",
+      "weight": 0.03636364
+    },
+    {
+      "code": "P2.16",
+      "pillar": "p2",
+      "sheet_weight_pct": 5.0,
+      "cluster": null,
+      "title": "Teamwork & Knowledge Sharing",
+      "source": "360° Survey + Peer Review",
+      "rubric": {
+        "S": "Dẫn dắt technical discussion, mentor junior (<3 tháng kinh nghiệm), viết internal blog/tech talk, build team culture tích cực.",
+        "A": "Hỗ trợ đồng nghiệp chủ động khi họ bị stuck. Code review mang tính xây dựng (không chỉ chỉ lỗi, còn giải thích tại sao).",
+        "B": "Sẵn sàng giúp khi được hỏi. Code review đôi khi quá ngắn gọn hoặc chỉ nit-pick.",
+        "C": "Không hỗ trợ đồng nghiệp. Code review không có (approve mù) hoặc gây friction không cần thiết."
+      },
+      "checklist": "Checklist Teamwork:\n• Code review: mô tả tại sao thay vì chỉ 'fix this'\n• Dùng câu hỏi thay vì lệnh trong review: 'Have you considered...?'\n• Pair programming với junior ≥1 lần/sprint khi cần\n• Chia sẻ TIL (Today I Learned) trong team channel\n• Không blame — focus vào vấn đề, không vào người\n• Celebrate team wins, không chỉ individual wins\n• Onboarding buddy cho member mới",
+      "id": "dev_p2_16",
+      "weight": 0.02597403
+    },
+    {
+      "code": "P2.17",
+      "pillar": "p2",
+      "sheet_weight_pct": 5.0,
+      "cluster": null,
+      "title": "Học hỏi & Tự phát triển (Learning Agility)",
+      "source": "HR Learning Log + Portfolio",
+      "rubric": {
+        "S": "Hoàn thành ≥2 khóa học/chứng chỉ/conference talk/kỳ quý. Apply kiến thức mới vào dự án có dẫn chứng. Contribute vào open source.",
+        "A": "Hoàn thành ≥1 khóa học hoặc chứng chỉ. Apply kiến thức vào dự án có thể chỉ ra được cụ thể.",
+        "B": "Học nhưng chưa apply vào dự án. Hoặc apply nhưng không thể giải thích tại sao chọn.",
+        "C": "Không có hoạt động học tập trong kỳ. Sử dụng công nghệ cũ mà không biết có alternative tốt hơn."
+      },
+      "checklist": "Checklist Learning:\n• Link đến khóa học/certificate hoàn thành\n• Mô tả 1 điều cụ thể đã học và apply vào dự án\n• Tham gia ≥1 tech talk nội bộ hoặc external (conference, meetup)\n• Đọc ≥1 technical book hoặc >10 technical article/kỳ\n• Thử nghiệm công nghệ mới trong side project hoặc POC",
+      "id": "dev_p2_17",
+      "weight": 0.025974
+    },
+    {
+      "code": "P3.1",
+      "pillar": "p3",
+      "sheet_weight_pct": 10.0,
+      "cluster": "P3 — PERFORMANCE\nKPI & Kết quả",
+      "title": "Tiến độ task — Timeline Adherence",
+      "source": "Jira / Linear Sprint Report",
+      "rubric": {
+        "S": "≥95% task on-time theo story point. Không để blocker quá 4h mà không escalate.",
+        "A": "85-94% on-time. Blocker được escalate trong ngày. Estimate tương đối chính xác (±20%).",
+        "B": "75-84% on-time. Thỉnh thoảng miss sprint goal nhưng có lý do rõ ràng.",
+        "C": "60-74% on-time. Thường miss deadline. Estimate không chính xác (>50% sai)."
+      },
+      "checklist": "Công thức tính:\n• Score = (Tasks_OnTime / Total_Tasks_Committed) × 100%\n• Loại trừ: unplanned work >30% sprint capacity (có PM xác nhận)\n• Story point weight: Epic (×3), Story (×2), Task (×1)\n• Escalation time: Critical blocker ≤1h, Major blocker ≤4h, Minor blocker next standup\n• Estimate accuracy = |Actual - Estimate| / Estimate",
+      "id": "dev_p3_1",
+      "weight": 0.13333333
+    },
+    {
+      "code": "P3.2",
+      "pillar": "p3",
+      "sheet_weight_pct": 10.0,
+      "cluster": null,
+      "title": "Chất lượng sản phẩm — Bug Rate",
+      "source": "Bug Tracker + QA Report",
+      "rubric": {
+        "S": "Bug index <0.05 (Critical×3 + Major×2 + Minor×1) / Total Story Points. Không tái phát bug đã sửa.",
+        "A": "Bug index 0.05–0.10. Không có Critical bug do thiếu sót logic cơ bản. Tái phát <10%.",
+        "B": "Bug index 0.10–0.20. Đôi khi có Major bug. Tái phát rate 10-20%.",
+        "C": "Bug index 0.20–0.35. Thường xuyên có Major bug hoặc Critical bug. Tái phát >20%."
+      },
+      "checklist": "Công thức:\nBug_Index = (Critical×3 + Major×2 + Minor×1) / SP_Delivered\n\nPhân loại Bug:\n• Critical: Production down, data loss, security breach, payment fail\n• Major: Feature không dùng được, wrong calculation, UX block hoàn toàn\n• Minor: UI glitch, typo, performance <20% degradation\n\nTái phát bug: hệ số nhân ×2\nBug do spec không rõ: không tính vào Dev",
+      "id": "dev_p3_2",
+      "weight": 0.13333333
+    },
+    {
+      "code": "P3.3",
+      "pillar": "p3",
+      "sheet_weight_pct": 5.0,
+      "cluster": null,
+      "title": "Code Review Contribution",
+      "source": "GitHub/GitLab PR Statistics",
+      "rubric": {
+        "S": "Review ≥2 PR/tuần của người khác. Comment có chất lượng (không chỉ nit-pick). Tỷ lệ approve/request changes hợp lý.",
+        "A": "Review ≥1 PR/tuần. Comment cụ thể và mang tính xây dựng. Turnaround ≤24h.",
+        "B": "Review PR khi được request nhưng không chủ động. Turnaround đôi khi >24h.",
+        "C": "Hầu như không review PR, hoặc approve mà không đọc kỹ, hoặc không respond review request."
+      },
+      "checklist": "Checklist Code Review Quality:\n• Review trong ≤24h sau khi được assign\n• Comment có dẫn chứng (link docs, ví dụ code)\n• Phân biệt: Blocking (must fix) vs Suggestion (nice to have) vs Question\n• Không nit-pick formatting đã có linter xử lý\n• Praise tốt khi thấy code hay\n• Check: test coverage, security, performance implication\n• Không approve code mình không hiểu",
+      "id": "dev_p3_3",
+      "weight": 0.06666667
+    },
+    {
+      "code": "P3.4",
+      "pillar": "p3",
+      "sheet_weight_pct": 5.0,
+      "cluster": null,
+      "title": "Đóng góp kỹ thuật (Technical Contribution)",
+      "source": "GitHub Stats + Confluence / Notion",
+      "rubric": {
+        "S": "Dẫn dắt ≥1 technical initiative. Contribute vào shared library/tooling. Viết ≥2 technical document/ADR. Propose và implement architectural improvement.",
+        "A": "Đóng góp vào internal library hoặc tooling. Viết ≥1 technical document được team dùng. Propose improvement.",
+        "B": "Đóng góp nhỏ khi được yêu cầu. Ít chủ động propose cải tiến.",
+        "C": "Không có đóng góp kỹ thuật nào ngoài nhiệm vụ được giao. Không viết document."
+      },
+      "checklist": "Các loại đóng góp kỹ thuật:\n• Viết/cải tiến shared component/library được team dùng\n• Viết ADR (Architecture Decision Record)\n• Tạo internal tool giúp tăng productivity\n• Contribute vào coding standard / best practice document\n• Dẫn dắt spike/POC cho công nghệ mới\n• Tech talk nội bộ chia sẻ kiến thức\n• Contribute vào open source project liên quan đến tech stack",
+      "id": "dev_p3_4",
+      "weight": 0.06666667
+    }
+  ]
+}

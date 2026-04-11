@@ -118,4 +118,9 @@ class Project extends Model
     {
         return $this->hasMany(ProjectSupply::class)->orderBy('sort_order')->orderBy('id');
     }
+
+    public function evaluations(): HasMany
+    {
+        return $this->hasMany(Evaluation::class);
+    }
 }

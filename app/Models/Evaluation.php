@@ -9,7 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Evaluation extends Model
 {
     protected $fillable = [
-        'period_type', 'period_label', 'person_id', 'p1', 'p2', 'p3',
+        'period_type', 'period_label', 'scoring_mode', 'lean_track', 'career_level', 'project_id',
+        'person_id', 'p1', 'p2', 'p3', 'criteria_scores', 'kaizen_verified', 'kaizen_action',
         'total', 'grade', 'reviewer_id', 'status', 'adjustment_reason', 'adjustment_delta',
     ];
 
@@ -19,6 +20,8 @@ class Evaluation extends Model
         'p3' => 'decimal:2',
         'total' => 'decimal:2',
         'adjustment_delta' => 'decimal:2',
+        'criteria_scores' => 'array',
+        'kaizen_verified' => 'boolean',
     ];
 
     public function person(): BelongsTo
@@ -34,5 +37,10 @@ class Evaluation extends Model
     public function peers(): HasMany
     {
         return $this->hasMany(EvaluationPeer::class);
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
     }
 }
