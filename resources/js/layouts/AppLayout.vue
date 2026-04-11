@@ -109,10 +109,8 @@
                         <div class="ppms-nav-label">{{ t('layout.navModuleReviewsComms') }}</div>
                         <AppSidebarNavEntry module-key="evaluations" to="/evaluations" :title="t('layout.navEvaluations')">
                             <span class="ppms-nav-ico-wrap" aria-hidden="true">
-                                <svg class="ppms-nav-ico-svg" viewBox="0 0 24 24">
-                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                                    <circle cx="9" cy="7" r="4" />
-                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                                <svg class="ppms-nav-ico-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M5 11h4v10H5V11zm7 0h4V4h-4v17zm7 0h4v-6h-4v6z" />
                                 </svg>
                             </span>
                             <span class="ppms-nav-text">{{ t('layout.navEvaluations') }}</span>
@@ -294,6 +292,32 @@
                     </svg>
                 </span>
                 <span class="ppms-mobile-tab-label">{{ t('layout.navProjects') }}</span>
+            </span>
+            <router-link
+                v-if="!navMobileDisabled('evaluations')"
+                to="/evaluations"
+                class="ppms-mobile-tab"
+                :class="{ 'ppms-mobile-tab--active': route.name === 'evaluations' }"
+            >
+                <span class="ppms-mobile-tab-ico" aria-hidden="true">
+                    <svg class="ppms-mobile-tab-svg" viewBox="0 0 24 24">
+                        <path d="M5 11h4v10H5V11zm7 0h4V4h-4v17zm7 0h4v-6h-4v6z" />
+                    </svg>
+                </span>
+                <span class="ppms-mobile-tab-label">{{ t('layout.navEvaluations') }}</span>
+            </router-link>
+            <span
+                v-else
+                class="ppms-mobile-tab ppms-mobile-tab--disabled"
+                role="presentation"
+                :title="t('layout.navDisabledMaint')"
+            >
+                <span class="ppms-mobile-tab-ico" aria-hidden="true">
+                    <svg class="ppms-mobile-tab-svg" viewBox="0 0 24 24">
+                        <path d="M5 11h4v10H5V11zm7 0h4V4h-4v17zm7 0h4v-6h-4v6z" />
+                    </svg>
+                </span>
+                <span class="ppms-mobile-tab-label">{{ t('layout.navEvaluations') }}</span>
             </span>
             <router-link
                 v-if="!navMobileDisabled('notifications')"
