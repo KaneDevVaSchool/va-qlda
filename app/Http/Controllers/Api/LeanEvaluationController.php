@@ -63,7 +63,7 @@ class LeanEvaluationController extends Controller
     public function kaizenContext(Request $request)
     {
         $request->validate([
-            'person_id' => 'required|exists:users,id',
+            'person_id' => 'required|exists:cms.users,id',
             'period_label' => 'nullable|string|max:32',
         ]);
 
@@ -193,7 +193,7 @@ class LeanEvaluationController extends Controller
     public function taskContext(Request $request)
     {
         $request->validate([
-            'person_id' => 'required|exists:users,id',
+            'person_id' => 'required|exists:cms.users,id',
             'project_id' => 'nullable|exists:projects,id',
         ]);
 

@@ -69,7 +69,7 @@ class EvaluationController extends Controller
         $data = $request->validate([
             'period_type' => 'required|in:quarterly,annual',
             'period_label' => 'required|string|max:32',
-            'person_id' => 'required|exists:users,id',
+            'person_id' => 'required|exists:cms.users,id',
             'scoring_mode' => 'sometimes|in:legacy,lean',
             'lean_track' => 'nullable|in:dev,ba_pm_uiux',
             'career_level' => 'nullable|in:junior,middle,senior,lead',

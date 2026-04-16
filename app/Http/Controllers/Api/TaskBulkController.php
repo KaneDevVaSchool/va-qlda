@@ -19,7 +19,7 @@ class TaskBulkController extends Controller
         $data = $request->validate([
             'task_ids' => 'required|array|min:1|max:50',
             'task_ids.*' => 'integer|exists:tasks,id',
-            'assignee_id' => 'nullable|exists:users,id',
+            'assignee_id' => 'nullable|exists:cms.users,id',
             'status' => 'nullable|in:todo,in_progress,done,blocked',
         ]);
 

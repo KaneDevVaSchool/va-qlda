@@ -17,7 +17,7 @@ class EvaluationPeerController extends Controller
         }
 
         $data = $request->validate([
-            'reviewer_id' => 'required|exists:users,id',
+            'reviewer_id' => 'required|exists:cms.users,id',
             'attitude_score' => 'nullable|numeric|min:0|max:100',
             'notes' => 'nullable|string|max:5000',
         ]);
