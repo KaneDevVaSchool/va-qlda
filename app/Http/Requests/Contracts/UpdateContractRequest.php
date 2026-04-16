@@ -25,7 +25,7 @@ class UpdateContractRequest extends FormRequest
             'end_date' => ['sometimes', 'date'],
             'total_value' => ['sometimes', 'numeric', 'min:0'],
             'payment_cycle' => ['sometimes', Rule::enum(PaymentCycle::class)],
-            'followed_by_id' => ['sometimes', 'nullable', 'integer', 'exists:users,id'],
+            'followed_by_id' => ['sometimes', 'nullable', 'integer', 'exists:cms.users,id'],
         ];
     }
 

@@ -184,7 +184,7 @@ class ProjectImportService
             'customer_name' => 'nullable|string|max:255',
             'customer_email' => 'nullable|email|max:255',
             'description' => 'nullable|string|max:65535',
-            'owner_id' => 'nullable|integer|exists:users,id',
+            'owner_id' => 'nullable|integer|exists:cms.users,id',
             'owner_email' => 'nullable|email|max:255',
             'labels' => 'nullable|string|max:512',
         ];

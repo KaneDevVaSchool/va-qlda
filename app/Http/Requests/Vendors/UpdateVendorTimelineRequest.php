@@ -21,7 +21,7 @@ class UpdateVendorTimelineRequest extends FormRequest
         return [
             'phase' => ['sometimes', Rule::enum(VendorTimelinePhase::class)],
             'occurred_at' => ['sometimes', 'date'],
-            'performed_by_user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'performed_by_user_id' => ['nullable', 'integer', 'exists:cms.users,id'],
             'note' => ['nullable', 'string', 'max:20000'],
             'is_current' => ['sometimes', 'boolean'],
         ];

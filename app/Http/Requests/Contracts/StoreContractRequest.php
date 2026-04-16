@@ -25,7 +25,7 @@ class StoreContractRequest extends FormRequest
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'total_value' => ['required', 'numeric', 'min:0'],
             'payment_cycle' => ['required', Rule::enum(PaymentCycle::class)],
-            'followed_by_id' => ['nullable', 'integer', 'exists:users,id'],
+            'followed_by_id' => ['nullable', 'integer', 'exists:cms.users,id'],
         ];
     }
 }
